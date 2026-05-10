@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\ServiceRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -17,4 +18,8 @@ Route::get('/services/{service}', [ServiceController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::post('/service-requests', [ServiceRequestController::class, 'store']);
+    Route::get('/my-requests', [ServiceRequestController::class, 'myRequests']);
+    Route::get('/my-requests/{serviceRequest}', [ServiceRequestController::class, 'show']);
 });
