@@ -1,10 +1,18 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ServiceCategoryController;
+use App\Http\Controllers\Api\ServiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/service-categories', [ServiceCategoryController::class, 'index']);
+Route::get('/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'show']);
+
+Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/{service}', [ServiceController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
