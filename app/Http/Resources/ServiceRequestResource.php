@@ -21,6 +21,7 @@ class ServiceRequestResource extends JsonResource
             'service' => new ServiceResource($this->whenLoaded('service')),
             'citizen' => $this->whenLoaded('user'),
             'assigned_staff' => $this->whenLoaded('assignedStaff'),
+            'documents' => RequestDocumentResource::collection($this->whenLoaded('documents')),
 
             'citizen_notes' => $this->citizen_notes,
             'staff_notes' => $this->staff_notes,
