@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -31,11 +33,14 @@ class AuthController extends Controller
 
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Registered successfully',
-            'user' => $user,
-            'token' => $token,
-        ], 201);
+        return $this->successResponse(
+            'Registered successfully',
+            [
+                'user' => $user,
+                'token' => $token,
+            ],
+            201
+        );
     }
 
     public function login(Request $request)
@@ -48,39 +53,50 @@ class AuthController extends Controller
         $user = User::where('email', $validated['email'])->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid credentials.'],
-            ]);
+            return $this->errorResponse(
+                'Invalid credentials.',
+                [
+                    'email' => ['Invalid credentials.'],
+                ],
+                422
+            );
         }
 
         if (! $user->is_active) {
-            return response()->json([
-                'message' => 'Your account is inactive.',
-            ], 403);
+            return $this->errorResponse(
+                'Your account is inactive.',
+                null,
+                403
+            );
         }
 
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Logged in successfully',
-            'user' => $user,
-            'token' => $token,
-        ]);
+        return $this->successResponse(
+            'Logged in successfully',
+            [
+                'user' => $user,
+                'token' => $token,
+            ]
+        );
     }
 
     public function me(Request $request)
     {
-        return response()->json([
-            'user' => $request->user(),
-        ]);
+        return $this->successResponse(
+            'User retrieved successfully',
+            [
+                'user' => $request->user(),
+            ]
+        );
     }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Logged out successfully',
-        ]);
+        return $this->successResponse(
+            'Logged out successfully'
+        );
     }
 }
