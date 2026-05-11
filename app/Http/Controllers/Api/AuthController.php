@@ -28,17 +28,17 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
             'national_id' => $validated['national_id'] ?? null,
-            'role' => 'citizen',
+            'role' => User::ROLE_CITIZEN,
         ]);
 
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
-            'Registered successfully',
             [
                 'user' => $user,
                 'token' => $token,
             ],
+            'Registered successfully',
             201
         );
     }
@@ -73,21 +73,21 @@ class AuthController extends Controller
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
-            'Logged in successfully',
             [
                 'user' => $user,
                 'token' => $token,
-            ]
+            ],
+            'Logged in successfully'
         );
     }
 
     public function me(Request $request)
     {
         return $this->successResponse(
-            'User retrieved successfully',
             [
                 'user' => $request->user(),
-            ]
+            ],
+            'User retrieved successfully'
         );
     }
 
@@ -96,6 +96,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return $this->successResponse(
+            null,
             'Logged out successfully'
         );
     }

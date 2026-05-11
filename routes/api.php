@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-requests/{serviceRequest}/documents', [RequestDocumentController::class, 'index']);
     Route::post('/my-requests/{serviceRequest}/documents', [RequestDocumentController::class, 'store']);
     Route::delete('/my-requests/{serviceRequest}/documents/{document}', [RequestDocumentController::class, 'destroy']);
+    Route::apiResource('appointments', AppointmentController::class);
 });
 
 Route::middleware(['auth:sanctum', 'role:citizen'])->group(function () {

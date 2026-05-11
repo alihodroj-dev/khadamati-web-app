@@ -12,19 +12,21 @@ trait ApiResponse
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $data,
+            'errors'  => null,
+            'data'    => $data,
         ], $statusCode);
     }
 
     protected function errorResponse(
-        string $message = 'Something went wrong',
+        string $message = 'Error',
         mixed $errors = null,
         int $statusCode = 400
     ) {
         return response()->json([
             'success' => false,
             'message' => $message,
-            'errors' => $errors,
+            'errors'  => $errors,
+            'data'    => null,
         ], $statusCode);
     }
 }
