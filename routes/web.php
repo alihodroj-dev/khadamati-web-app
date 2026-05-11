@@ -33,6 +33,19 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('admin.dashboard');
+        
+        Route::prefix('services')->group(function () {
+
+            Route::get('/', [ServiceController::class, 'index'])
+                ->name('admin.services.index');
+
+            Route::get('/create', [ServiceController::class, 'create'])
+                ->name('admin.services.create');
+
+            Route::get('/{id}/edit', [ServiceController::class, 'edit'])
+                ->name('admin.services.edit');
+
+        });
 
     });
 
