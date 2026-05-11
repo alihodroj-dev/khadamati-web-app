@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // 1. Validation Exception (Step 5 of your guide)
         $exceptions->render(function (ValidationException $e, $request) {
-            if ($request->expectsJson() || $request->is('api/*')) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed.',
@@ -36,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 2. Authentication Exception
         $exceptions->render(function (AuthenticationException $e, $request) {
-            if ($request->expectsJson() || $request->is('api/*')) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthenticated.',
@@ -48,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 3. Not Found Exception
         $exceptions->render(function (NotFoundHttpException $e, $request) {
-            if ($request->expectsJson() || $request->is('api/*')) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Resource not found.',
@@ -60,7 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 4. Access Denied Exception
         $exceptions->render(function (AccessDeniedHttpException $e, $request) {
-            if ($request->expectsJson() || $request->is('api/*')) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Forbidden.',

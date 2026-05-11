@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -15,7 +16,6 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-
     use HasApiTokens, HasFactory, Notifiable;
 
     const ROLE_CITIZEN = 'citizen';
@@ -37,44 +37,60 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
-    public function serviceRequests()
+    // Service Requests
+    public function serviceRequests(): HasMany
     {
         return $this->hasMany(ServiceRequest::class);
     }
 
-    public function assignedRequests()
+    public function assignedRequests(): HasMany
     {
-        return $this->hasMany(ServiceRequest::class, 'assigned_staff_id');
+        return $this->hasMany(
+            ServiceRequest::class,
+            'assigned_staff_id'
+        );
     }
 
-    public function uploadedDocuments()
+    // Documents
+    public function uploadedDocuments(): HasMany
     {
-        return $this->hasMany(RequestDocument::class, 'uploaded_by');
+        return $this->hasMany(
+            RequestDocument::class,
+            'uploaded_by'
+        );
     }
 
-    public function appointments()
+    // Appointments
+    public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
     }
 
-    public function staffAppointments()
+    public function staffAppointments(): HasMany
     {
-        return $this->hasMany(Appointment::class, 'staff_id');
+        return $this->hasMany(
+            Appointment::class,
+            'staff_id'
+        );
     }
 
-    public function payments()
+    // Payments
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
-    public function feedback()
+    // Feedback
+    public function feedback(): HasMany
     {
         return $this->hasMany(Feedback::class);
     }
 
+    // Role Checks
     public function isCitizen(): bool
     {
         return $this->role === self::ROLE_CITIZEN;
@@ -89,5 +105,4 @@ class User extends Authenticatable
     {
         return $this->role === self::ROLE_ADMIN;
     }
-
 }

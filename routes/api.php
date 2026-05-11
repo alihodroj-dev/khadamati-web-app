@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\RequestDocumentController;
 use Illuminate\Support\Facades\Route;
 
+
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
