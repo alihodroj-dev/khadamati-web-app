@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -37,13 +38,13 @@ Route::middleware('auth')->group(function () {
         Route::prefix('services')->group(function () {
 
             Route::get('/', [ServiceController::class, 'index'])
-                ->name('admin.services.index');
+                ->name('services.index');
 
             Route::get('/create', [ServiceController::class, 'create'])
-                ->name('admin.services.create');
+                ->name('services.create');
 
             Route::get('/{id}/edit', [ServiceController::class, 'edit'])
-                ->name('admin.services.edit');
+                ->name('services.edit');
 
         });
 

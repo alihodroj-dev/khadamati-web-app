@@ -8,7 +8,7 @@
         Services
     </h1>
 
-    <a href="{{ route('admin.services.create') }}">
+    <a href="{{ route('services.create') }}">
         <x-button>
             + Add Service
         </x-button>
@@ -33,7 +33,7 @@
                 <td class="p-3">Cleaning Service</td>
                 <td class="p-3 flex gap-2">
 
-                    <a href="{{ route('admin.services.edit', 1) }}">
+                    <a href="{{ route('services.edit', 1) }}">
                         <x-button color="secondary">Edit</x-button>
                     </a>
 

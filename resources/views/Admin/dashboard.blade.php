@@ -4,6 +4,13 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
+    <a href="{{ route('services.index') }}">
+        <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+            <h2 class="text-gray-500">Services</h2>
+            <p class="text-3xl font-bold mt-2">Manage</p>
+        </div>
+    </a>
+
     <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-gray-500">Users</h2>
         <p class="text-3xl font-bold mt-2">120</p>

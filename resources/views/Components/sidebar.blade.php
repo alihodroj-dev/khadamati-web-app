@@ -25,6 +25,11 @@
                 Reports
             </a>
 
+            <a href="{{ route('services.index') }}"
+            class="block px-6 py-3 hover:bg-blue-800 {{ request()->routeIs('services.*') ? 'bg-blue-800' : '' }}">
+                Services
+            </a>
+
         @endif
 
         @if($role === 'staff')

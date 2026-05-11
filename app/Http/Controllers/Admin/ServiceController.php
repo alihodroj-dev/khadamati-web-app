@@ -1,3 +1,5 @@
+<?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -7,16 +9,16 @@ class ServiceController extends Controller
 {
     public function index()
     {
-        return view('admin.services.index');
+        return view('services.index');
     }
 
     public function create()
     {
-        return view('admin.services.create');
+        return view('services.create');
     }
 
     public function edit($id)
     {
-        return view('admin.services.edit', compact('id'));
+        return view('services.edit', compact('id'));
     }
 }
