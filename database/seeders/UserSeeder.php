@@ -4,18 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => 'admin@khadamati.test'],
+            ['email' => 'admin@khadamati.com'],
             [
-                'name' => 'Khadamati Admin',
-                'password' => Hash::make('password123'),
-                'role' => 'admin',
+                'name' => 'Admin',
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_ADMIN,
                 'phone' => '+96170000001',
                 'national_id' => 'ADM-000001',
                 'is_active' => true,
@@ -23,11 +22,11 @@ class UserSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'staff@khadamati.test'],
+            ['email' => 'staff@khadamati.com'],
             [
-                'name' => 'Khadamati Staff',
-                'password' => Hash::make('password123'),
-                'role' => 'staff',
+                'name' => 'Staff User',
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_STAFF,
                 'phone' => '+96170000002',
                 'national_id' => 'STF-000001',
                 'is_active' => true,
@@ -35,11 +34,11 @@ class UserSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'citizen@khadamati.test'],
+            ['email' => 'citizen@khadamati.com'],
             [
-                'name' => 'Test Citizen',
-                'password' => Hash::make('password123'),
-                'role' => 'citizen',
+                'name' => 'Citizen User',
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_CITIZEN,
                 'phone' => '+96170000003',
                 'national_id' => 'CTZ-000001',
                 'is_active' => true,

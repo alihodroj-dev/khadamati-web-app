@@ -18,6 +18,10 @@ class User extends Authenticatable
 
     use HasApiTokens, HasFactory, Notifiable;
 
+    const ROLE_CITIZEN = 'citizen';
+    const ROLE_STAFF = 'staff';
+    const ROLE_ADMIN = 'admin';
+
     protected $fillable = [
         'name',
         'email',
@@ -70,4 +74,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Feedback::class);
     }
+
+    public function isCitizen(): bool
+    {
+        return $this->role === self::ROLE_CITIZEN;
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === self::ROLE_STAFF;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
 }

@@ -28,3 +28,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/my-requests/{serviceRequest}/documents', [RequestDocumentController::class, 'store']);
     Route::delete('/my-requests/{serviceRequest}/documents/{document}', [RequestDocumentController::class, 'destroy']);
 });
+
+Route::middleware(['auth:sanctum', 'role:citizen'])->group(function () {
+
+    Route::get('/my-requests', [CitizenRequestController::class, 'index']);
+
+});
+
+Route::middleware(['auth:sanctum', 'role:staff'])->prefix('staff')->group(function () {
+
+    Route::get('/requests', [StaffRequestController::class, 'index']);
+
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+
+    Route::get('/users', [AdminController::class, 'users']);
+
+});
+
+Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+});
