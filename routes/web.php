@@ -47,8 +47,20 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [ServiceController::class, 'create'])
                 ->name('services.create');
 
+            Route::post('/', [ServiceController::class, 'store'])
+                ->name('services.store');
+
             Route::get('/{id}/edit', [ServiceController::class, 'edit'])
                 ->name('services.edit');
+
+            Route::put('/{id}', [ServiceController::class, 'update'])
+                ->name('services.update');
+
+            Route::delete('/{id}', [ServiceController::class, 'destroy'])
+                ->name('services.destroy');
+            
+            Route::get('/{id}', [ServiceController::class, 'show'])
+                ->name('services.show');
 
         });
 
@@ -60,8 +72,20 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [CategoryController::class, 'create'])
                 ->name('categories.create');
 
+            Route::post('/', [CategoryController::class, 'store'])
+                ->name('categories.store');
+
             Route::get('/{id}/edit', [CategoryController::class, 'edit'])
                 ->name('categories.edit');
+
+            Route::put('/{id}', [CategoryController::class, 'update'])
+                ->name('categories.update');
+
+            Route::delete('/{id}', [CategoryController::class, 'destroy'])
+                ->name('categories.destroy');
+
+            Route::get('/{id}', [CategoryController::class, 'show'])
+                ->name('categories.show');
 
         });
 
@@ -73,8 +97,20 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [UserController::class, 'create'])
                 ->name('users.create');
 
+            Route::post('/', [UserController::class, 'store'])
+                ->name('users.store');
+
             Route::get('/{id}/edit', [UserController::class, 'edit'])
                 ->name('users.edit');
+
+            Route::put('/{id}', [UserController::class, 'update'])
+                ->name('users.update');
+
+            Route::delete('/{id}', [UserController::class, 'destroy'])
+                ->name('users.destroy');
+
+            Route::get('/{id}', [UserController::class, 'show'])
+                ->name('users.show');
 
         });
 

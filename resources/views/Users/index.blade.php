@@ -3,7 +3,6 @@
 @section('content')
 
 <div class="flex justify-between items-center mb-6">
-
     <h1 class="text-2xl font-bold">
         Users
     </h1>
@@ -13,60 +12,60 @@
             + Add User
         </x-button>
     </a>
-
 </div>
 
 <x-card>
-
     <x-table>
-
+        {{-- HEAD --}}
         <x-slot name="head">
-            <th class="p-3">ID</th>
-            <th class="p-3">Name</th>
-            <th class="p-3">Email</th>
-            <th class="p-3">Role</th>
-            <th class="p-3">Status</th>
-            <th class="p-3">Actions</th>
+            <th class="px-4 py-3 text-left border border-gray-200">ID</th>
+            <th class="px-4 py-3 text-left border border-gray-200">Name</th>
+            <th class="px-4 py-3 text-left border border-gray-200">Role</th>
+            <th class="px-4 py-3 text-left border border-gray-200 w-80">Actions</th>
         </x-slot>
 
+        {{-- BODY --}}
         <x-slot name="body">
-
             <tr>
-                <td class="p-3">1</td>
-                <td class="p-3">John Doe</td>
-                <td class="p-3">john@example.com</td>
-
-                <td class="p-3">
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                <td class="px-4 py-3 border border-gray-200 text-center">
+                    1
+                </td>
+                <td class="px-4 py-3 font-medium text-gray-900 border border-gray-200 text-center">
+                    John Doe
+                </td>
+                <td class="px-4 py-3 border border-gray-200 text-center">
+                    <span style="background-color: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 500;">
                         Admin
                     </span>
                 </td>
+                <td class="px-4 py-3 border border-gray-200 text-center">
+                    <div class="flex gap-2 justify-center">
+                        <a href="{{ route('users.show', 1) }}">
+                            <x-button>Details</x-button>
+                        </a>
 
-                <td class="p-3">
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                        Active
-                    </span>
-                </td>
+                        <a href="{{ route('users.edit', 1) }}">
+                            <x-button color="secondary">Edit</x-button>
+                        </a>
 
-                <td class="p-3 flex gap-2">
-
-                    <a href="{{ route('users.edit', 1) }}">
-                        <x-button color="secondary">
-                            Edit
-                        </x-button>
-                    </a>
-
-                    <x-button color="danger">
-                        Delete
-                    </x-button>
-
+                        <form method="POST"
+                              action="{{ route('users.destroy', 1) }}"
+                              onsubmit="return confirm('Are you sure you want to delete this user?')"
+                              class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                style="background-color: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;"
+                            >
+                                Delete
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
-
         </x-slot>
-
     </x-table>
-
 </x-card>
 
 @endsection

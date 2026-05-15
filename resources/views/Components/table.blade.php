@@ -1,17 +1,14 @@
-<div class="bg-white shadow rounded-xl overflow-x-auto">
-
-    <table class="w-full text-left border-collapse">
-
-        <thead class="bg-gray-100 text-gray-700">
-            <tr>
-                {{ $head }}
-            </tr>
-        </thead>
-
-        <tbody class="divide-y">
-            {{ $body }}
-        </tbody>
-
-    </table>
-
+<div class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full border-collapse table-auto">
+            <thead class="bg-gray-50/75 border-b border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-500">
+                <tr>
+                    {{ $head }}
+                </tr>
+            </thead>
+            <tbody class="text-sm">
+                {{ $body }}
+            </tbody>
+        </table>
+    </div>
 </div>

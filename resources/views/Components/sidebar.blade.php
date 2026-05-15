@@ -17,12 +17,9 @@
                 Dashboard
             </a>
 
-            <a href="#" class="block px-6 py-3 hover:bg-blue-800">
+            <a href="{{ route('users.index') }}"
+            class="block px-6 py-3 hover:bg-blue-800 {{ request()->routeIs('users.*') ? 'bg-blue-800' : '' }}">
                 Users
-            </a>
-
-            <a href="#" class="block px-6 py-3 hover:bg-blue-800">
-                Reports
             </a>
 
             <a href="{{ route('categories.index') }}"
@@ -35,10 +32,7 @@
                 Services
             </a>
 
-            <a href="{{ route('users.index') }}"
-            class="block px-6 py-3 hover:bg-blue-800 {{ request()->routeIs('users.*') ? 'bg-blue-800' : '' }}">
-                Users
-            </a>
+
 
         @endif
 
