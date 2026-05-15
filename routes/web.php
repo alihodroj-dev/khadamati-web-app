@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\UserController;
 
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Auth\LoginController;
@@ -61,6 +62,19 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/{id}/edit', [CategoryController::class, 'edit'])
                 ->name('categories.edit');
+
+        });
+
+        Route::prefix('users')->group(function () {
+
+            Route::get('/', [UserController::class, 'index'])
+                ->name('users.index');
+
+            Route::get('/create', [UserController::class, 'create'])
+                ->name('users.create');
+
+            Route::get('/{id}/edit', [UserController::class, 'edit'])
+                ->name('users.edit');
 
         });
 
