@@ -1,8 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\CategoryController;
+
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -45,6 +48,19 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/{id}/edit', [ServiceController::class, 'edit'])
                 ->name('services.edit');
+
+        });
+
+        Route::prefix('categories')->group(function () {
+
+            Route::get('/', [CategoryController::class, 'index'])
+                ->name('categories.index');
+
+            Route::get('/create', [CategoryController::class, 'create'])
+                ->name('categories.create');
+
+            Route::get('/{id}/edit', [CategoryController::class, 'edit'])
+                ->name('categories.edit');
 
         });
 
