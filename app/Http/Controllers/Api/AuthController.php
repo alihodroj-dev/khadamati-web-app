@@ -9,6 +9,7 @@ use App\Services\AppleAuthenticationService;
 use App\Services\AppleIdentityTokenVerificationService;
 use App\Services\GoogleAuthenticationService;
 use App\Services\GoogleIdTokenVerificationService;
+use App\Services\OtpLoginService;
 use App\Services\RegistrationCompletionService;
 use App\Traits\ApiResponse;
 use Illuminate\Validation\Rule;
@@ -198,30 +199,57 @@ class AuthController extends Controller
         );
     }
 
-    public function login(Request $request)
+    public function login(Request $request, OtpLoginService $otpLoginService)
     {
         $validated = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        try {
+            $challenge = $otpLoginService->initiateLogin(
+                $validated['email'],
+                $validated['password']
+            );
+        } catch (ValidationException $e) {
+            $message = collect($e->errors())->flatten()->first() ?? 'Invalid credentials.';
 
-        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return $this->errorResponse(
-                'Invalid credentials.',
-                [
-                    'email' => ['Invalid credentials.'],
-                ],
-                422
+                $message,
+                $e->errors(),
+                str_contains($message, 'inactive') ? 403 : 422
             );
         }
 
-        if (! $user->is_active) {
+        $responseMessage = 'Verification code sent.';
+
+        if (app()->environment('local')) {
+            $responseMessage = 'Verification code sent. For local development, check the Laravel application log for the OTP code.';
+        }
+
+        return $this->successResponse(
+            $challenge,
+            $responseMessage
+        );
+    }
+
+    public function verifyOtp(Request $request, OtpLoginService $otpLoginService)
+    {
+        $validated = $request->validate([
+            'challenge_token' => ['required', 'string'],
+            'otp' => ['required', 'string', 'digits:6'],
+        ]);
+
+        try {
+            $user = $otpLoginService->verifyOtp(
+                $validated['challenge_token'],
+                $validated['otp']
+            );
+        } catch (ValidationException $e) {
             return $this->errorResponse(
-                'Your account is inactive.',
-                null,
-                403
+                'OTP verification failed.',
+                $e->errors(),
+                422
             );
         }
 
@@ -229,11 +257,38 @@ class AuthController extends Controller
 
         return $this->successResponse(
             [
-                'user' => $user,
+                'user' => new UserResource($user->fresh()),
                 'token' => $token,
             ],
             'Logged in successfully'
         );
+    }
+
+    public function resendOtp(Request $request, OtpLoginService $otpLoginService)
+    {
+        $validated = $request->validate([
+            'challenge_token' => ['required', 'string'],
+        ]);
+
+        try {
+            $result = $otpLoginService->resendOtp($validated['challenge_token']);
+        } catch (ValidationException $e) {
+            return $this->errorResponse(
+                'Unable to resend verification code.',
+                $e->errors(),
+                422
+            );
+        }
+
+        $message = $result['message'];
+        unset($result['message']);
+
+        if (isset($result['development_message'])) {
+            $message = $result['development_message'];
+            unset($result['development_message']);
+        }
+
+        return $this->successResponse($result, $message);
     }
 
     public function me(Request $request)

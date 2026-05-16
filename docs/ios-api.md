@@ -137,7 +137,7 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 
 ---
 
-### Login
+### Login (email/password — step 1)
 
 | | |
 |---|---|
@@ -154,6 +154,41 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 }
 ```
 
+**Response** `200` — does **not** return a token. Starts OTP verification.
+
+```json
+{
+  "success": true,
+  "message": "Verification code sent.",
+  "data": {
+    "requires_otp": true,
+    "challenge_token": "64-char-token",
+    "expires_at": "2026-05-17T12:00:00.000000Z"
+  }
+}
+```
+
+**Notes:** Google/Apple login (`/auth/google`, `/auth/apple`) still return a token immediately. Returns `403` if account is inactive.
+
+---
+
+### Verify login OTP (email/password — step 2)
+
+| | |
+|---|---|
+| **Method** | `POST` |
+| **Path** | `/login/verify-otp` |
+| **Auth** | No |
+
+**Request**
+
+```json
+{
+  "challenge_token": "64-char-token",
+  "otp": "123456"
+}
+```
+
 **Response** `200`
 
 ```json
@@ -166,7 +201,37 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 }
 ```
 
-**Notes:** Returns `403` if account is inactive.
+---
+
+### Resend login OTP
+
+| | |
+|---|---|
+| **Method** | `POST` |
+| **Path** | `/login/resend-otp` |
+| **Auth** | No |
+
+**Request**
+
+```json
+{
+  "challenge_token": "64-char-token"
+}
+```
+
+**Response** `200`
+
+```json
+{
+  "success": true,
+  "data": {
+    "challenge_token": "64-char-token",
+    "expires_at": "2026-05-17T12:10:00.000000Z"
+  }
+}
+```
+
+**Notes:** OTP is logged to Laravel logs (email/SMS not wired yet). In `local` environment, the response message hints to check application logs.
 
 ---
 

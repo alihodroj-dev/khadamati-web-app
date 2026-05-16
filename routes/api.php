@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/register/complete', [AuthController::class, 'completeRegistration']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/login/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/auth/google', [AuthController::class, 'google']);
 Route::post('/auth/apple', [AuthController::class, 'apple']);
 
