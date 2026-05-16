@@ -29,6 +29,8 @@
 
     </div>
 
+    @if($role === 'admin')
+
     {{-- NAVIGATION --}}
     <nav class="flex-1 px-4 py-6 overflow-y-auto">
 
@@ -65,10 +67,10 @@
             <div class="space-y-1">
 
                 {{-- USERS --}}
-                <a href="{{ route('users.index') }}"
+                <a href="{{ route('admin.users.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
 
-                   {{ request()->routeIs('users.*')
+                   {{ request()->routeIs('admin.users.*')
                         ? 'bg-white text-blue-700 font-semibold shadow-sm'
                         : 'text-white hover:bg-blue-800 hover:text-black-900'
                    }}">
@@ -80,10 +82,10 @@
                 </a>
 
                 {{-- CATEGORIES --}}
-                <a href="{{ route('categories.index') }}"
+                <a href="{{ route('admin.categories.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
 
-                   {{ request()->routeIs('categories.*')
+                   {{ request()->routeIs('admin.categories.*')
                         ? 'bg-white text-blue-700 font-semibold shadow-sm'
                         : 'text-white hover:bg-blue-800 hover:text-gray-900'
                    }}">
@@ -95,10 +97,10 @@
                 </a>
 
                 {{-- SERVICES --}}
-                <a href="{{ route('services.index') }}"
+                <a href="{{ route('admin.services.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
 
-                   {{ request()->routeIs('services.*')
+                   {{ request()->routeIs('admin.services.*')
                         ? 'bg-white text-blue-700 font-semibold shadow-sm'
                         : 'text-white hover:bg-blue-800 hover:text-black'
                    }}">
@@ -122,13 +124,20 @@
 
             <div class="space-y-1">
 
-                <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200 bg-gray-50">
+                {{-- Requests --}}
+                <a href="{{ route('admin.requests.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+
+                   {{ request()->routeIs('admin.requests.*')
+                        ? 'bg-white text-blue-700 font-semibold shadow-sm'
+                        : 'text-white hover:bg-blue-800 hover:text-black'
+                   }}">
 
                     <span>
                         Requests
                     </span>
 
-                </div>
+                </a>
 
                 <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200 bg-gray-50">
 
@@ -172,6 +181,39 @@
         </div>
 
     </nav>
+
+    @endif
+
+    @if($role === 'staff')
+
+        {{-- STAFF NAVIGATION --}}
+        <div class="px-6 py-4">
+
+            <div class="mb-6">
+
+                <p class="text-xs text-blue-200 uppercase mb-3">
+                    Staff Panel
+                </p>
+
+                <a href="{{ route('staff.dashboard') }}"
+                class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-blue-800">
+
+                    Dashboard
+
+                </a>
+
+                <a href="{{ route('staff.requests.index') }}"
+                class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-blue-800">
+
+                    My Requests
+
+                </a>
+
+            </div>
+
+        </div>
+
+    @endif
 
     {{-- FOOTER --}}
     <div class="border-t border-gray-100 p-4">

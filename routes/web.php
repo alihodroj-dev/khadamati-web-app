@@ -6,8 +6,13 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ServiceRequestController;
+use App\Http\Controllers\Admin\AppointmentController;
+
 
 use App\Http\Controllers\Staff\StaffDashboardController;
+use App\Http\Controllers\Staff\StaffRequestController;
+
 use App\Http\Controllers\Auth\LoginController;
 
 Route::get('/', function () {
@@ -42,75 +47,94 @@ Route::middleware('auth')->group(function () {
         Route::prefix('services')->group(function () {
 
             Route::get('/', [ServiceController::class, 'index'])
-                ->name('services.index');
+                ->name('admin.services.index');
 
             Route::get('/create', [ServiceController::class, 'create'])
-                ->name('services.create');
+                ->name('admin.services.create');
 
             Route::post('/', [ServiceController::class, 'store'])
-                ->name('services.store');
+                ->name('admin.services.store');
 
             Route::get('/{id}/edit', [ServiceController::class, 'edit'])
-                ->name('services.edit');
+                ->name('admin.services.edit');
 
             Route::put('/{id}', [ServiceController::class, 'update'])
-                ->name('services.update');
+                ->name('admin.services.update');
 
             Route::delete('/{id}', [ServiceController::class, 'destroy'])
-                ->name('services.destroy');
+                ->name('admin.services.destroy');
             
             Route::get('/{id}', [ServiceController::class, 'show'])
-                ->name('services.show');
+                ->name('admin.services.show');
 
         });
 
         Route::prefix('categories')->group(function () {
 
             Route::get('/', [CategoryController::class, 'index'])
-                ->name('categories.index');
+                ->name('admin.categories.index');
 
             Route::get('/create', [CategoryController::class, 'create'])
-                ->name('categories.create');
+                ->name('admin.categories.create');
 
             Route::post('/', [CategoryController::class, 'store'])
-                ->name('categories.store');
+                ->name('admin.categories.store');
 
             Route::get('/{id}/edit', [CategoryController::class, 'edit'])
-                ->name('categories.edit');
+                ->name('admin.categories.edit');
 
             Route::put('/{id}', [CategoryController::class, 'update'])
-                ->name('categories.update');
+                ->name('admin.categories.update');
 
             Route::delete('/{id}', [CategoryController::class, 'destroy'])
-                ->name('categories.destroy');
+                ->name('admin.categories.destroy');
 
             Route::get('/{id}', [CategoryController::class, 'show'])
-                ->name('categories.show');
+                ->name('admin.categories.show');
 
         });
 
         Route::prefix('users')->group(function () {
 
             Route::get('/', [UserController::class, 'index'])
-                ->name('users.index');
+                ->name('admin.users.index');
 
             Route::get('/create', [UserController::class, 'create'])
-                ->name('users.create');
+                ->name('admin.users.create');
 
             Route::post('/', [UserController::class, 'store'])
-                ->name('users.store');
+                ->name('admin.users.store');
 
             Route::get('/{id}/edit', [UserController::class, 'edit'])
-                ->name('users.edit');
+                ->name('admin.users.edit');
 
             Route::put('/{id}', [UserController::class, 'update'])
-                ->name('users.update');
+                ->name('admin.users.update');
 
             Route::delete('/{id}', [UserController::class, 'destroy'])
-                ->name('users.destroy');
+                ->name('admin.users.destroy');
 
             Route::get('/{id}', [UserController::class, 'show'])
-                ->name('users.show');
+                ->name('admin.users.show');
+
+        });
+
+        Route::prefix('requests')->group(function () {
+
+            Route::get('/', [ServiceRequestController::class, 'index'])
+                ->name('admin.requests.index');
+
+            Route::get('/{id}', [ServiceRequestController::class, 'show'])
+                ->name('admin.requests.show');
+
+            Route::post('/{id}/assign', [ServiceRequestController::class, 'assignStaff'])
+                ->name('admin.requests.assignStaff');
+
+            Route::post('/{id}/status', [ServiceRequestController::class, 'updateStatus'])
+                ->name('admin.requests.updateStatus');
+
+            Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])
+                ->name('admin.requests.destroy');
 
         });
 
@@ -127,6 +151,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])
             ->name('staff.dashboard');
 
+        // REQUESTS
+        Route::get('/requests', [StaffRequestController::class, 'index'])
+            ->name('staff.requests.index');
+
+        Route::get('/requests/{id}', [StaffRequestController::class, 'show'])
+            ->name('staff.requests.show');
+
+        Route::post('/requests/{id}/status', [StaffRequestController::class, 'updateStatus'])
+            ->name('staff.requests.updateStatus');
     });
 
 });

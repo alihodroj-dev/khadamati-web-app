@@ -3,39 +3,40 @@
 @section('content')
 
 <h1 class="text-2xl font-bold mb-6">
-    Edit User #{{ $id }}
+    Create User
 </h1>
 
 <x-card>
 
-    <form method="POST" action="{{ route('users.update', $id) }}">
+    <form method="POST" action="{{ route('admin.users.store') }}">
 
         @csrf
-        @method('PUT')
 
         <x-input
             label="Full Name"
             name="name"
-            value="John Doe"
         />
 
         <x-input
             label="Email Address"
             name="email"
             type="email"
-            value="john@example.com"
+        />
+
+        <x-input
+            label="Password"
+            name="password"
+            type="password"
         />
 
         <x-input
             label="Phone Number"
             name="phone"
-            value="+96170000000"
         />
 
         <x-input
             label="National ID"
             name="national_id"
-            value="123456789"
         />
 
         {{-- Role --}}
@@ -49,7 +50,7 @@
                 name="role"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-                <option value="admin" selected>
+                <option value="admin">
                     Admin
                 </option>
 
@@ -76,7 +77,7 @@
                 name="is_active"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-                <option value="1" selected>
+                <option value="1">
                     Active
                 </option>
 
@@ -91,14 +92,14 @@
         {{-- Actions --}}
         <div class="flex items-center justify-between mt-6">
             <a 
-                href="{{ route('users.index') }}" 
+                href="{{ route('admin.users.index') }}" 
                 class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition duration-150 ease-in-out"
             >
                 Back to Users
             </a>
 
             <x-button type="submit">
-                Update User
+                Save User
             </x-button>
         </div>
 

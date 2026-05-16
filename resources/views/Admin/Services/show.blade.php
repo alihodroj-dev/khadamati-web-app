@@ -5,7 +5,7 @@
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
         <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <a href="{{ route('services.index') }}" class="hover:text-blue-600 transition">Services</a>
+            <a href="{{ route('admin.services.index') }}" class="hover:text-blue-600 transition">Services</a>
             <span>/</span>
             <span>Details</span>
         </div>
@@ -15,10 +15,10 @@
     </div>
 
     <div class="flex gap-3">
-        <a href="{{ route('services.index') }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
+        <a href="{{ route('admin.services.index') }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
             Back
         </a>
-        <a href="{{ route('services.edit', $id) }}">
+        <a href="{{ route('admin.services.edit', $id) }}">
             <x-button color="secondary">
                 Edit Service
             </x-button>

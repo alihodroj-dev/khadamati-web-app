@@ -3,31 +3,27 @@
 @section('content')
 
 <h1 class="text-2xl font-bold mb-6">
-    Edit Category #{{ $id }}
+    Create Category
 </h1>
 
 <x-card>
 
-    <form method="POST" action="{{ route('categories.update', $id) }}">
+    <form method="POST" action="{{ route('admin.categories.store') }}">
         @csrf
-        @method('PUT')
 
         <x-input
             label="Category Name"
             name="name"
-            value="Example Category"
         />
 
         <x-input
             label="Description"
             name="description"
-            value="Services related to household maintenance"
         />
 
         <x-input
             label="Icon"
             name="icon"
-            value="🏠"
         />
 
         {{-- Status --}}
@@ -41,7 +37,7 @@
                 name="is_active"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-                <option value="1" selected>
+                <option value="1">
                     Active
                 </option>
 
@@ -56,14 +52,14 @@
         {{-- Actions --}}
         <div class="flex items-center justify-between mt-6">
             <a 
-                href="{{ route('categories.index') }}" 
+                href="{{ route('admin.categories.index') }}" 
                 class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition duration-150 ease-in-out"
             >
                 Back to Categories
             </a>
 
             <x-button type="submit">
-                Update Category
+                Save Category
             </x-button>
         </div>
     </form>
