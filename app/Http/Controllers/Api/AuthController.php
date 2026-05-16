@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Http\Resources\UserResource;
+use App\Models\User;
+use App\Services\GoogleAuthenticationService;
+use App\Services\GoogleIdTokenVerificationService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use InvalidArgumentException;
+use RuntimeException;
 
 class AuthController extends Controller
 {
@@ -51,6 +55,51 @@ class AuthController extends Controller
             ],
             'Registered successfully',
             201
+        );
+    }
+
+    public function google(
+        Request $request,
+        GoogleIdTokenVerificationService $tokenVerifier,
+        GoogleAuthenticationService $googleAuth
+    ) {
+        $validated = $request->validate([
+            'id_token' => ['required', 'string'],
+        ]);
+
+        try {
+            $payload = $tokenVerifier->verify($validated['id_token']);
+            $user = $googleAuth->authenticate($payload)->fresh();
+        } catch (InvalidArgumentException $e) {
+            return $this->errorResponse(
+                'Invalid Google ID token.',
+                ['id_token' => [$e->getMessage()]],
+                401
+            );
+        } catch (RuntimeException $e) {
+            return $this->errorResponse(
+                $e->getMessage(),
+                null,
+                500
+            );
+        }
+
+        if (! $user->is_active) {
+            return $this->errorResponse(
+                'Your account is inactive.',
+                null,
+                403
+            );
+        }
+
+        $token = $user->createToken('khadamati-ios-app')->plainTextToken;
+
+        return $this->successResponse(
+            [
+                'user' => new UserResource($user->fresh()),
+                'token' => $token,
+            ],
+            'Logged in successfully'
         );
     }
 
