@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Models\Office;
 use App\Models\ServiceRequest;
 use App\Notifications\AppointmentUpdatedNotification;
+use App\Support\AppointmentAvailabilityBuilder;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -56,14 +58,17 @@ class AppointmentController extends Controller
         );
     }
 
-    public function availability(Request $request)
+    public function availability(Request $request, AppointmentAvailabilityBuilder $availabilityBuilder)
     {
         $this->authorize('viewAny', Appointment::class);
 
         $validated = $request->validate([
             'date' => ['required', 'date', 'date_format:Y-m-d'],
             'staff_id' => ['nullable', 'integer', 'exists:users,id'],
+            'service_request_id' => ['nullable', 'integer', 'exists:service_requests,id'],
         ]);
+
+        $office = $this->resolveOfficeForAvailability($request, $validated);
 
         $query = Appointment::query()
             ->whereDate('appointment_date', $validated['date'])
@@ -73,7 +78,7 @@ class AppointmentController extends Controller
             $query->where('staff_id', $validated['staff_id']);
         }
 
-        $unavailableTimes = $query
+        $bookedTimes = $query
             ->orderBy('appointment_time')
             ->pluck('appointment_time')
             ->map(fn ($time) => Carbon::parse($time)->format('H:i'))
@@ -81,13 +86,38 @@ class AppointmentController extends Controller
             ->values()
             ->all();
 
+        $payload = $availabilityBuilder->build(
+            $validated['date'],
+            $office,
+            $bookedTimes
+        );
+
         return $this->successResponse(
-            [
-                'date' => $validated['date'],
-                'unavailable_times' => $unavailableTimes,
-            ],
+            $payload,
             'Appointment availability retrieved successfully.'
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function resolveOfficeForAvailability(Request $request, array $validated): ?Office
+    {
+        if (empty($validated['service_request_id'])) {
+            return null;
+        }
+
+        $serviceRequest = ServiceRequest::query()
+            ->with('office')
+            ->findOrFail($validated['service_request_id']);
+
+        if ($serviceRequest->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+            abort(403, 'You are not allowed to view availability for this service request.');
+        }
+
+        $office = $serviceRequest->office;
+
+        return $office instanceof Office && $office->is_active ? $office : null;
     }
 
     public function store(Request $request)

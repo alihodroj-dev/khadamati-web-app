@@ -930,18 +930,34 @@ At least one entry is required. Same ownership and status rules as single upload
 | **Path** | `/appointments/availability` |
 | **Auth** | Yes |
 
-**Query:** `date` (required, `Y-m-d`), `staff_id` (optional)
+**Query**
+
+| Param | Required | Notes |
+|-------|----------|--------|
+| `date` | Yes | `Y-m-d` |
+| `staff_id` | No | Exclude slots already booked for this staff member |
+| `service_request_id` | No | Use the request’s office `working_hours` when set (must own the request) |
+
+Default schedule when office hours are missing: **09:00–15:00**, **30-minute** slots.
 
 **Response** `200`
 
 ```json
 {
   "data": {
-    "date": "2026-05-16",
-    "unavailable_times": ["09:00", "10:30"]
+    "date": "2026-05-17",
+    "slot_duration_minutes": 30,
+    "working_hours": {
+      "start": "09:00",
+      "end": "15:00"
+    },
+    "available_times": ["09:00", "09:30", "10:30"],
+    "unavailable_times": ["10:00"]
   }
 }
 ```
+
+`unavailable_times` includes booked slots (for the given `staff_id` when provided). `available_times` is every slot in `working_hours` that is not booked.
 
 ---
 
