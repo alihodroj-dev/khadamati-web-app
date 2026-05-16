@@ -49,6 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
         'show',
     ]);
 
+    Route::patch('/my-requests/{serviceRequest}/cancel', [
+        ServiceRequestController::class,
+        'cancel',
+    ]);
+
     Route::get('/my-requests/{serviceRequest}/documents', [
         RequestDocumentController::class,
         'index',

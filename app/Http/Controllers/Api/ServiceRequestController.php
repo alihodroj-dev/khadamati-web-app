@@ -14,6 +14,12 @@ class ServiceRequestController extends Controller
 {
     use ApiResponse;
 
+    private const CANCELLABLE_STATUSES = [
+        'pending',
+        'under_review',
+        'requires_action',
+    ];
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -100,6 +106,33 @@ class ServiceRequestController extends Controller
                 'service_request' => new ServiceRequestResource($serviceRequest),
             ],
             'Service request retrieved successfully'
+        );
+    }
+
+    public function cancel(Request $request, ServiceRequest $serviceRequest)
+    {
+        if ($serviceRequest->user_id !== $request->user()->id) {
+            return $this->errorResponse(
+                'You are not allowed to cancel this service request.',
+                null,
+                403
+            );
+        }
+
+        if (! in_array($serviceRequest->status, self::CANCELLABLE_STATUSES, true)) {
+            return $this->errorResponse(
+                'This service request cannot be cancelled.',
+                null,
+                422
+            );
+        }
+
+        $serviceRequest->update(['status' => 'cancelled']);
+        $serviceRequest->load('service.category');
+
+        return $this->successResponse(
+            new ServiceRequestResource($serviceRequest),
+            'Service request cancelled successfully.'
         );
     }
 
