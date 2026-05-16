@@ -26,6 +26,7 @@ Route::get('/service-categories', [ServiceCategoryController::class, 'index']);
 Route::get('/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'show']);
 
 Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/{service}/feedback', [ServiceController::class, 'feedback']);
 Route::get('/services/{service}', [ServiceController::class, 'show']);
 
 Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PublicServiceFeedbackResource;
 use App\Http\Resources\ServiceResource;
+use App\Models\Feedback;
 use App\Models\Service;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -70,6 +72,43 @@ class ServiceController extends Controller
                 'service' => new ServiceResource($service),
             ],
             'Service retrieved successfully'
+        );
+    }
+
+    public function feedback(Request $request, Service $service)
+    {
+        if (! $service->is_active) {
+            return $this->errorResponse(
+                'Service not found.',
+                null,
+                404
+            );
+        }
+
+        $validated = $request->validate([
+            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $query = Feedback::query()
+            ->with('user')
+            ->whereHas('serviceRequest', function ($serviceRequestQuery) use ($service) {
+                $serviceRequestQuery
+                    ->where('service_id', $service->id)
+                    ->where('status', 'completed');
+            })
+            ->latest();
+
+        if (isset($validated['rating'])) {
+            $query->where('rating', $validated['rating']);
+        }
+
+        $feedback = $query->get();
+
+        return $this->successResponse(
+            [
+                'feedback' => PublicServiceFeedbackResource::collection($feedback),
+            ],
+            'Service feedback retrieved successfully.'
         );
     }
 }
