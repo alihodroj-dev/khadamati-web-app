@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\ReportController;
 
 
 use App\Http\Controllers\Staff\StaffDashboardController;
@@ -176,6 +177,12 @@ Route::middleware('auth')->group(function () {
 
         });
 
+        Route::prefix('reports')->group(function () {
+
+            Route::get('/', [ReportController::class, 'index'])
+                ->name('admin.reports.index');
+
+        });
     });
 
     /*

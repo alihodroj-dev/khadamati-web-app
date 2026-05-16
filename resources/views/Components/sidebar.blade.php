@@ -47,7 +47,7 @@
                 class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                 {{ request()->routeIs('admin.dashboard')
                         ? 'bg-white text-blue-700 font-semibold shadow-sm'
-                        : 'text-gray-600 hover:bg-blue-800 hover:text-gray-900'
+                        : 'text-white hover:bg-blue-800 hover:text-gray-900'
                 }}">
                     <span>Dashboard</span>
                 </a>
@@ -180,13 +180,19 @@
 
             <div class="space-y-1">
 
-                <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200 bg-blue-800">
+                <a href="{{ route('admin.reports.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+
+                   {{ request()->routeIs('admin.reports.*')
+                        ? 'bg-white text-blue-700 font-semibold shadow-sm'
+                        : 'text-white hover:bg-blue-800 hover:text-black'
+                   }}">
 
                     <span>
                         Reports
                     </span>
 
-                </div>
+                </a>
 
             </div>
 
