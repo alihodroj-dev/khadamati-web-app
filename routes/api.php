@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\IdVerificationController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RequestDocumentController;
@@ -28,6 +29,9 @@ Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{service}', [ServiceController::class, 'show']);
 
 Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);
+
+Route::get('/offices', [OfficeController::class, 'index']);
+Route::get('/offices/{office}', [OfficeController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
