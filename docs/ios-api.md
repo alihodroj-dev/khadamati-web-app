@@ -724,7 +724,7 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 | **Path** | `/my-requests/{serviceRequest}` |
 | **Auth** | Yes |
 
-**Response** `200` — `data.service_request` with `service`, `office`, `documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`.
+**Response** `200` — `data.service_request` with `service`, `office`, `documents`, `requirement_documents`, `official_documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`.
 
 `required_documents` and `missing_documents` are arrays of objects (legacy string values in the database are normalized automatically):
 
@@ -756,6 +756,21 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 
 ## Documents
 
+Each `RequestDocumentResource` includes:
+
+| Field | Values | Meaning |
+|-------|--------|---------|
+| `source` | `citizen`, `staff`, `system` | Who provided the file |
+| `purpose` | `requirement`, `official_response`, `certificate`, `receipt`, `other` | Why the file exists |
+
+Citizen uploads use `source: citizen`, `purpose: requirement`. Staff uploads use `source: staff` with `purpose` derived from their document type (e.g. `certificate` → `certificate`). Future system-generated files use `source: system`.
+
+Use `requirement_documents` for the upload checklist UI and `official_documents` for completed outputs (certificates, receipts, staff responses). `documents` remains the full list.
+
+On `GET /my-requests/{id}`, `data.service_request` also exposes `requirement_documents` and `official_documents` when documents are loaded. `missing_documents` only considers citizen requirement uploads.
+
+---
+
 ### List documents
 
 | | |
@@ -764,7 +779,7 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 | **Path** | `/my-requests/{serviceRequest}/documents` |
 | **Auth** | Yes |
 
-**Response** `200` — `data.documents[]` (`RequestDocumentResource` with `status`: `pending`, `approved`, `rejected`).
+**Response** `200` — `data.documents[]`, `data.requirement_documents[]`, `data.official_documents[]`.
 
 ---
 
@@ -783,7 +798,7 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 | `document_type` | Required document `key` (e.g. `national_id_copy`) or legacy `label` (e.g. `National ID copy`) |
 | `document` | File matching `accepted_types` and `max_size_mb` from the requirement |
 
-**Response** `201` — `data.document`. Stored `document_type` is the canonical **key** when it matches a requirement.
+**Response** `201` — `data.document` with `source: citizen`, `purpose: requirement`. Stored `document_type` is the canonical **key** when it matches a requirement.
 
 **Notes:** Not allowed when request is `completed`, `cancelled`, or `rejected`.
 
@@ -846,7 +861,7 @@ At least one entry is required. Same ownership and status rules as single upload
 
 **Response** `200` — `data` is `null`.
 
-**Notes:** Cannot delete `approved` documents.
+**Notes:** Only citizen requirement uploads can be deleted. Cannot delete `approved` requirement documents. Staff/system official documents cannot be deleted by citizens.
 
 ---
 

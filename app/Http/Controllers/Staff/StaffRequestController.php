@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\RequestDocument;
+use App\Support\RequestDocumentPurposeResolver;
 use Illuminate\Http\Request as HttpRequest;
 use App\Models\ServiceRequest;
 
@@ -88,14 +89,18 @@ class StaffRequestController extends Controller
 
         RequestDocument::create([
             'service_request_id' => $request->id,
-            'uploaded_by'        => auth()->id(),
-            'document_type'      => $httpRequest->document_type,
-            'file_name'          => $file->getClientOriginalName(),
-            'file_path'          => $path,
-            'mime_type'          => $file->getClientMimeType(),
-            'file_size'          => $file->getSize(),
-            'status'             => 'active',
-            'rejection_reason'   => null,
+            'uploaded_by' => auth()->id(),
+            'source' => RequestDocument::SOURCE_STAFF,
+            'purpose' => RequestDocumentPurposeResolver::fromStaffDocumentType(
+                $httpRequest->document_type
+            ),
+            'document_type' => $httpRequest->document_type,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'mime_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+            'status' => 'approved',
+            'rejection_reason' => null,
         ]);
 
         return back()->with('success', 'Document uploaded successfully');

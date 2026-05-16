@@ -57,6 +57,18 @@ class ServiceRequest extends Model
         return $this->hasMany(RequestDocument::class);
     }
 
+    public function requirementDocuments()
+    {
+        return $this->hasMany(RequestDocument::class)
+            ->where('purpose', RequestDocument::PURPOSE_REQUIREMENT);
+    }
+
+    public function officialDocuments()
+    {
+        return $this->hasMany(RequestDocument::class)
+            ->official();
+    }
+
     public function appointment()
     {
         return $this->hasOne(Appointment::class);
@@ -98,7 +110,8 @@ class ServiceRequest extends Model
         }
 
         $uploadedKeys = $this->documents
-            ->map(fn ($document) => RequiredDocumentDefinition::resolveTypeKey(
+            ->filter(fn (RequestDocument $document) => $document->purpose === RequestDocument::PURPOSE_REQUIREMENT)
+            ->map(fn (RequestDocument $document) => RequiredDocumentDefinition::resolveTypeKey(
                 (string) $document->document_type,
                 $definitions
             ))

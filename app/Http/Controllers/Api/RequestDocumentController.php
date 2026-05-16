@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RequestDocumentResource;
 use App\Models\RequestDocument;
+use Illuminate\Support\Collection;
 use App\Models\ServiceRequest;
 use App\Support\RequiredDocumentDefinition;
 use App\Traits\ApiResponse;
@@ -30,9 +31,7 @@ class RequestDocumentController extends Controller
             ->get();
 
         return $this->successResponse(
-            [
-                'documents' => RequestDocumentResource::collection($documents),
-            ],
+            $this->documentCollectionPayload($documents),
             'Request documents retrieved successfully'
         );
     }
@@ -171,6 +170,14 @@ class RequestDocumentController extends Controller
                 'Document not found for this service request.',
                 null,
                 404
+            );
+        }
+
+        if (! $document->isCitizenRequirement()) {
+            return $this->errorResponse(
+                'Only citizen requirement uploads can be deleted.',
+                null,
+                422
             );
         }
 
@@ -319,6 +326,8 @@ class RequestDocumentController extends Controller
         return RequestDocument::create([
             'service_request_id' => $serviceRequest->id,
             'uploaded_by' => $request->user()->id,
+            'source' => RequestDocument::SOURCE_CITIZEN,
+            'purpose' => RequestDocument::PURPOSE_REQUIREMENT,
             'document_type' => $resolvedKey ?? $documentType,
             'file_name' => $file->getClientOriginalName(),
             'file_path' => $path,
@@ -326,5 +335,26 @@ class RequestDocumentController extends Controller
             'file_size' => $file->getSize(),
             'status' => 'pending',
         ]);
+    }
+
+    /**
+     * @param  Collection<int, RequestDocument>  $documents
+     * @return array<string, mixed>
+     */
+    private function documentCollectionPayload(Collection $documents): array
+    {
+        $requirementDocuments = $documents
+            ->where('purpose', RequestDocument::PURPOSE_REQUIREMENT)
+            ->values();
+
+        $officialDocuments = $documents
+            ->filter(fn (RequestDocument $document) => $document->isOfficialOutput())
+            ->values();
+
+        return [
+            'documents' => RequestDocumentResource::collection($documents),
+            'requirement_documents' => RequestDocumentResource::collection($requirementDocuments),
+            'official_documents' => RequestDocumentResource::collection($officialDocuments),
+        ];
     }
 }

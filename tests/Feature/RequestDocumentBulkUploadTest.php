@@ -46,7 +46,10 @@ class RequestDocumentBulkUploadTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonCount(2, 'data.documents')
             ->assertJsonPath('data.documents.0.document_type', 'national_id_copy')
-            ->assertJsonPath('data.documents.1.document_type', 'proof_of_address');
+            ->assertJsonPath('data.documents.0.source', 'citizen')
+            ->assertJsonPath('data.documents.0.purpose', 'requirement')
+            ->assertJsonPath('data.documents.1.document_type', 'proof_of_address')
+            ->assertJsonPath('data.documents.1.purpose', 'requirement');
 
         $this->assertSame(2, RequestDocument::query()->where('service_request_id', $serviceRequest->id)->count());
     }

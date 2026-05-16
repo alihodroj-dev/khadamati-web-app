@@ -40,7 +40,11 @@ class RequiredDocumentDefinitionTest extends TestCase
         ]);
         $serviceRequest->setRelation('service', $service);
         $serviceRequest->setRelation('documents', collect([
-            new \App\Models\RequestDocument(['document_type' => 'National ID copy']),
+            new \App\Models\RequestDocument([
+                'document_type' => 'National ID copy',
+                'source' => \App\Models\RequestDocument::SOURCE_CITIZEN,
+                'purpose' => \App\Models\RequestDocument::PURPOSE_REQUIREMENT,
+            ]),
         ]));
 
         $missing = $serviceRequest->missingRequiredDocuments();

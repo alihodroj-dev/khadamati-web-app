@@ -14,6 +14,8 @@ class RequestDocumentResource extends JsonResource
             'id' => $this->id,
             'service_request_id' => $this->service_request_id,
             'uploaded_by' => $this->uploaded_by,
+            'source' => $this->source,
+            'purpose' => $this->purpose,
 
             'document_type' => $this->document_type,
             'file_name' => $this->file_name,

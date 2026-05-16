@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\RequestDocument;
 use App\Support\RequiredDocumentDefinition;
 use App\Support\ServiceRequestTrackingUrls;
 use Illuminate\Http\Request;
@@ -27,6 +28,22 @@ class ServiceRequestResource extends JsonResource
             'citizen' => $this->whenLoaded('user'),
             'assigned_staff' => $this->whenLoaded('assignedStaff'),
             'documents' => RequestDocumentResource::collection($this->whenLoaded('documents')),
+            'requirement_documents' => $this->when(
+                $this->relationLoaded('documents'),
+                fn () => RequestDocumentResource::collection(
+                    $this->documents
+                        ->where('purpose', RequestDocument::PURPOSE_REQUIREMENT)
+                        ->values()
+                )
+            ),
+            'official_documents' => $this->when(
+                $this->relationLoaded('documents'),
+                fn () => RequestDocumentResource::collection(
+                    $this->documents
+                        ->filter(fn (RequestDocument $document) => $document->isOfficialOutput())
+                        ->values()
+                )
+            ),
             'required_documents' => $this->when(
                 $this->relationLoaded('service'),
                 fn () => RequiredDocumentDefinition::normalizeList(

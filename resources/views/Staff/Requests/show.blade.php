@@ -82,13 +82,15 @@
                                             {{ $doc->file_name }}
                                         </p>
                                         <p class="text-xs text-gray-400 mt-0.5">
-                                            {{ $doc->document_type }} · {{ number_format($doc->file_size / 1024, 1) }} KB
+                                            {{ $doc->document_type }}
+                                            · {{ str_replace('_', ' ', $doc->purpose) }}
+                                            · {{ number_format($doc->file_size / 1024, 1) }} KB
                                         </p>
                                     </div>
 
                                     <div class="flex items-center gap-3">
                                         <span class="text-xs px-2 py-1 rounded-full
-                                            {{ $doc->status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                            {{ $doc->status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' }}">
                                             {{ ucfirst($doc->status) }}
                                         </span>
                                         <a href="{{ Storage::url($doc->file_path) }}"
