@@ -39,4 +39,8 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
     ],
 
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+    ],
+
 ];

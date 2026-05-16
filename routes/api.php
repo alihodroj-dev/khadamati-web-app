@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'google']);
+Route::post('/auth/apple', [AuthController::class, 'apple']);
 
 Route::get('/service-categories', [ServiceCategoryController::class, 'index']);
 Route::get('/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'show']);
