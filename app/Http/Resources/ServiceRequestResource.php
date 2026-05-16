@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\ServiceRequestTrackingUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,10 +13,7 @@ class ServiceRequestResource extends JsonResource
         return [
             'id' => $this->id,
             'reference_number' => $this->reference_number,
-            'tracking_token' => $this->tracking_token,
-            'tracking_url' => $this->tracking_token
-                ? rtrim(config('app.url'), '/').'/track/'.$this->tracking_token
-                : null,
+            ...ServiceRequestTrackingUrls::for($this->resource),
             'status' => $this->status,
 
             'user_id' => $this->user_id,

@@ -695,7 +695,8 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 
 **Notes:**
 - `office_id` optional for global services; required to match service if service is office-specific.
-- Includes `tracking_token`, `tracking_url`, `reference_number`, `office`.
+- Includes `tracking_token`, `tracking_api_url`, `tracking_web_url`, `reference_number`, `office`.
+- Encode `tracking_api_url` in QR codes for in-app/API lookups; `tracking_web_url` opens the public browser page.
 
 **Statuses:** `pending`, `under_review`, `requires_action`, `approved`, `rejected`, `completed`, `cancelled`.
 
@@ -1153,18 +1154,37 @@ document: <file>
 
 ## Tracking
 
-### Public track by token
+Each `ServiceRequestResource` includes:
+
+| Field | Description |
+|-------|-------------|
+| `tracking_token` | Opaque token |
+| `tracking_api_url` | `{APP_URL}/api/track/{tracking_token}` — use for QR codes and API polling |
+| `tracking_web_url` | `{APP_URL}/track/{tracking_token}` — public browser page |
+
+Example:
+
+```json
+{
+  "tracking_token": "abc123token",
+  "tracking_api_url": "https://example.com/api/track/abc123token",
+  "tracking_web_url": "https://example.com/track/abc123token"
+}
+```
+
+### Public track by token (API)
 
 | | |
 |---|---|
 | **Method** | `GET` |
-| **Path** | `/track/{trackingToken}` |
+| **Path** | `/api/track/{trackingToken}` |
 | **Auth** | No |
 
 **Response** `200` — limited public data only.
 
 ```json
 {
+  "success": true,
   "data": {
     "reference_number": "KHR-20260516-ABCDEF",
     "status": "under_review",
@@ -1176,9 +1196,17 @@ document: <file>
 }
 ```
 
-**Notes:** No citizen name, documents, payments, or staff notes. Use `tracking_url` from a request for QR codes:
+**Notes:** No citizen name, documents, payments, or staff notes.
 
-`{APP_URL}/track/{tracking_token}`
+### Public track page (web)
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **Path** | `/track/{trackingToken}` |
+| **Auth** | No |
+
+Minimal HTML status page (reference, service name, status, timestamps). Same token as the API route; intended for QR codes opened in a mobile browser.
 
 ---
 

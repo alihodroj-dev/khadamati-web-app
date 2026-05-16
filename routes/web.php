@@ -19,10 +19,14 @@ use App\Http\Controllers\Staff\StaffAppointmentController;
 
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\PublicTrackingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/track/{trackingToken}', [PublicTrackingController::class, 'show'])
+    ->name('tracking.show');
 
 Route::middleware('guest')->group(function () {
 
