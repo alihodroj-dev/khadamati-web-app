@@ -62,4 +62,29 @@ class ServiceRequest extends Model
     {
         return $this->hasOne(Feedback::class);
     }
+
+    /**
+     * Required document types that have not been uploaded yet.
+     *
+     * @return list<string>
+     */
+    public function missingDocumentTypes(): array
+    {
+        if (! $this->relationLoaded('service') || ! $this->relationLoaded('documents')) {
+            return [];
+        }
+
+        $required = $this->service->required_documents ?? [];
+
+        if ($required === []) {
+            return [];
+        }
+
+        $uploadedTypes = $this->documents
+            ->pluck('document_type')
+            ->unique()
+            ->all();
+
+        return array_values(array_diff($required, $uploadedTypes));
+    }
 }

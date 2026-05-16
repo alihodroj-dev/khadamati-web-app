@@ -22,6 +22,14 @@ class ServiceRequestResource extends JsonResource
             'citizen' => $this->whenLoaded('user'),
             'assigned_staff' => $this->whenLoaded('assignedStaff'),
             'documents' => RequestDocumentResource::collection($this->whenLoaded('documents')),
+            'required_documents' => $this->when(
+                $this->relationLoaded('service'),
+                fn () => $this->service->required_documents ?? []
+            ),
+            'missing_documents' => $this->when(
+                $this->relationLoaded('service') && $this->relationLoaded('documents'),
+                fn () => $this->missingDocumentTypes()
+            ),
             'appointment' => new AppointmentResource($this->whenLoaded('appointment')),
             'payment' => new PaymentResource($this->whenLoaded('payment')),
             'feedback' => new FeedbackResource($this->whenLoaded('feedback')),
