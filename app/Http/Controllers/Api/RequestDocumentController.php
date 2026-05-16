@@ -30,10 +30,10 @@ class RequestDocumentController extends Controller
             ->get();
 
         return $this->successResponse(
-            'Request documents retrieved successfully',
             [
                 'documents' => RequestDocumentResource::collection($documents),
-            ]
+            ],
+            'Request documents retrieved successfully'
         );
     }
 
@@ -84,10 +84,10 @@ class RequestDocumentController extends Controller
         ]);
 
         return $this->successResponse(
-            'Document uploaded successfully',
             [
                 'document' => new RequestDocumentResource($document),
             ],
+            'Document uploaded successfully',
             201
         );
     }
@@ -124,8 +124,6 @@ class RequestDocumentController extends Controller
 
         $document->delete();
 
-        return $this->successResponse(
-            'Document deleted successfully'
-        );
+        return $this->successResponse(null, 'Document deleted successfully');
     }
 }
