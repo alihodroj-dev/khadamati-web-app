@@ -26,4 +26,9 @@ class Office extends Model
             'is_active' => 'boolean',
         ];
     }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
 }

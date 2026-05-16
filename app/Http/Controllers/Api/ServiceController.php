@@ -14,9 +14,19 @@ class ServiceController extends Controller
 
     public function index(Request $request)
     {
+        $request->validate([
+            'office_id' => ['nullable', 'integer', 'exists:offices,id'],
+            'category_id' => ['nullable', 'integer', 'exists:service_categories,id'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+
         $query = Service::query()
             ->where('is_active', true)
-            ->with('category');
+            ->with(['category', 'office']);
+
+        if ($request->filled('office_id')) {
+            $query->where('office_id', $request->office_id);
+        }
 
         if ($request->filled('category_id')) {
             $query->where('service_category_id', $request->category_id);
@@ -53,7 +63,7 @@ class ServiceController extends Controller
             );
         }
 
-        $service->load('category');
+        $service->load(['category', 'office']);
 
         return $this->successResponse(
             [

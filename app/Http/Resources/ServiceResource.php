@@ -12,7 +12,9 @@ class ServiceResource extends JsonResource
         return [
             'id' => $this->id,
             'service_category_id' => $this->service_category_id,
+            'office_id' => $this->office_id,
             'category' => new ServiceCategoryResource($this->whenLoaded('category')),
+            'office' => new OfficeResource($this->whenLoaded('office')),
             'name' => $this->name,
             'description' => $this->description,
             'base_fee' => (float) $this->base_fee,
