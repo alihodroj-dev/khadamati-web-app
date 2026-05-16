@@ -13,12 +13,25 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'father_name' => $this->father_name,
+            'mother_name' => $this->mother_name,
+            'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
             'email' => $this->email,
             'phone' => $this->phone,
             'national_id' => $this->national_id,
             'id_document_path' => $this->id_document_path,
             'id_document_url' => $this->id_document_path
                 ? Storage::disk('public')->url($this->id_document_path)
+                : null,
+            'id_front_path' => $this->id_front_path,
+            'id_front_url' => $this->id_front_path
+                ? Storage::disk('public')->url($this->id_front_path)
+                : null,
+            'id_back_path' => $this->id_back_path,
+            'id_back_url' => $this->id_back_path
+                ? Storage::disk('public')->url($this->id_back_path)
                 : null,
             'role' => $this->role,
             'is_active' => (bool) $this->is_active,

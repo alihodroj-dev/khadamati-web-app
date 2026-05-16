@@ -105,4 +105,27 @@ class AppleAuthenticationService
     {
         return str_ends_with(strtolower($email), '@'.self::PRIVATE_RELAY_DOMAIN);
     }
+
+    /**
+     * @param  array{
+     *     sub: string,
+     *     email?: string
+     * }  $payload
+     */
+    public function linkSocialAccount(User $user, array $payload): SocialAccount
+    {
+        $email = $this->normalizeEmail($payload['email'] ?? null) ?? $user->email;
+
+        return SocialAccount::query()->updateOrCreate(
+            [
+                'provider' => SocialAccount::PROVIDER_APPLE,
+                'provider_user_id' => $payload['sub'],
+            ],
+            [
+                'user_id' => $user->id,
+                'email' => $email,
+                'avatar_url' => null,
+            ]
+        );
+    }
 }

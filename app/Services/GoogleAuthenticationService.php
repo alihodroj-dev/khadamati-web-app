@@ -66,4 +66,26 @@ class GoogleAuthenticationService
             return $user;
         });
     }
+
+    /**
+     * @param  array{
+     *     sub: string,
+     *     email: string,
+     *     picture?: string
+     * }  $payload
+     */
+    public function linkSocialAccount(User $user, array $payload): SocialAccount
+    {
+        return SocialAccount::query()->updateOrCreate(
+            [
+                'provider' => SocialAccount::PROVIDER_GOOGLE,
+                'provider_user_id' => $payload['sub'],
+            ],
+            [
+                'user_id' => $user->id,
+                'email' => $payload['email'],
+                'avatar_url' => $payload['picture'] ?? null,
+            ]
+        );
+    }
 }

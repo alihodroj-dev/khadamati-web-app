@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\TrackingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register/complete', [AuthController::class, 'completeRegistration']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'google']);
 Route::post('/auth/apple', [AuthController::class, 'apple']);

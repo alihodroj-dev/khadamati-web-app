@@ -24,12 +24,19 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
+        'father_name',
+        'mother_name',
+        'date_of_birth',
         'email',
         'password',
         'role',
         'phone',
         'national_id',
         'id_document_path',
+        'id_front_path',
+        'id_back_path',
         'is_active',
         'push_notifications_enabled',
         'email_notifications_enabled',
@@ -40,6 +47,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'date_of_birth' => 'date',
             'password' => 'hashed',
             'is_active' => 'boolean',
             'push_notifications_enabled' => 'boolean',

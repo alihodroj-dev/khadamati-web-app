@@ -48,26 +48,53 @@ Common HTTP status codes: `200`, `201`, `401`, `403`, `404`, `422`.
 
 ## Auth
 
-### Register
+### Citizen registration flow (iOS)
+
+1. `POST /identity/preview` — upload ID front/back, receive `verification_session_token` and editable `fields`.
+2. `POST /register/complete` — submit confirmed profile data + auth provider credentials.
+
+Legacy `POST /register` remains for admin/testing only; **do not use it in the iOS app**.
+
+---
+
+### Complete registration
 
 | | |
 |---|---|
 | **Method** | `POST` |
-| **Path** | `/register` |
+| **Path** | `/register/complete` |
 | **Auth** | No |
 
-**Request** (`multipart/form-data` if uploading ID document)
+**Request** (`application/json`)
 
 ```json
 {
-  "name": "Jane Citizen",
-  "email": "jane@example.com",
-  "password": "password123",
-  "phone": "+96170000003",
-  "national_id": "CTZ-000001",
-  "id_document": "<file optional>"
+  "verification_session_token": "session-token-from-preview",
+  "auth_provider": "google",
+  "provider_token": "google-native-id-token",
+  "email": "user@example.com",
+  "first_name": "Ali",
+  "last_name": "Hodroj",
+  "father_name": "Father",
+  "mother_name": "Mother",
+  "date_of_birth": "2001-05-10",
+  "national_id": "123456789",
+  "phone": "+96170000001"
 }
 ```
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `verification_session_token` | Yes | From `/identity/preview` |
+| `auth_provider` | Yes | `google`, `apple`, or `email` |
+| `provider_token` | If google/apple | Google ID token or Apple identity token |
+| `email` | Yes | Must match provider token email when applicable |
+| `first_name`, `last_name`, `father_name`, `mother_name` | Yes | |
+| `date_of_birth` | Yes | `Y-m-d` |
+| `national_id` | Yes | Unique |
+| `phone` | No | |
+| `password` | If `email` | Min 8 chars |
+| `password_confirmation` | If `email` | Must match `password` |
 
 **Response** `201`
 
@@ -77,13 +104,36 @@ Common HTTP status codes: `200`, `201`, `401`, `403`, `404`, `422`.
   "message": "Registered successfully",
   "errors": null,
   "data": {
-    "user": { "id": 1, "name": "Jane Citizen", "email": "jane@example.com", "role": "citizen" },
+    "user": {
+      "id": 1,
+      "name": "Ali Hodroj",
+      "first_name": "Ali",
+      "last_name": "Hodroj",
+      "father_name": "Father",
+      "mother_name": "Mother",
+      "date_of_birth": "2001-05-10",
+      "email": "user@example.com",
+      "national_id": "123456789",
+      "role": "citizen"
+    },
     "token": "1|plainTextToken..."
   }
 }
 ```
 
-**Notes:** `id_document` — jpg, jpeg, png, pdf, max 5 MB. Store token securely.
+**Notes:** ID images from the preview session are moved to permanent storage on the user. The verification session is marked `consumed` and cannot be reused.
+
+---
+
+### Register (legacy / testing only)
+
+| | |
+|---|---|
+| **Method** | `POST` |
+| **Path** | `/register` |
+| **Auth** | No |
+
+Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 
 ---
 
@@ -1009,6 +1059,6 @@ document: <file>
 | Register, login, categories, services, offices, service feedback, track | No |
 | Everything else | Yes |
 
-**Multipart endpoints:** `POST /register`, `POST /identity/preview`, `POST /my-requests/{id}/documents`
+**Multipart endpoints:** `POST /identity/preview`, `POST /my-requests/{id}/documents`
 
 **File download:** `GET /my-requests/{id}/documents/{id}/download`

@@ -9,7 +9,10 @@ use App\Services\AppleAuthenticationService;
 use App\Services\AppleIdentityTokenVerificationService;
 use App\Services\GoogleAuthenticationService;
 use App\Services\GoogleIdTokenVerificationService;
+use App\Services\RegistrationCompletionService;
 use App\Traits\ApiResponse;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
@@ -18,6 +21,47 @@ use RuntimeException;
 class AuthController extends Controller
 {
     use ApiResponse;
+
+    public function completeRegistration(
+        Request $request,
+        RegistrationCompletionService $registrationCompletionService
+    ) {
+        $validated = $request->validate([
+            'verification_session_token' => ['required', 'string'],
+            'auth_provider' => ['required', 'string', Rule::in(['google', 'apple', 'email'])],
+            'provider_token' => ['nullable', 'string', 'required_if:auth_provider,google,apple'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'father_name' => ['required', 'string', 'max:255'],
+            'mother_name' => ['required', 'string', 'max:255'],
+            'date_of_birth' => ['required', 'date'],
+            'national_id' => ['required', 'string', 'max:255', 'unique:users,national_id'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed', 'required_if:auth_provider,email'],
+        ]);
+
+        try {
+            $user = $registrationCompletionService->complete($validated);
+        } catch (ValidationException $e) {
+            return $this->errorResponse(
+                'Registration could not be completed.',
+                $e->errors(),
+                422
+            );
+        }
+
+        $token = $user->createToken('khadamati-ios-app')->plainTextToken;
+
+        return $this->successResponse(
+            [
+                'user' => new UserResource($user),
+                'token' => $token,
+            ],
+            'Registered successfully',
+            201
+        );
+    }
 
     public function register(Request $request)
     {

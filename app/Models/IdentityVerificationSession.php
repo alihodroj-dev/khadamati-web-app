@@ -12,6 +12,8 @@ class IdentityVerificationSession extends Model
 
     public const STATUS_FAILED = 'failed';
 
+    public const STATUS_CONSUMED = 'consumed';
+
     protected $fillable = [
         'session_token',
         'id_front_path',
@@ -28,5 +30,11 @@ class IdentityVerificationSession extends Model
             'extracted_data' => 'array',
             'expires_at' => 'datetime',
         ];
+    }
+
+    public function isConsumable(): bool
+    {
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_FAILED], true)
+            && $this->expires_at?->isFuture();
     }
 }
