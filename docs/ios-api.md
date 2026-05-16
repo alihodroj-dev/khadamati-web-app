@@ -589,7 +589,7 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 | **Path** | `/services/{service}` |
 | **Auth** | No |
 
-**Response** `200` — `data.service`.
+**Response** `200` — `data.service` including `required_documents[]` (each item has `key`, `label`, `required`, `accepted_types`, `max_size_mb`).
 
 ---
 
@@ -726,6 +726,18 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 
 **Response** `200` — `data.service_request` with `service`, `office`, `documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`.
 
+`required_documents` and `missing_documents` are arrays of objects (legacy string values in the database are normalized automatically):
+
+```json
+{
+  "key": "national_id_copy",
+  "label": "National ID Copy",
+  "required": true,
+  "accepted_types": ["jpg", "jpeg", "png", "pdf"],
+  "max_size_mb": 5
+}
+```
+
 ---
 
 ### Cancel request
@@ -766,14 +778,14 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 
 **Request** (`multipart/form-data`)
 
-```
-document_type: National ID copy
-document: <file>
-```
+| Field | Notes |
+|-------|--------|
+| `document_type` | Required document `key` (e.g. `national_id_copy`) or legacy `label` (e.g. `National ID copy`) |
+| `document` | File matching `accepted_types` and `max_size_mb` from the requirement |
 
-**Response** `201` — `data.document`.
+**Response** `201` — `data.document`. Stored `document_type` is the canonical **key** when it matches a requirement.
 
-**Notes:** jpg, jpeg, png, pdf, max 5 MB. Not allowed when request is `completed`, `cancelled`, or `rejected`.
+**Notes:** Not allowed when request is `completed`, `cancelled`, or `rejected`.
 
 ---
 

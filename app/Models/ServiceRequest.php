@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\RequiredDocumentDefinition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -72,28 +73,43 @@ class ServiceRequest extends Model
     }
 
     /**
-     * Required document types that have not been uploaded yet.
+     * Required document definitions that have not been uploaded yet.
      *
-     * @return list<string>
+     * @return list<array{
+     *     key: string,
+     *     label: string,
+     *     required: bool,
+     *     accepted_types: list<string>,
+     *     max_size_mb: int
+     * }>
      */
-    public function missingDocumentTypes(): array
+    public function missingRequiredDocuments(): array
     {
         if (! $this->relationLoaded('service') || ! $this->relationLoaded('documents')) {
             return [];
         }
 
-        $required = $this->service->required_documents ?? [];
+        $definitions = RequiredDocumentDefinition::normalizeList(
+            $this->service->required_documents ?? []
+        );
 
-        if ($required === []) {
+        if ($definitions === []) {
             return [];
         }
 
-        $uploadedTypes = $this->documents
-            ->pluck('document_type')
+        $uploadedKeys = $this->documents
+            ->map(fn ($document) => RequiredDocumentDefinition::resolveTypeKey(
+                (string) $document->document_type,
+                $definitions
+            ))
+            ->filter()
             ->unique()
             ->all();
 
-        return array_values(array_diff($required, $uploadedTypes));
+        return array_values(array_filter(
+            $definitions,
+            fn (array $definition) => ! in_array($definition['key'], $uploadedKeys, true)
+        ));
     }
 
     public static function generateTrackingToken(): string

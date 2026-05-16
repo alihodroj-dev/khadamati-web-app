@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\RequiredDocumentDefinition;
 use App\Support\ServiceRequestTrackingUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,11 +29,13 @@ class ServiceRequestResource extends JsonResource
             'documents' => RequestDocumentResource::collection($this->whenLoaded('documents')),
             'required_documents' => $this->when(
                 $this->relationLoaded('service'),
-                fn () => $this->service->required_documents ?? []
+                fn () => RequiredDocumentDefinition::normalizeList(
+                    $this->service->required_documents ?? []
+                )
             ),
             'missing_documents' => $this->when(
                 $this->relationLoaded('service') && $this->relationLoaded('documents'),
-                fn () => $this->missingDocumentTypes()
+                fn () => $this->missingRequiredDocuments()
             ),
             'appointment' => new AppointmentResource($this->whenLoaded('appointment')),
             'payment' => new PaymentResource($this->whenLoaded('payment')),

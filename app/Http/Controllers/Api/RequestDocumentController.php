@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\RequestDocumentResource;
 use App\Models\RequestDocument;
 use App\Models\ServiceRequest;
+use App\Support\RequiredDocumentDefinition;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -55,13 +56,44 @@ class RequestDocumentController extends Controller
             );
         }
 
+        $serviceRequest->loadMissing('service');
+
+        $requiredDefinitions = RequiredDocumentDefinition::normalizeList(
+            $serviceRequest->service?->required_documents ?? []
+        );
+
         $validated = $request->validate([
             'document_type' => ['required', 'string', 'max:255'],
+            'document' => ['required', 'file'],
+        ]);
+
+        $resolvedKey = RequiredDocumentDefinition::resolveTypeKey(
+            $validated['document_type'],
+            $requiredDefinitions
+        );
+
+        if ($requiredDefinitions !== [] && $resolvedKey === null) {
+            return $this->errorResponse(
+                'The document type is not required for this service.',
+                [
+                    'document_type' => ['The document type must match a required document key or label.'],
+                ],
+                422
+            );
+        }
+
+        $definition = $resolvedKey !== null
+            ? RequiredDocumentDefinition::find($resolvedKey, $requiredDefinitions)
+            : null;
+
+        $acceptedTypes = $definition['accepted_types'] ?? RequiredDocumentDefinition::DEFAULT_ACCEPTED_TYPES;
+        $maxSizeKb = ($definition['max_size_mb'] ?? RequiredDocumentDefinition::DEFAULT_MAX_SIZE_MB) * 1024;
+
+        $request->validate([
             'document' => [
-                'required',
                 'file',
-                'mimes:jpg,jpeg,png,pdf',
-                'max:5120',
+                'mimes:'.implode(',', $acceptedTypes),
+                'max:'.$maxSizeKb,
             ],
         ]);
 
@@ -75,7 +107,7 @@ class RequestDocumentController extends Controller
         $document = RequestDocument::create([
             'service_request_id' => $serviceRequest->id,
             'uploaded_by' => $request->user()->id,
-            'document_type' => $validated['document_type'],
+            'document_type' => $resolvedKey ?? $validated['document_type'],
             'file_name' => $file->getClientOriginalName(),
             'file_path' => $path,
             'mime_type' => $file->getClientMimeType(),

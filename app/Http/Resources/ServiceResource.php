@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\RequiredDocumentDefinition;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +20,9 @@ class ServiceResource extends JsonResource
             'description' => $this->description,
             'base_fee' => (float) $this->base_fee,
             'estimated_processing_days' => $this->estimated_processing_days,
-            'required_documents' => $this->required_documents ?? [],
+            'required_documents' => RequiredDocumentDefinition::normalizeList(
+                $this->required_documents ?? []
+            ),
             'requires_appointment' => (bool) $this->requires_appointment,
             'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
