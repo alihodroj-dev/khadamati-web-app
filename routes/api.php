@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RequestDocumentController;
@@ -63,6 +64,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payments/{payment}/process', [PaymentController::class, 'process']);
     Route::patch('/payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid']);
     Route::patch('/payments/{payment}/refund', [PaymentController::class, 'refund']);
+
+    Route::get('/feedback', [FeedbackController::class, 'index']);
+    Route::post('/feedback', [FeedbackController::class, 'store']);
+    Route::get('/feedback/{feedback}', [FeedbackController::class, 'show']);
+    Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy']);
 
     // Staff & Admin: request management
     Route::middleware('role:staff,admin')->group(function () {

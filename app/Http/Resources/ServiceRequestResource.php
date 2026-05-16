@@ -24,6 +24,7 @@ class ServiceRequestResource extends JsonResource
             'documents' => RequestDocumentResource::collection($this->whenLoaded('documents')),
             'appointment' => new AppointmentResource($this->whenLoaded('appointment')),
             'payment' => new PaymentResource($this->whenLoaded('payment')),
+            'feedback' => new FeedbackResource($this->whenLoaded('feedback')),
 
             'citizen_notes' => $this->citizen_notes,
             'staff_notes' => $this->staff_notes,
