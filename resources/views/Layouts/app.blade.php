@@ -21,7 +21,33 @@
 
             {{-- Main Content --}}
             <main class="p-6">
+                {{-- Flash Messages --}}
+                    @if(session('success'))
+                        <div class="mb-4 px-4 py-3 bg-green-100 text-green-800 rounded-lg border border-green-200">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if(session('error'))
+                        <div class="mb-4 px-4 py-3 bg-red-100 text-red-800 rounded-lg border border-red-200">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                {{-- Validation Errors --}}
+                    @if($errors->any())
+                        <div class="mb-4 px-4 py-3 bg-yellow-100 text-yellow-800 rounded-lg border border-yellow-200">
+                            <p class="font-semibold mb-1">Please fix the following errors:</p>
+                            <ul class="list-disc list-inside text-sm">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                 @yield('content')
+                
             </main>
 
         </div>

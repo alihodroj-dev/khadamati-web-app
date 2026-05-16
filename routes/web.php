@@ -205,22 +205,21 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/requests/{id}/status', [StaffRequestController::class, 'updateStatus'])
             ->name('staff.requests.updateStatus');
+
+            Route::prefix('appointments')->group(function () {
+
+                Route::get('/', [StaffAppointmentController::class, 'index'])
+                    ->name('staff.appointments.index');
+
+                Route::get('/today', [StaffAppointmentController::class, 'today'])
+                    ->name('staff.appointments.today');
+
+                Route::get('/{id}', [StaffAppointmentController::class, 'show'])
+                    ->name('staff.appointments.show');
+
+                Route::post('/{id}/update', [StaffAppointmentController::class, 'update'])
+                    ->name('staff.appointments.update');
+
+            });
     });
-
-    Route::prefix('appointments')->group(function () {
-
-        Route::get('/', [StaffAppointmentController::class, 'index'])
-            ->name('staff.appointments.index');
-
-        Route::get('/today', [StaffAppointmentController::class, 'today'])
-            ->name('staff.appointments.today');
-
-        Route::get('/{id}', [StaffAppointmentController::class, 'show'])
-            ->name('staff.appointments.show');
-
-        Route::post('/{id}/update', [StaffAppointmentController::class, 'update'])
-            ->name('staff.appointments.update');
-
-    });
-
 });

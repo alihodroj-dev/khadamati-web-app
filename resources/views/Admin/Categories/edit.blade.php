@@ -3,32 +3,18 @@
 @section('content')
 
 <h1 class="text-2xl font-bold mb-6">
-    Edit Category #{{ $id }}
+    Edit Category #{{ $category->id }}
 </h1>
 
 <x-card>
 
-    <form method="POST" action="{{ route('admin.categories.update', $id) }}">
+    <form method="POST" action="{{ route('admin.categories.update', $category->id) }}">
         @csrf
         @method('PUT')
 
-        <x-input
-            label="Category Name"
-            name="name"
-            value="Example Category"
-        />
-
-        <x-input
-            label="Description"
-            name="description"
-            value="Services related to household maintenance"
-        />
-
-        <x-input
-            label="Icon"
-            name="icon"
-            value="🏠"
-        />
+        <x-input label="Category Name" name="name" value="{{ $category->name }}" />
+        <x-input label="Description" name="description" value="{{ $category->description }}" />
+        <x-input label="Icon" name="icon" value="{{ $category->icon }}" />
 
         {{-- Status --}}
         <div class="mb-6">
@@ -37,18 +23,9 @@
                 Status
             </label>
 
-            <select
-                name="is_active"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-                <option value="1" selected>
-                    Active
-                </option>
-
-                <option value="0">
-                    Inactive
-                </option>
-
+            <select name="is_active" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="1" {{ $category->is_active ? 'selected' : '' }}>Active</option>
+                <option value="0" {{ !$category->is_active ? 'selected' : '' }}>Inactive</option>
             </select>
 
         </div>

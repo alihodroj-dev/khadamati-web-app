@@ -10,7 +10,7 @@
             <span>Details</span>
         </div>
         <h1 class="text-2xl font-bold text-gray-900">
-            Service Details <span class="text-gray-400 font-mono text-lg ml-2">#{{ $id }}</span>
+            Service Details <span class="text-gray-400 font-mono text-lg ml-2">{{ $service->id }}</span>
         </h1>
     </div>
 
@@ -18,7 +18,7 @@
         <a href="{{ route('admin.services.index') }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
             Back
         </a>
-        <a href="{{ route('admin.services.edit', $id) }}">
+        <a href="{{ route('admin.services.edit', $service->id) }}">
             <x-button color="secondary">
                 Edit Service
             </x-button>
@@ -38,27 +38,28 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                     <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Service Name</h3>
-                    <p class="text-xl font-bold text-gray-900">Passport Renewal</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $service->name }}</p>
                 </div>
 
                 <div>
                     <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Category</h3>
-                    <p class="text-lg text-gray-700">Civil Services</p>
+                    <p class="text-lg text-gray-700">{{ $service->category->name ?? '-' }}</p>
                 </div>
 
                 <div class="md:col-span-2">
                     <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Description</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        Renew passport service description. This covers the official renewal process for expired or soon-to-expire documents.
-                    </p>
+                    <p class="text-gray-600 leading-relaxed">{{ $service->description }}</p>
                 </div>
 
                 <div class="md:col-span-2">
                     <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Required Documents</h3>
                     <div class="mt-2 flex flex-wrap gap-2">
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm border border-gray-200">ID Copy</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm border border-gray-200">Personal Photos (2x)</span>
-                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm border border-gray-200">Old Passport</span>
+                        {{-- Required documents --}}
+                        @foreach($service->required_documents as $doc)
+                            <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm border border-gray-200">
+                                {{ trim($doc) }}
+                            </span>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -75,12 +76,14 @@
             <div class="space-y-6">
                 <div class="flex justify-between items-center">
                     <span class="text-gray-500 font-medium">Base Fee</span>
-                    <span class="text-xl font-bold text-gray-900">$20.00</span>
+                    <span class="text-xl font-bold text-gray-900">${{ number_format($service->base_fee, 2) }}</span>
                 </div>
 
                 <div class="flex justify-between items-center">
                     <span class="text-gray-500 font-medium">Processing Time</span>
-                    <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg font-semibold">5 Business Days</span>
+                    <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg font-semibold">
+                        {{ $service->estimated_processing_days }} Business Days
+                    </span>                
                 </div>
 
                 <div class="pt-4 border-t border-gray-100 space-y-4">
@@ -88,7 +91,7 @@
                         <span class="text-gray-500 font-medium">Appointment</span>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10">
                             <span class="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                            Required
+                            {{ $service->requires_appointment ? 'Required' : 'Not Required' }}
                         </span>
                     </div>
 
@@ -96,7 +99,7 @@
                         <span class="text-gray-500 font-medium">Status</span>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/10">
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                            Active
+                            {{ $service->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
                 </div>

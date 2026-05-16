@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     public function index()
     {
-        return view('admin.users.index');
+        $users = User::latest()->paginate(10);
+        return view('admin.users.index', compact('users'));
     }
 
     public function create()
@@ -26,7 +28,8 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        return view('admin.users.edit', compact('id'));
+        $user = User::findOrFail($id);
+        return view('admin.users.edit', compact('user'));
     }
 
     public function update(Request $request, $id)
@@ -45,6 +48,7 @@ class UserController extends Controller
 
     public function show($id)
     {
-        return view('admin.users.show', compact('id'));
+        $user = User::findOrFail($id);
+        return view('admin.users.show', compact('user'));
     }
 }

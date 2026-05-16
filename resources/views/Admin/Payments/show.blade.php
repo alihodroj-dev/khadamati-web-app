@@ -38,20 +38,16 @@
             @method('PUT')
 
             <select name="status" class="w-full border rounded px-3 py-2 mb-3">
-
-                <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="failed">Failed</option>
-                <option value="refunded">Refunded</option>
-
+                <option value="pending" {{ $payment->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                <option value="paid" {{ $payment->status === 'paid' ? 'selected' : '' }}>Paid</option>
+                <option value="failed" {{ $payment->status === 'failed' ? 'selected' : '' }}>Failed</option>
+                <option value="refunded" {{ $payment->status === 'refunded' ? 'selected' : '' }}>Refunded</option>
             </select>
 
             <select name="payment_method" class="w-full border rounded px-3 py-2 mb-3">
-
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="online">Online</option>
-
+                <option value="cash" {{ $payment->payment_method === 'cash' ? 'selected' : '' }}>Cash</option>
+                <option value="card" {{ $payment->payment_method === 'card' ? 'selected' : '' }}>Card</option>
+                <option value="online" {{ $payment->payment_method === 'online' ? 'selected' : '' }}>Online</option>
             </select>
 
             <textarea name="payment_details"

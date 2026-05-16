@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceCategory;
+use App\Models\Service;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
     public function index()
     {
-        return view('admin.services.index');
+        $services = Service::latest()->paginate(10);
+        return view('admin.services.index', compact('services'));
     }
 
     public function create()
@@ -26,7 +29,9 @@ class ServiceController extends Controller
 
     public function edit($id)
     {
-        return view('admin.services.edit', compact('id'));
+        $service = Service::findOrFail($id);
+        $categories = ServiceCategory::all();
+        return view('admin.services.edit', compact('service', 'categories'));
     }
 
     public function update(Request $request, $id)
@@ -45,6 +50,7 @@ class ServiceController extends Controller
 
     public function show($id)
     {
-        return view('admin.services.show', compact('id'));
+        $service = Service::findOrFail($id);
+        return view('admin.services.show', compact('service'));
     }
 }

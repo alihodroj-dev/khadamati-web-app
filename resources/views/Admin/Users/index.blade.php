@@ -26,44 +26,61 @@
 
         {{-- BODY --}}
         <x-slot name="body">
-            <tr>
-                <td class="px-4 py-3 border border-gray-200 text-center">
-                    1
-                </td>
-                <td class="px-4 py-3 font-medium text-gray-900 border border-gray-200 text-center">
-                    John Doe
-                </td>
-                <td class="px-4 py-3 border border-gray-200 text-center">
-                    <span style="background-color: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 500;">
-                        Admin
-                    </span>
-                </td>
-                <td class="px-4 py-3 border border-gray-200 text-center">
-                    <div class="flex gap-2 justify-center">
-                        <a href="{{ route('admin.users.show', 1) }}">
-                            <x-button>Details</x-button>
-                        </a>
+            @forelse($users as $user)
+                <tr class="border-t hover:bg-gray-50">
+                    <td class="px-4 py-3 border border-gray-200 text-center">
+                        {{ $user->id }}
+                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-900 border border-gray-200 text-center">
+                        {{ $user->name }}
+                    </td>
+                    <td class="px-4 py-3 border border-gray-200 text-center">
+                        <span style="
+                            @switch($user->role)
+                                @case('admin')
+                                    background-color:#dcfce7; color:#166534;
+                                    @break
+                                @case('staff')
+                                    background-color:#dbeafe; color:#1e40af;
+                                    @break
+                                @case('citizen')
+                                    background-color:#fee2e2; color:#991b1b;
+                                    @break
+                                @default
+                                    background-color:#f3f4f6; color:#374151;
+                            @endswitch
+                            padding:4px 12px; border-radius:9999px; font-size:12px; font-weight:500;
+                        ">
+                            {{ ucfirst($user->role) }}
+                        </span>
+                    </td>
 
-                        <a href="{{ route('admin.users.edit', 1) }}">
-                            <x-button color="secondary">Edit</x-button>
-                        </a>
-
-                        <form method="POST"
-                              action="{{ route('admin.users.destroy', 1) }}"
-                              onsubmit="return confirm('Are you sure you want to delete this user?')"
-                              class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button
-                                type="submit"
-                                style="background-color: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;"
-                            >
-                                Delete
-                            </button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
+                    <td class="px-4 py-3 border border-gray-200 text-center">
+                        <div class="flex gap-2 justify-center">
+                            <a href="{{ route('admin.users.show', $user->id) }}">
+                                <x-button>Details</x-button>
+                            </a>
+                            <a href="{{ route('admin.users.edit', $user->id) }}">
+                                <x-button color="secondary">Edit</x-button>
+                            </a>
+                            <form method="POST"
+                                action="{{ route('admin.users.destroy', $user->id) }}"
+                                onsubmit="return confirm('Are you sure?')"
+                                class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" style="background-color:#ef4444;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="text-center py-6 text-gray-500">No Users found</td>
+                </tr>
+            @endforelse
         </x-slot>
     </x-table>
 </x-card>

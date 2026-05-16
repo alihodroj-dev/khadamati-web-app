@@ -10,7 +10,7 @@
             <span>Details</span>
         </div>
         <h1 class="text-2xl font-bold text-gray-900">
-            Category Details <span class="text-gray-400 font-mono text-lg ml-2">#{{ $id }}</span>
+            Category Details <span class="text-gray-400 font-mono text-lg ml-2">#{{ $category->id }}</span>
         </h1>
     </div>
 
@@ -18,7 +18,7 @@
         <a href="{{ route('admin.categories.index') }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
             Back
         </a>
-        <a href="{{ route('admin.categories.edit', $id) }}">
+        <a href="{{ route('admin.categories.edit', $category->id) }}">
             <x-button color="secondary">
                 Edit Category
             </x-button>
@@ -41,27 +41,20 @@
 
                 <div>
                     <p class="text-sm text-gray-500">Name</p>
-                    <p class="text-base font-medium">Home Services</p>
+                    <p class="text-base font-medium">{{ $category->name }}</p>
                 </div>
 
                 <div>
                     <p class="text-sm text-gray-500">Description</p>
-                    <p class="text-base text-gray-700">
-                        Services related to household maintenance and repairs.
-                    </p>
+                    <p class="text-base text-gray-700">{{ $category->description }}</p>
                 </div>
 
                 <div>
                     <p class="text-sm text-gray-500">Icon</p>
-                    <p class="text-base text-gray-700 text-2xl">
-                        🏠
-                    </p>
+                    <p class="text-2xl">{{ $category->icon }}</p>
                 </div>
-
             </div>
-
         </x-card>
-
     </div>
 
     {{-- SIDE INFO --}}
@@ -74,19 +67,13 @@
             </h2>
 
             <div class="flex justify-between items-center">
-
                 <span class="text-gray-600">Category Status</span>
-
-                <span class="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs">
-                    Active
+                <span class="px-3 py-1 rounded-full text-xs {{ $category->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                    {{ $category->is_active ? 'Active' : 'Inactive' }}
                 </span>
-
             </div>
-
         </x-card>
-
     </div>
-
 </div>
 
 @endsection

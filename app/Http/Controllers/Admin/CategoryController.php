@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        return view('admin.categories.index');
+        $categories = ServiceCategory::latest()->paginate(10);
+        return view('admin.categories.index', compact('categories'));
     }
 
     public function create()
@@ -26,7 +28,8 @@ class CategoryController extends Controller
 
     public function edit($id)
     {
-        return view('admin.categories.edit', compact('id'));
+        $category = ServiceCategory::findOrFail($id);
+        return view('admin.categories.edit', compact('category'));
     }
 
     public function update(Request $request, $id)
@@ -45,6 +48,7 @@ class CategoryController extends Controller
 
     public function show($id)
     {
-        return view('admin.categories.show', compact('id'));
+        $category = ServiceCategory::findOrFail($id);
+        return view('admin.categories.show', compact('category'));
     }
 }

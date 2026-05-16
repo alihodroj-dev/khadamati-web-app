@@ -3,27 +3,21 @@
 @section('content')
 
 <h1 class="text-2xl font-bold mb-6">
-    Edit Service #{{ $id }}
+    Edit Service #{{ $service->id }}
 </h1>
 
 <x-card>
 
-    <form method="POST" action="{{ route('admin.services.update', $id) }}">
+    <form method="POST" action="{{ route('admin.services.update', $service->id) }}">
 
         @csrf
         @method('PUT')
 
-        <x-input label="Category ID" name="service_category_id" value="1" />
-
-        <x-input label="Service Name" name="name" value="Passport Renewal" />
-
-        <x-input label="Description" name="description" value="Renew passport service" />
-
-        <x-input label="Base Fee" name="base_fee" value="20" />
-
-        <x-input label="Estimated Processing Days" name="estimated_processing_days" value="5" />
-
-        <x-input label="Required Documents" name="required_documents" value="ID Copy, Photos" />
+        <x-input label="Service Name" name="name" value="{{ $service->name }}" />
+        <x-input label="Description" name="description" value="{{ $service->description }}" />
+        <x-input label="Base Fee ($)" name="base_fee" value="{{ $service->base_fee }}" />
+        <x-input label="Estimated Processing Days" name="estimated_processing_days" value="{{ $service->estimated_processing_days }}" />
+        <x-input label="Required Documents" name="required_documents" value="{{ implode(',', $service->required_documents ?? []) }}" />
 
         {{-- Requires Appointment --}}
         <div class="mb-4">
@@ -32,31 +26,39 @@
                 Requires Appointment
             </label>
 
-            <select name="requires_appointment"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-
-                <option value="1" selected>Yes</option>
-                <option value="0">No</option>
-
+            <select name="requires_appointment" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="1" {{ $service->requires_appointment ? 'selected' : '' }}>Yes</option>
+                <option value="0" {{ !$service->requires_appointment ? 'selected' : '' }}>No</option>
             </select>
 
         </div>
 
+        {{-- Category --}}
+        <div class="mb-4">
+
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Category
+            </label>
+
+            <select name="service_category_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" {{ $service->service_category_id == $category->id ? 'selected' : '' }}>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         {{-- Status --}}
         <div class="mb-6">
-
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 Status
             </label>
 
-            <select name="is_active"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-
-                <option value="1" selected>Active</option>
-                <option value="0">Inactive</option>
-
+            <select name="is_active" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="1" {{ $service->is_active ? 'selected' : '' }}>Active</option>
+                <option value="0" {{ !$service->is_active ? 'selected' : '' }}>Inactive</option>
             </select>
-
         </div>
 
         {{-- Actions --}}

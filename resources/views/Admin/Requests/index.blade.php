@@ -98,32 +98,23 @@
                         View
                     </a>
 
-                    {{-- 2. ASSIGN QUICK --}}
-                    <form method="POST"
-                          action="{{ route('admin.requests.assignStaff', $req->id) }}">
-                        @csrf
-
-                        <input type="hidden" name="staff_id" value="{{ $req->staff_id ?? 1 }}">
-
-                        <button class="text-indigo-600 hover:underline text-sm">
-                            Assign
-                        </button>
-                    </form>
+                    {{-- 2. ASSIGN  --}}
+                    <a href="{{ route('admin.requests.show', $req->id) }}"
+                    class="text-indigo-600 hover:underline text-sm">
+                        Assign
+                    </a>
 
                     {{-- 3. DELETE --}}
                     <form method="POST"
-                              action="{{ route('admin.categories.destroy', 1) }}"
-                              onsubmit="return confirm('Are you sure you want to delete this category?')"
-                              class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button
-                                type="submit"
-                                style="background-color: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;"
-                            >
-                                Delete
-                            </button>
-                        </form>
+                        action="{{ route('admin.requests.destroy', $req->id) }}"
+                        onsubmit="return confirm('Are you sure you want to delete this request?')"
+                        class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" style="background-color: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;">
+                            Delete
+                        </button>
+                    </form>
 
                 </td>
 
