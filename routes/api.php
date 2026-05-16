@@ -1,12 +1,13 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RequestDocumentController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceRequestController;
+use App\Http\Controllers\Api\StaffRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -29,22 +30,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/my-requests/{serviceRequest}', [
         ServiceRequestController::class,
-        'show'
+        'show',
     ]);
 
     Route::get('/my-requests/{serviceRequest}/documents', [
         RequestDocumentController::class,
-        'index'
+        'index',
     ]);
 
     Route::post('/my-requests/{serviceRequest}/documents', [
         RequestDocumentController::class,
-        'store'
+        'store',
     ]);
 
     Route::delete('/my-requests/{serviceRequest}/documents/{document}', [
         RequestDocumentController::class,
-        'destroy'
+        'destroy',
     ]);
 
     Route::apiResource('appointments', AppointmentController::class);
@@ -56,4 +57,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payments/{payment}/process', [PaymentController::class, 'process']);
     Route::patch('/payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid']);
     Route::patch('/payments/{payment}/refund', [PaymentController::class, 'refund']);
+
+    // Staff & Admin: request management
+    Route::middleware('role:staff,admin')->group(function () {
+        Route::get('/staff/dashboard', [StaffRequestController::class, 'dashboard']);
+        Route::get('/staff/requests', [StaffRequestController::class, 'index']);
+        Route::get('/staff/requests/{serviceRequest}', [StaffRequestController::class, 'show']);
+        Route::patch('/staff/requests/{serviceRequest}/status', [StaffRequestController::class, 'updateStatus']);
+        Route::get('/staff/appointments', [StaffRequestController::class, 'appointments']);
+        Route::patch('/staff/appointments/{appointment}', [StaffRequestController::class, 'updateAppointment']);
+    });
+
+    // Admin only: assign requests to staff
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/admin/requests/{serviceRequest}/assign', [StaffRequestController::class, 'assign']);
+    });
 });
