@@ -48,16 +48,131 @@ Common HTTP status codes: `200`, `201`, `401`, `403`, `404`, `422`.
 
 ## Auth
 
-### Citizen registration flow (iOS)
+Citizen authentication for the iOS app. Use only the routes below — not the internal/deprecated endpoints at the end of this section.
 
-1. `POST /identity/preview` — upload ID front/back, receive `verification_session_token` and editable `fields`.
-2. `POST /register/complete` — submit confirmed profile data + auth provider credentials.
+### iOS auth routes
 
-Legacy `POST /register` remains for admin/testing only; **do not use it in the iOS app**.
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `POST` | `/identity/preview` | No | Upload ID images, get OCR-prefilled form |
+| `POST` | `/register/complete` | No | Finish registration after preview |
+| `POST` | `/auth/google` | No | Sign in with native Google (returns token) |
+| `POST` | `/auth/apple` | No | Sign in with native Apple (returns token) |
+| `POST` | `/login` | No | Email/password step 1 (OTP challenge) |
+| `POST` | `/login/verify-otp` | No | Email/password step 2 (token) |
+| `POST` | `/login/resend-otp` | No | Resend login OTP |
+| `GET` | `/me` | Yes | Current user |
+| `POST` | `/logout` | Yes | Revoke current token |
+
+### Flow overview
+
+**New citizen (registration)**
+
+```
+POST /identity/preview  →  editable fields + verification_session_token
+POST /register/complete →  user + token
+```
+
+Choose one auth method in `register/complete`:
+
+- `auth_provider: "google"` — include `provider_token` (Google ID token)
+- `auth_provider: "apple"` — include `provider_token` (Apple identity token)
+- `auth_provider: "email"` — include `password` + `password_confirmation`
+
+**Returning citizen (sign-in)**
+
+| Method | Steps |
+|--------|--------|
+| Google | `POST /auth/google` → token |
+| Apple | `POST /auth/apple` → token |
+| Email | `POST /login` → `POST /login/verify-otp` → token (optional `POST /login/resend-otp`) |
+
+Social sign-in does **not** use OTP. Email/password sign-in always requires OTP before a token is issued.
 
 ---
 
-### Complete registration
+### ID preview (registration step 1)
+
+| | |
+|---|---|
+| **Method** | `POST` |
+| **Path** | `/identity/preview` |
+| **Auth** | No |
+
+**Request** (`multipart/form-data`)
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `id_front` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
+| `id_back` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
+
+**Response** `200`
+
+```json
+{
+  "success": true,
+  "message": "Identity preview generated successfully.",
+  "data": {
+    "verification_session_token": "64-char-token",
+    "fields": [
+      {
+        "key": "first_name",
+        "label": "First Name",
+        "type": "text",
+        "value": "Ali",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "last_name",
+        "label": "Last Name",
+        "type": "text",
+        "value": "Hodroj",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "father_name",
+        "label": "Father Name",
+        "type": "text",
+        "value": "",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "mother_name",
+        "label": "Mother Name",
+        "type": "text",
+        "value": "",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "date_of_birth",
+        "label": "Date of Birth",
+        "type": "date",
+        "value": null,
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "national_id",
+        "label": "National ID",
+        "type": "text",
+        "value": "",
+        "editable": true,
+        "required": true
+      }
+    ]
+  }
+}
+```
+
+**Notes:** OCR runs on the front ID image only. Parsed values are best-effort; let the user edit all fields. Session expires after 24 hours. Pass `verification_session_token` to `/register/complete`.
+
+---
+
+### Registration completion (registration step 2)
 
 | | |
 |---|---|
@@ -87,13 +202,13 @@ Legacy `POST /register` remains for admin/testing only; **do not use it in the i
 |-------|----------|-------|
 | `verification_session_token` | Yes | From `/identity/preview` |
 | `auth_provider` | Yes | `google`, `apple`, or `email` |
-| `provider_token` | If google/apple | Google ID token or Apple identity token |
+| `provider_token` | If google/apple | Native ID token from the mobile SDK |
 | `email` | Yes | Must match provider token email when applicable |
 | `first_name`, `last_name`, `father_name`, `mother_name` | Yes | |
 | `date_of_birth` | Yes | `Y-m-d` |
 | `national_id` | Yes | Unique |
 | `phone` | No | |
-| `password` | If `email` | Min 8 chars |
+| `password` | If `email` | Min 8 characters |
 | `password_confirmation` | If `email` | Must match `password` |
 
 **Response** `201`
@@ -102,18 +217,13 @@ Legacy `POST /register` remains for admin/testing only; **do not use it in the i
 {
   "success": true,
   "message": "Registered successfully",
-  "errors": null,
   "data": {
     "user": {
       "id": 1,
       "name": "Ali Hodroj",
       "first_name": "Ali",
       "last_name": "Hodroj",
-      "father_name": "Father",
-      "mother_name": "Mother",
-      "date_of_birth": "2001-05-10",
       "email": "user@example.com",
-      "national_id": "123456789",
       "role": "citizen"
     },
     "token": "1|plainTextToken..."
@@ -121,29 +231,82 @@ Legacy `POST /register` remains for admin/testing only; **do not use it in the i
 }
 ```
 
-**Notes:** ID images from the preview session are moved to permanent storage on the user. The verification session is marked `consumed` and cannot be reused.
+**Notes:** ID images are moved to permanent user storage. The preview session is marked `consumed` and cannot be reused. `name` on the user is stored as `first_name` + `last_name`.
+
+**Email registration example** — set `auth_provider` to `"email"` and include `password` / `password_confirmation` instead of `provider_token`.
 
 ---
 
-### Register (legacy / testing only)
+### Google sign-in (native)
+
+For **returning** users who registered with Google. Returns a Sanctum token immediately (no OTP).
 
 | | |
 |---|---|
 | **Method** | `POST` |
-| **Path** | `/register` |
+| **Path** | `/auth/google` |
 | **Auth** | No |
 
-Not part of the iOS citizen onboarding flow. Retained for admin/testing.
+**Request**
+
+```json
+{
+  "id_token": "google-native-id-token"
+}
+```
+
+**Response** `200`
+
+```json
+{
+  "success": true,
+  "message": "Logged in successfully",
+  "data": {
+    "user": { "id": 1, "email": "user@gmail.com", "role": "citizen" },
+    "token": "2|plainTextToken..."
+  }
+}
+```
+
+**Notes:** Server verifies the Google ID token (issuer, audience, expiry, verified email). Links an existing account or creates one for first-time Google users without going through ID preview. For **new** citizens with ID verification, use registration (`/identity/preview` → `/register/complete` with `auth_provider: "google"`).
 
 ---
 
-### Login (email/password — step 1)
+### Apple sign-in (native)
+
+For **returning** users who registered with Apple. Returns a Sanctum token immediately (no OTP).
 
 | | |
 |---|---|
 | **Method** | `POST` |
-| **Path** | `/login` |
+| **Path** | `/auth/apple` |
 | **Auth** | No |
+
+**Request**
+
+```json
+{
+  "identity_token": "apple-native-identity-token",
+  "full_name": "Optional Name From First Apple Login"
+}
+```
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `identity_token` | Yes | From `ASAuthorizationAppleIDCredential` |
+| `full_name` | No | Only needed when Apple omits name on later sign-ins |
+
+**Response** `200` — same shape as Google (`data.user` + `data.token`).
+
+**Notes:** Server verifies the Apple identity token against your app bundle ID. Supports private relay emails (`@privaterelay.appleid.com`). For **new** citizens with ID verification, use `/identity/preview` → `/register/complete` with `auth_provider: "apple"`.
+
+---
+
+### Email sign-in (OTP)
+
+Password users must complete OTP before receiving a token.
+
+#### Step 1 — `POST /login`
 
 **Request**
 
@@ -154,7 +317,7 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 }
 ```
 
-**Response** `200` — does **not** return a token. Starts OTP verification.
+**Response** `200` — no token
 
 ```json
 {
@@ -168,17 +331,9 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 }
 ```
 
-**Notes:** Google/Apple login (`/auth/google`, `/auth/apple`) still return a token immediately. Returns `403` if account is inactive.
+In `local` environment, the message hints to check Laravel logs for the OTP code.
 
----
-
-### Verify login OTP (email/password — step 2)
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/login/verify-otp` |
-| **Auth** | No |
+#### Step 2 — `POST /login/verify-otp`
 
 **Request**
 
@@ -194,22 +349,15 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 ```json
 {
   "success": true,
+  "message": "Logged in successfully",
   "data": {
-    "user": { "id": 1, "name": "Jane Citizen", "email": "jane@example.com", "role": "citizen" },
+    "user": { "id": 1, "email": "jane@example.com", "role": "citizen" },
     "token": "2|plainTextToken..."
   }
 }
 ```
 
----
-
-### Resend login OTP
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/login/resend-otp` |
-| **Auth** | No |
+#### Resend — `POST /login/resend-otp`
 
 **Request**
 
@@ -219,19 +367,7 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 }
 ```
 
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "challenge_token": "64-char-token",
-    "expires_at": "2026-05-17T12:10:00.000000Z"
-  }
-}
-```
-
-**Notes:** OTP is logged to Laravel logs (email/SMS not wired yet). In `local` environment, the response message hints to check application logs.
+**Response** `200` — new `expires_at`; same `challenge_token`. OTP is logged server-side until email/SMS delivery is added.
 
 ---
 
@@ -243,7 +379,7 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 | **Path** | `/me` |
 | **Auth** | Yes |
 
-**Response** `200` — `data.user` contains the authenticated user object.
+**Response** `200` — `data.user` is a `UserResource`.
 
 ---
 
@@ -255,7 +391,18 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 | **Path** | `/logout` |
 | **Auth** | Yes |
 
-**Response** `200` — `data` is `null`. Revokes the current token only.
+**Response** `200` — `data` is `null`. Revokes the current bearer token only.
+
+---
+
+### Internal / deprecated (not for iOS)
+
+These endpoints are **not** part of the citizen app. Do not call them from iOS.
+
+| Method | Path | Status |
+|--------|------|--------|
+| `POST` | `/register` | Deprecated — legacy single-step registration (admin/testing) |
+| `POST` | `/verify-id` | Removed — replaced by `/identity/preview` + `/register/complete` |
 
 ---
 
@@ -338,88 +485,6 @@ Not part of the iOS citizen onboarding flow. Retained for admin/testing.
 ```
 
 **Response** `200` — updated `UserResource`.
-
----
-
-### Identity preview (pre-registration)
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/identity/preview` |
-| **Auth** | No |
-
-**Request** (`multipart/form-data`)
-
-| Field | Type | Rules |
-|-------|------|-------|
-| `id_front` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
-| `id_back` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "message": "Identity preview generated successfully.",
-  "errors": null,
-  "data": {
-    "verification_session_token": "64-char-token",
-    "fields": [
-      {
-        "key": "first_name",
-        "label": "First Name",
-        "type": "text",
-        "value": "Ali",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "last_name",
-        "label": "Last Name",
-        "type": "text",
-        "value": "Hodroj",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "father_name",
-        "label": "Father Name",
-        "type": "text",
-        "value": "",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "mother_name",
-        "label": "Mother Name",
-        "type": "text",
-        "value": "",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "date_of_birth",
-        "label": "Date of Birth",
-        "type": "date",
-        "value": null,
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "national_id",
-        "label": "National ID",
-        "type": "text",
-        "value": "",
-        "editable": true,
-        "required": true
-      }
-    ]
-  }
-}
-```
-
-**Notes:** OCR runs on the front ID image only (OCR.space). Parsed values are best-effort; empty fields remain editable on iOS. Store `verification_session_token` for a future registration/confirm step. Session expires after 24 hours.
 
 ---
 
@@ -1121,8 +1186,12 @@ document: <file>
 
 | Area | Auth required |
 |------|----------------|
-| Register, login, categories, services, offices, service feedback, track | No |
+| Auth (preview, register/complete, social login, login/OTP), categories, services, offices, service feedback, track | No |
 | Everything else | Yes |
+
+**iOS auth (public):** `POST /identity/preview`, `POST /register/complete`, `POST /auth/google`, `POST /auth/apple`, `POST /login`, `POST /login/verify-otp`, `POST /login/resend-otp`
+
+**iOS auth (authenticated):** `GET /me`, `POST /logout`
 
 **Multipart endpoints:** `POST /identity/preview`, `POST /my-requests/{id}/documents`
 

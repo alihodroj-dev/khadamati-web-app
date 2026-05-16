@@ -19,13 +19,18 @@ use App\Http\Controllers\Api\StaffRequestController;
 use App\Http\Controllers\Api\TrackingController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register']);
+/*
+|--------------------------------------------------------------------------
+| Citizen auth (iOS)
+|--------------------------------------------------------------------------
+*/
+Route::post('/identity/preview', [IdentityPreviewController::class, 'preview']);
 Route::post('/register/complete', [AuthController::class, 'completeRegistration']);
+Route::post('/auth/google', [AuthController::class, 'google']);
+Route::post('/auth/apple', [AuthController::class, 'apple']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/login/resend-otp', [AuthController::class, 'resendOtp']);
-Route::post('/auth/google', [AuthController::class, 'google']);
-Route::post('/auth/apple', [AuthController::class, 'apple']);
 
 Route::get('/service-categories', [ServiceCategoryController::class, 'index']);
 Route::get('/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'show']);
@@ -39,7 +44,12 @@ Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);
 Route::get('/offices', [OfficeController::class, 'index']);
 Route::get('/offices/{office}', [OfficeController::class, 'show']);
 
-Route::post('/identity/preview', [IdentityPreviewController::class, 'preview']);
+/*
+|--------------------------------------------------------------------------
+| Internal / deprecated (not for iOS)
+|--------------------------------------------------------------------------
+*/
+Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
