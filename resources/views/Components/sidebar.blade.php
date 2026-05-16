@@ -139,13 +139,19 @@
 
                 </a>
 
-                <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200 bg-gray-50">
+                <a href="{{ route('admin.appointments.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+
+                   {{ request()->routeIs('admin.appointments.*')
+                        ? 'bg-white text-blue-700 font-semibold shadow-sm'
+                        : 'text-white hover:bg-blue-800 hover:text-black'
+                   }}">
 
                     <span>
                         Appointments
                     </span>
 
-                </div>
+                </a>
 
                 <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200 bg-gray-50">
 
@@ -206,6 +212,13 @@
                 class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-blue-800">
 
                     My Requests
+
+                </a>
+
+                <a href="{{ route('staff.appointments.index') }}"
+                class="flex items-center px-4 py-3 rounded-xl text-white hover:bg-blue-800">
+
+                    My Appointments
 
                 </a>
 

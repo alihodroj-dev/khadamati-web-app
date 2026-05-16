@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\AppointmentController;
 
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\StaffRequestController;
+use App\Http\Controllers\Staff\StaffAppointmentController;
+
 
 use App\Http\Controllers\Auth\LoginController;
 
@@ -138,6 +140,25 @@ Route::middleware('auth')->group(function () {
 
         });
 
+        Route::prefix('appointments')->group(function () {
+
+            Route::get('/', [AppointmentController::class, 'index'])
+                ->name('admin.appointments.index');
+
+            Route::get('/{id}', [AppointmentController::class, 'show'])
+                ->name('admin.appointments.show');
+
+            Route::get('/{id}/edit', [AppointmentController::class, 'edit'])
+                ->name('admin.appointments.edit');
+
+            Route::put('/{id}', [AppointmentController::class, 'update'])
+                ->name('admin.appointments.update');
+
+            Route::delete('/{id}', [AppointmentController::class, 'destroy'])
+                ->name('admin.appointments.destroy');
+
+        });
+
     });
 
     /*
@@ -160,6 +181,22 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/requests/{id}/status', [StaffRequestController::class, 'updateStatus'])
             ->name('staff.requests.updateStatus');
+    });
+
+    Route::prefix('appointments')->group(function () {
+
+        Route::get('/', [StaffAppointmentController::class, 'index'])
+            ->name('staff.appointments.index');
+
+        Route::get('/today', [StaffAppointmentController::class, 'today'])
+            ->name('staff.appointments.today');
+
+        Route::get('/{id}', [StaffAppointmentController::class, 'show'])
+            ->name('staff.appointments.show');
+
+        Route::post('/{id}/update', [StaffAppointmentController::class, 'update'])
+            ->name('staff.appointments.update');
+
     });
 
 });
