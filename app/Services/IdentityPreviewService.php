@@ -5,15 +5,13 @@ namespace App\Services;
 use App\Models\IdentityVerificationSession;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
-use Throwable;
 
 class IdentityPreviewService
 {
     private const SESSION_TTL_HOURS = 24;
 
     public function __construct(
-        private OcrSpaceService $ocrSpaceService,
-        private IdentityIdParserService $identityIdParser,
+        private OcrSpaceIdentityService $ocrSpaceIdentityService,
         private IdentityPreviewFormBuilder $formBuilder
     ) {}
 
@@ -38,16 +36,13 @@ class IdentityPreviewService
         $frontPath = $idFront->storeAs($basePath, $this->buildStoredFilename('front', $idFront), 'public');
         $backPath = $idBack->storeAs($basePath, $this->buildStoredFilename('back', $idBack), 'public');
 
-        $ocrRawText = null;
-        $status = IdentityVerificationSession::STATUS_PENDING;
+        $ocrResult = $this->ocrSpaceIdentityService->extractFromFrontIdPath($frontPath);
 
-        try {
-            $ocrRawText = $this->ocrSpaceService->extractText($idFront);
-        } catch (Throwable) {
-            $status = IdentityVerificationSession::STATUS_FAILED;
-        }
-
-        $extractedData = $this->identityIdParser->parse($ocrRawText ?? '');
+        $ocrRawText = $ocrResult['success'] ? $ocrResult['raw_text'] : null;
+        $status = $ocrResult['success']
+            ? IdentityVerificationSession::STATUS_PENDING
+            : IdentityVerificationSession::STATUS_FAILED;
+        $extractedData = $ocrResult['extracted_fields'];
 
         $session = IdentityVerificationSession::create([
             'session_token' => $sessionToken,

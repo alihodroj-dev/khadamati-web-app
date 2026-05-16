@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\IdentityVerificationSession;
-use App\Services\OcrSpaceService;
+use App\Services\OcrSpaceIdentityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -25,10 +25,22 @@ class IdentityPreviewTest extends TestCase
     {
         Storage::fake('public');
 
-        $this->mock(OcrSpaceService::class, function ($mock) {
-            $mock->shouldReceive('extractText')
+        $this->mock(OcrSpaceIdentityService::class, function ($mock) {
+            $mock->shouldReceive('extractFromFrontIdPath')
                 ->once()
-                ->andReturn("First Name: Ali\nLast Name: Hodroj\nNational ID: 1234567890");
+                ->andReturn([
+                    'success' => true,
+                    'raw_text' => "First Name: Ali\nLast Name: Hodroj\nNational ID: 1234567890",
+                    'extracted_fields' => [
+                        'first_name' => 'Ali',
+                        'last_name' => 'Hodroj',
+                        'father_name' => '',
+                        'mother_name' => '',
+                        'date_of_birth' => null,
+                        'national_id' => '1234567890',
+                    ],
+                    'error' => null,
+                ]);
         });
 
         $response = $this->postJson('/api/identity/preview', [
@@ -67,10 +79,22 @@ class IdentityPreviewTest extends TestCase
     {
         Storage::fake('public');
 
-        $this->mock(OcrSpaceService::class, function ($mock) {
-            $mock->shouldReceive('extractText')
+        $this->mock(OcrSpaceIdentityService::class, function ($mock) {
+            $mock->shouldReceive('extractFromFrontIdPath')
                 ->once()
-                ->andThrow(new \RuntimeException('OCR.space request failed.'));
+                ->andReturn([
+                    'success' => false,
+                    'raw_text' => '',
+                    'extracted_fields' => [
+                        'first_name' => '',
+                        'last_name' => '',
+                        'father_name' => '',
+                        'mother_name' => '',
+                        'date_of_birth' => null,
+                        'national_id' => '',
+                    ],
+                    'error' => OcrSpaceIdentityService::ERROR_PARSE,
+                ]);
         });
 
         $response = $this->postJson('/api/identity/preview', [
