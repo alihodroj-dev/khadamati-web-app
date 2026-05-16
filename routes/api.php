@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::patch('/profile', [ProfileController::class, 'update']);
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
+    Route::patch('/profile/notification-preferences', [ProfileController::class, 'updateNotificationPreferences']);
 
     Route::post('/verify-id', [IdVerificationController::class, 'verify']);
 

@@ -67,4 +67,30 @@ class ProfileController extends Controller
 
         return $this->successResponse(null, 'Password updated successfully.');
     }
+
+    public function updateNotificationPreferences(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->isCitizen()) {
+            return $this->errorResponse(
+                'Only citizens can update notification preferences.',
+                null,
+                403
+            );
+        }
+
+        $validated = $request->validate([
+            'push_notifications_enabled' => ['sometimes', 'boolean'],
+            'email_notifications_enabled' => ['sometimes', 'boolean'],
+            'sms_notifications_enabled' => ['sometimes', 'boolean'],
+        ]);
+
+        $user->update($validated);
+
+        return $this->successResponse(
+            new UserResource($user->fresh()),
+            'Notification preferences updated successfully.'
+        );
+    }
 }

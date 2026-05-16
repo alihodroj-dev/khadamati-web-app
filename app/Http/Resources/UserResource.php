@@ -22,6 +22,9 @@ class UserResource extends JsonResource
                 : null,
             'role' => $this->role,
             'is_active' => (bool) $this->is_active,
+            'push_notifications_enabled' => (bool) $this->push_notifications_enabled,
+            'email_notifications_enabled' => (bool) $this->email_notifications_enabled,
+            'sms_notifications_enabled' => (bool) $this->sms_notifications_enabled,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

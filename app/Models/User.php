@@ -31,6 +31,9 @@ class User extends Authenticatable
         'national_id',
         'id_document_path',
         'is_active',
+        'push_notifications_enabled',
+        'email_notifications_enabled',
+        'sms_notifications_enabled',
     ];
 
     protected function casts(): array
@@ -39,6 +42,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'push_notifications_enabled' => 'boolean',
+            'email_notifications_enabled' => 'boolean',
+            'sms_notifications_enabled' => 'boolean',
         ];
     }
 
