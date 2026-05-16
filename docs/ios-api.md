@@ -634,7 +634,16 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 | **Path** | `/offices` |
 | **Auth** | No |
 
-**Query:** `search`, `near_lat`, `near_lng` (both required together for distance sort)
+**Query (all optional)**
+
+| Param | Description |
+|-------|-------------|
+| `service_id` | Offices offering this active service (office-specific service → that office; global service → all active offices) |
+| `category_id` | Offices with at least one active service in this category |
+| `search` | Match `name`, `address`, or `email` |
+| `near_lat`, `near_lng` | Both required together — sort nearest first (Haversine); include `distance_km` on each office with coordinates |
+
+Filters combine with AND. Default sort is `name` ascending; with `near_lat`/`near_lng`, sort by distance (offices without coordinates last).
 
 **Response** `200`
 
@@ -648,6 +657,7 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
         "address": "Hamra Street",
         "latitude": 33.8938,
         "longitude": 35.5018,
+        "distance_km": 0.72,
         "working_hours": { "mon": "08:00-16:00" },
         "is_active": true
       }
@@ -655,6 +665,8 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
   }
 }
 ```
+
+`distance_km` is present only when `near_lat` and `near_lng` are sent and the office has coordinates.
 
 ---
 
