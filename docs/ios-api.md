@@ -659,6 +659,9 @@ Filters combine with AND. Default sort is `name` ascending; with `near_lat`/`nea
         "longitude": 35.5018,
         "distance_km": 0.72,
         "working_hours": { "mon": "08:00-16:00" },
+        "services_count": 12,
+        "average_rating": 4.6,
+        "ratings_count": 38,
         "is_active": true
       }
     ]
@@ -667,6 +670,14 @@ Filters combine with AND. Default sort is `name` ascending; with `near_lat`/`nea
 ```
 
 `distance_km` is present only when `near_lat` and `near_lng` are sent and the office has coordinates.
+
+Discovery stats (list and show):
+
+| Field | Meaning |
+|-------|---------|
+| `services_count` | Distinct services with at least one **completed** request at this office |
+| `ratings_count` | Feedback count from **completed** requests at this office |
+| `average_rating` | Mean feedback rating (1 decimal); `null` when `ratings_count` is 0 |
 
 ---
 

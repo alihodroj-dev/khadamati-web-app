@@ -22,9 +22,23 @@ class OfficeResource extends JsonResource
                 fn () => round((float) $this->distance_km, 2)
             ),
             'working_hours' => $this->working_hours ?? [],
+            'services_count' => (int) ($this->services_count ?? 0),
+            'average_rating' => $this->discoveryAverageRating(),
+            'ratings_count' => (int) ($this->ratings_count ?? 0),
             'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    private function discoveryAverageRating(): ?float
+    {
+        $ratingsCount = (int) ($this->ratings_count ?? 0);
+
+        if ($ratingsCount === 0 || $this->average_rating === null) {
+            return null;
+        }
+
+        return round((float) $this->average_rating, 1);
     }
 }

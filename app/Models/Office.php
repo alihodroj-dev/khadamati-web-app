@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Office extends Model
@@ -35,5 +36,39 @@ class Office extends Model
     public function serviceRequests()
     {
         return $this->hasMany(ServiceRequest::class);
+    }
+
+    public function completedServiceRequests()
+    {
+        return $this->serviceRequests()->where('status', 'completed');
+    }
+
+    public function feedbackFromCompletedRequests()
+    {
+        return $this->hasManyThrough(
+            Feedback::class,
+            ServiceRequest::class,
+            'office_id',
+            'service_request_id',
+            'id',
+            'id'
+        )->where('service_requests.status', 'completed');
+    }
+
+    public function scopeWithDiscoveryStats(Builder $query): Builder
+    {
+        return $query
+            ->addSelect([
+                'services_count' => ServiceRequest::query()
+                    ->selectRaw('count(distinct service_id)')
+                    ->whereColumn('service_requests.office_id', 'offices.id')
+                    ->where('service_requests.status', 'completed'),
+            ])
+            ->withCount([
+                'feedbackFromCompletedRequests as ratings_count',
+            ])
+            ->withAvg([
+                'feedbackFromCompletedRequests as average_rating',
+            ], 'rating');
     }
 }
