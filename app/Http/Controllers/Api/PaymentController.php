@@ -52,7 +52,7 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'service_request_id' => ['required', 'exists:service_requests,id'],
             'appointment_id' => ['nullable', 'exists:appointments,id'],
-            'payment_method' => ['required', 'in:card,cash'],
+            'payment_method' => ['required', 'in:card,cash,crypto'],
             'amount' => ['nullable', 'numeric', 'min:0.01'],
             'currency' => ['nullable', 'string', 'size:3'],
         ]);
@@ -114,10 +114,7 @@ class PaymentController extends Controller
             'payment_method' => $validated['payment_method'],
             'status' => 'pending',
             'transaction_reference' => 'TXN-'.strtoupper(Str::random(12)),
-            'payment_details' => [
-                'provider' => 'mock',
-                'environment' => 'sandbox',
-            ],
+            'payment_details' => $this->buildInitialPaymentDetails($validated['payment_method']),
         ]);
 
         $payment->load(['serviceRequest', 'appointment']);
@@ -241,5 +238,24 @@ class PaymentController extends Controller
             new PaymentResource($payment),
             'Payment refunded successfully.'
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildInitialPaymentDetails(string $paymentMethod): array
+    {
+        if ($paymentMethod === 'crypto') {
+            return [
+                'provider' => 'mock',
+                'network' => 'testnet',
+                'wallet_address' => '0x'.strtolower(Str::random(40)),
+            ];
+        }
+
+        return [
+            'provider' => 'mock',
+            'environment' => 'sandbox',
+        ];
     }
 }
