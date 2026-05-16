@@ -78,6 +78,11 @@ Route::middleware('auth:sanctum')->group(function () {
         'show',
     ]);
 
+    Route::get('/my-requests/{serviceRequest}/certificate', [
+        ServiceRequestController::class,
+        'certificate',
+    ]);
+
     Route::patch('/my-requests/{serviceRequest}/cancel', [
         ServiceRequestController::class,
         'cancel',

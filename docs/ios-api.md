@@ -836,6 +836,40 @@ Step `status` is `completed` or `pending`. `staff_notes` is omitted for citizens
 
 ---
 
+### Certificate (placeholder)
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **Path** | `/my-requests/{serviceRequest}/certificate` |
+| **Auth** | Yes |
+
+Lightweight JSON record for completed requests. **No PDF** — use for iOS completion screens until real document generation exists.
+
+**Rules:** Citizen must own the request. Request `status` must be `completed`.
+
+**Response** `200`
+
+```json
+{
+  "data": {
+    "certificate": {
+      "certificate_number": "CERT-KHR-20260517-ABC123",
+      "request_reference": "KHR-20260517-ABC123",
+      "service_name": "Passport Renewal",
+      "citizen_name": "Ali Hodroj",
+      "office_name": "Beirut Main Office",
+      "issued_at": "2026-05-15T14:00:00.000000Z",
+      "status": "valid"
+    }
+  }
+}
+```
+
+`issued_at` uses `completed_at` when present. `certificate_number` is `CERT-` + `reference_number`.
+
+---
+
 ## Documents
 
 Each `RequestDocumentResource` includes:

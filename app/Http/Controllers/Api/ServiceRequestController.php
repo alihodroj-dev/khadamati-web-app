@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ServiceRequestCertificateResource;
 use App\Http\Resources\ServiceRequestResource;
 use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceRequest;
+use App\Support\ServiceRequestCertificateBuilder;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -173,6 +175,37 @@ class ServiceRequestController extends Controller
                 'service_request' => new ServiceRequestResource($serviceRequest),
             ],
             'Service request retrieved successfully'
+        );
+    }
+
+    public function certificate(
+        Request $request,
+        ServiceRequest $serviceRequest,
+        ServiceRequestCertificateBuilder $certificateBuilder
+    ) {
+        if ($serviceRequest->user_id !== $request->user()->id) {
+            return $this->errorResponse(
+                'You are not allowed to view the certificate for this service request.',
+                null,
+                403
+            );
+        }
+
+        if ($serviceRequest->status !== 'completed') {
+            return $this->errorResponse(
+                'A certificate is only available for completed service requests.',
+                null,
+                422
+            );
+        }
+
+        return $this->successResponse(
+            [
+                'certificate' => new ServiceRequestCertificateResource(
+                    $certificateBuilder->build($serviceRequest)
+                ),
+            ],
+            'Service request certificate retrieved successfully.'
         );
     }
 
