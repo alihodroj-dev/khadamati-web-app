@@ -17,12 +17,11 @@
 <x-table>
 
     <x-slot name="head">
-
         <th class="px-4 py-3 text-left">Reference</th>
         <th class="px-4 py-3 text-left">Service</th>
         <th class="px-4 py-3 text-left">Status</th>
+        <th class="px-4 py-3 text-left">Payment</th>
         <th class="px-4 py-3 text-left">Actions</th>
-
     </x-slot>
 
     <x-slot name="body">

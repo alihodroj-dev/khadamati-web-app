@@ -2,11 +2,21 @@
 
 @section('content')
 
-<div class="mb-6">
+<div class="mb-6 flex justify-between items-center">
 
-    <h1 class="text-2xl font-bold">
-        My Appointments
-    </h1>
+    <div>
+        <h1 class="text-2xl font-bold">
+            My Appointments
+        </h1>
+        <p class="text-sm text-gray-500">
+            All your scheduled appointments
+        </p>
+    </div>
+
+    <a href="{{ route('staff.appointments.today') }}"
+       class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+        Today's Schedule
+    </a>
 
 </div>
 
@@ -53,66 +63,13 @@
 
     </tr>
 
-@empty
-
-    {{-- FAKE TEST DATA --}}
-    <tr class="border-t bg-gray-50">
-
-        <td class="px-4 py-3 font-semibold">
-            REF-2026-001
-        </td>
-
-        <td class="px-4 py-3">
-            2026-05-20
-        </td>
-
-        <td class="px-4 py-3">
-            10:30 AM
-        </td>
-
-        <td class="px-4 py-3">
-            <span class="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700">
-                Scheduled
-            </span>
-        </td>
-
-        <td class="px-4 py-3">
-            <span class="text-gray-400 text-sm">
-                View (disabled - demo)
-            </span>
-        </td>
-
-    </tr>
-
-    <tr class="border-t">
-
-        <td class="px-4 py-3 font-semibold">
-            REF-2026-002
-        </td>
-
-        <td class="px-4 py-3">
-            2026-05-22
-        </td>
-
-        <td class="px-4 py-3">
-            02:00 PM
-        </td>
-
-        <td class="px-4 py-3">
-            <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
-                Completed
-            </span>
-        </td>
-
-        <td class="px-4 py-3">
-            <span class="text-gray-400 text-sm">
-                View (disabled - demo)
-            </span>
-        </td>
-
-    </tr>
-
-@endforelse
+    @empty
+        <tr>
+            <td colspan="5" class="text-center py-6 text-gray-500">
+                No appointments found
+            </td>
+        </tr>
+    @endforelse
 
     </x-slot>
 

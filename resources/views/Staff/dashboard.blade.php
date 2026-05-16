@@ -10,17 +10,17 @@
 
     <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-gray-500">Assigned Requests</h2>
-        <p class="text-3xl font-bold mt-2">24</p>
+        <p class="text-3xl font-bold mt-2">{{ $assignedRequests }}</p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-gray-500">Appointments</h2>
-        <p class="text-3xl font-bold mt-2">12</p>
+        <p class="text-3xl font-bold mt-2">{{ $appointments }}</p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-gray-500">Completed Tasks</h2>
-        <p class="text-3xl font-bold mt-2">89</p>
+        <p class="text-3xl font-bold mt-2">{{ $completedTasks }}</p>
     </div>
 
 </div>

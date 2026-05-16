@@ -34,8 +34,9 @@ class ServiceRequestController extends Controller
     {
         $request = ServiceRequest::with(['user', 'service', 'staff'])
             ->findOrFail($id);
+        $staff = User::where('role', 'staff')->get();
 
-        return view('admin.requests.show', compact('request'));
+        return view('admin.requests.show', compact('request', 'staff'));
     }
 
     /**

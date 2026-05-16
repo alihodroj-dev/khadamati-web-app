@@ -100,7 +100,7 @@
 
                     <option value="">Select Staff</option>
 
-                    @foreach(\App\Models\User::where('role','staff')->get() as $staff)
+                    @foreach($staff)
 
                         <option value="{{ $staff->id }}">
                             {{ $staff->name }}

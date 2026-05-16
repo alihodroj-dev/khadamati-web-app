@@ -48,18 +48,13 @@
 
                 @csrf
 
-                <select name="status"
-                        class="w-full border rounded px-3 py-2 mb-3">
-
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="rejected">Rejected</option>
-
+                <select name="status" class="w-full border rounded px-3 py-2 mb-3">
+                    <option value="in_progress" {{ $request->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                    <option value="completed" {{ $request->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="rejected" {{ $request->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>
 
-                <textarea name="staff_notes"
-                          placeholder="Add notes..."
-                          class="w-full border rounded px-3 py-2 mb-3"></textarea>
+                <textarea name="staff_notes" class="w-full border rounded px-3 py-2 mb-3">{{ $request->staff_notes }}</textarea>
 
                 <button class="w-full bg-blue-600 text-white py-2 rounded">
                     Update
