@@ -8,6 +8,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'service_request_id',
+        'appointment_id',
         'user_id',
         'amount',
         'currency',
@@ -27,6 +28,11 @@ class Payment extends Model
     public function serviceRequest()
     {
         return $this->belongsTo(ServiceRequest::class);
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class);
     }
 
     public function user()

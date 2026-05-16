@@ -18,6 +18,11 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->foreignId('appointment_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->foreignId('user_id')
                 ->constrained()
                 ->cascadeOnDelete();
@@ -34,7 +39,7 @@ return new class extends Migration
                 'pending',
                 'paid',
                 'failed',
-                'refunded'
+                'refunded',
             ])->default('pending');
 
             $table->string('transaction_reference')->nullable()->unique();

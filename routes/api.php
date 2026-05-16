@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RequestDocumentController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
@@ -47,4 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     ]);
 
     Route::apiResource('appointments', AppointmentController::class);
+
+    // Payments
+    Route::get('/payments', [PaymentController::class, 'index']);
+    Route::post('/payments', [PaymentController::class, 'store']);
+    Route::get('/payments/{payment}', [PaymentController::class, 'show']);
+    Route::post('/payments/{payment}/process', [PaymentController::class, 'process']);
+    Route::patch('/payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid']);
+    Route::patch('/payments/{payment}/refund', [PaymentController::class, 'refund']);
 });
