@@ -23,30 +23,19 @@ class AppointmentController extends Controller
 
         if ($user->isAdmin()) {
 
-            $appointments = Appointment::with([
-                'user',
-                'staff',
-                'serviceRequest',
-            ])->latest()->get();
+            $appointments = Appointment::with($this->appointmentRelations())
+                ->latest()->get();
 
         } elseif ($user->isStaff()) {
 
-            $appointments = Appointment::with([
-                'user',
-                'staff',
-                'serviceRequest',
-            ])
+            $appointments = Appointment::with($this->appointmentRelations())
                 ->where('staff_id', $user->id)
                 ->latest()
                 ->get();
 
         } else {
 
-            $appointments = Appointment::with([
-                'user',
-                'staff',
-                'serviceRequest',
-            ])
+            $appointments = Appointment::with($this->appointmentRelations())
                 ->where('user_id', $user->id)
                 ->latest()
                 ->get();
@@ -209,11 +198,7 @@ class AppointmentController extends Controller
             'status' => 'scheduled',
         ]);
 
-        $appointment->load([
-            'user',
-            'staff',
-            'serviceRequest',
-        ]);
+        $appointment->load($this->appointmentRelations());
 
         $appointment->user?->notify(new AppointmentUpdatedNotification(
             $appointment,
@@ -232,11 +217,7 @@ class AppointmentController extends Controller
     {
         $this->authorize('view', $appointment);
 
-        $appointment->load([
-            'user',
-            'staff',
-            'serviceRequest',
-        ]);
+        $appointment->load($this->appointmentRelations());
 
         return $this->successResponse(
             new AppointmentResource($appointment),
@@ -274,11 +255,7 @@ class AppointmentController extends Controller
 
         $appointment->update($validated);
 
-        $appointment->load([
-            'user',
-            'staff',
-            'serviceRequest',
-        ]);
+        $appointment->load($this->appointmentRelations());
 
         $appointment->user?->notify(new AppointmentUpdatedNotification(
             $appointment,
@@ -308,5 +285,18 @@ class AppointmentController extends Controller
             null,
             'Appointment deleted successfully.'
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function appointmentRelations(): array
+    {
+        return [
+            'user',
+            'staff',
+            'serviceRequest.office',
+            'serviceRequest.service',
+        ];
     }
 }

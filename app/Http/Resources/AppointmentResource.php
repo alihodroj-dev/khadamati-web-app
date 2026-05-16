@@ -21,6 +21,8 @@ class AppointmentResource extends JsonResource
                 'tracking_token' => $this->serviceRequest->tracking_token,
                 'status' => $this->serviceRequest->status,
             ] : null,
+            'office' => $this->officeSummary(),
+            'service' => $this->serviceSummary(),
             'citizen' => [
                 'id' => $this->user?->id,
                 'name' => $this->user?->name,
@@ -45,5 +47,48 @@ class AppointmentResource extends JsonResource
         $time = (string) $this->appointment_time;
 
         return strlen($time) >= 5 ? substr($time, 0, 5) : $time;
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     name: string,
+     *     address: string|null,
+     *     latitude: float|null,
+     *     longitude: float|null
+     * }|null
+     */
+    protected function officeSummary(): ?array
+    {
+        $office = $this->serviceRequest?->office;
+
+        if ($office === null) {
+            return null;
+        }
+
+        return [
+            'id' => $office->id,
+            'name' => $office->name,
+            'address' => $office->address,
+            'latitude' => $office->latitude !== null ? (float) $office->latitude : null,
+            'longitude' => $office->longitude !== null ? (float) $office->longitude : null,
+        ];
+    }
+
+    /**
+     * @return array{id: int, name: string}|null
+     */
+    protected function serviceSummary(): ?array
+    {
+        $service = $this->serviceRequest?->service;
+
+        if ($service === null) {
+            return null;
+        }
+
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+        ];
     }
 }

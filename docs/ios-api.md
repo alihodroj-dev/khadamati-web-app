@@ -984,6 +984,17 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
     "tracking_token": "abc123token",
     "status": "under_review"
   },
+  "office": {
+    "id": 1,
+    "name": "Beirut Main Office",
+    "address": "Hamra Street",
+    "latitude": 33.8938,
+    "longitude": 35.5018
+  },
+  "service": {
+    "id": 5,
+    "name": "Passport Renewal"
+  },
   "citizen": { "id": 1, "name": "Jane Citizen", "email": "jane@example.com" },
   "staff": { "id": 3, "name": "Staff User", "email": "staff@example.com" },
   "created_at": "2026-05-16T10:00:00.000000Z",
