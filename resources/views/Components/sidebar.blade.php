@@ -153,13 +153,19 @@
 
                 </a>
 
-                <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200 bg-gray-50">
+                <a href="{{ route('admin.payments.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+
+                   {{ request()->routeIs('admin.payments.*')
+                        ? 'bg-white text-blue-700 font-semibold shadow-sm'
+                        : 'text-white hover:bg-blue-800 hover:text-black'
+                   }}">
 
                     <span>
                         Payments
                     </span>
 
-                </div>
+                </a>
 
             </div>
 

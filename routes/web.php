@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\PaymentController;
 
 
 use App\Http\Controllers\Staff\StaffDashboardController;
@@ -156,6 +157,22 @@ Route::middleware('auth')->group(function () {
 
             Route::delete('/{id}', [AppointmentController::class, 'destroy'])
                 ->name('admin.appointments.destroy');
+
+        });
+
+        Route::prefix('payments')->group(function () {
+
+            Route::get('/', [PaymentController::class, 'index'])
+                ->name('admin.payments.index');
+
+            Route::get('/{id}', [PaymentController::class, 'show'])
+                ->name('admin.payments.show');
+
+            Route::post('/{requestId}/create', [PaymentController::class, 'store'])
+                ->name('admin.payments.store');
+
+            Route::put('/{id}', [PaymentController::class, 'update'])
+                ->name('admin.payments.update');
 
         });
 

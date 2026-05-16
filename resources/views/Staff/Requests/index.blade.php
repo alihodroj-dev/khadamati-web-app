@@ -44,6 +44,15 @@
                 </td>
 
                 <td class="px-4 py-3">
+                    @if($req->payment && $req->payment->status === 'paid')
+                        <span class="text-green-600">Paid</span>
+                    @else
+                        <span class="text-yellow-600">Pending</span>
+                    @endif
+                </td>
+
+
+                <td class="px-4 py-3">
 
                     <a href="{{ route('staff.requests.show', $req->id) }}"
                        class="text-blue-600 hover:underline">

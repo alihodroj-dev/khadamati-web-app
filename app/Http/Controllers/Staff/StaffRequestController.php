@@ -13,7 +13,7 @@ class StaffRequestController extends Controller
      */
     public function index()
     {
-        $requests = ServiceRequest::with(['service', 'user'])
+        $requests = ServiceRequest::with(['service', 'user', 'payment'])
             ->where('assigned_staff_id', auth()->id())
             ->latest()
             ->paginate(10);
