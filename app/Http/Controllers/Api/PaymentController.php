@@ -53,14 +53,33 @@ class PaymentController extends Controller
             'service_request_id' => ['required', 'exists:service_requests,id'],
             'appointment_id' => ['nullable', 'exists:appointments,id'],
             'payment_method' => ['required', 'in:card,cash'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'currency' => ['sometimes', 'string', 'size:3'],
+            'amount' => ['nullable', 'numeric', 'min:0.01'],
+            'currency' => ['nullable', 'string', 'size:3'],
         ]);
 
-        $serviceRequest = ServiceRequest::findOrFail($validated['service_request_id']);
+        $serviceRequest = ServiceRequest::with('service')
+            ->findOrFail($validated['service_request_id']);
 
         if ($serviceRequest->user_id !== $request->user()->id) {
             return $this->errorResponse('Unauthorized service request.', null, 403);
+        }
+
+        if (! $serviceRequest->service) {
+            return $this->errorResponse(
+                'Service not found for this service request.',
+                null,
+                404
+            );
+        }
+
+        $amount = $validated['amount'] ?? $serviceRequest->service->base_fee;
+
+        if ((float) $amount <= 0) {
+            return $this->errorResponse(
+                'This service does not require payment.',
+                null,
+                422
+            );
         }
 
         if (isset($validated['appointment_id'])) {
@@ -90,7 +109,7 @@ class PaymentController extends Controller
             'service_request_id' => $validated['service_request_id'],
             'appointment_id' => $validated['appointment_id'] ?? null,
             'user_id' => $request->user()->id,
-            'amount' => $validated['amount'],
+            'amount' => $amount,
             'currency' => strtoupper($validated['currency'] ?? 'USD'),
             'payment_method' => $validated['payment_method'],
             'status' => 'pending',
