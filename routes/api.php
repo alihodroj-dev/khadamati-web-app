@@ -92,6 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
         'store',
     ]);
 
+    Route::post('/my-requests/{serviceRequest}/documents/bulk', [
+        RequestDocumentController::class,
+        'bulkStore',
+    ]);
+
     Route::get('/my-requests/{serviceRequest}/documents/{document}/download', [
         RequestDocumentController::class,
         'download',

@@ -8,8 +8,11 @@ use App\Models\RequestDocument;
 use App\Models\ServiceRequest;
 use App\Support\RequiredDocumentDefinition;
 use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class RequestDocumentController extends Controller
 {
@@ -17,12 +20,8 @@ class RequestDocumentController extends Controller
 
     public function index(Request $request, ServiceRequest $serviceRequest)
     {
-        if ($serviceRequest->user_id !== $request->user()->id) {
-            return $this->errorResponse(
-                'You are not allowed to view documents for this service request.',
-                null,
-                403
-            );
+        if ($response = $this->denyUnlessOwner($request, $serviceRequest, 'view')) {
+            return $response;
         }
 
         $documents = $serviceRequest
@@ -40,80 +39,34 @@ class RequestDocumentController extends Controller
 
     public function store(Request $request, ServiceRequest $serviceRequest)
     {
-        if ($serviceRequest->user_id !== $request->user()->id) {
-            return $this->errorResponse(
-                'You are not allowed to upload documents for this service request.',
-                null,
-                403
-            );
+        if ($response = $this->denyUnlessCanUpload($request, $serviceRequest)) {
+            return $response;
         }
 
-        if (in_array($serviceRequest->status, ['completed', 'cancelled', 'rejected'])) {
-            return $this->errorResponse(
-                'Documents cannot be uploaded for this service request status.',
-                null,
-                422
-            );
-        }
-
-        $serviceRequest->loadMissing('service');
-
-        $requiredDefinitions = RequiredDocumentDefinition::normalizeList(
-            $serviceRequest->service?->required_documents ?? []
-        );
+        $requiredDefinitions = $this->requiredDocumentDefinitions($serviceRequest);
 
         $validated = $request->validate([
             'document_type' => ['required', 'string', 'max:255'],
             'document' => ['required', 'file'],
         ]);
 
-        $resolvedKey = RequiredDocumentDefinition::resolveTypeKey(
+        if ($response = $this->validateDocumentItem(
             $validated['document_type'],
-            $requiredDefinitions
-        );
-
-        if ($requiredDefinitions !== [] && $resolvedKey === null) {
-            return $this->errorResponse(
-                'The document type is not required for this service.',
-                [
-                    'document_type' => ['The document type must match a required document key or label.'],
-                ],
-                422
-            );
+            $request->file('document'),
+            $requiredDefinitions,
+            'document_type',
+            'document'
+        )) {
+            return $response;
         }
 
-        $definition = $resolvedKey !== null
-            ? RequiredDocumentDefinition::find($resolvedKey, $requiredDefinitions)
-            : null;
-
-        $acceptedTypes = $definition['accepted_types'] ?? RequiredDocumentDefinition::DEFAULT_ACCEPTED_TYPES;
-        $maxSizeKb = ($definition['max_size_mb'] ?? RequiredDocumentDefinition::DEFAULT_MAX_SIZE_MB) * 1024;
-
-        $request->validate([
-            'document' => [
-                'file',
-                'mimes:'.implode(',', $acceptedTypes),
-                'max:'.$maxSizeKb,
-            ],
-        ]);
-
-        $file = $request->file('document');
-
-        $path = $file->store(
-            'request-documents/' . $serviceRequest->id,
-            'public'
+        $document = $this->createRequestDocument(
+            $request,
+            $serviceRequest,
+            $validated['document_type'],
+            $request->file('document'),
+            $requiredDefinitions
         );
-
-        $document = RequestDocument::create([
-            'service_request_id' => $serviceRequest->id,
-            'uploaded_by' => $request->user()->id,
-            'document_type' => $resolvedKey ?? $validated['document_type'],
-            'file_name' => $file->getClientOriginalName(),
-            'file_path' => $path,
-            'mime_type' => $file->getClientMimeType(),
-            'file_size' => $file->getSize(),
-            'status' => 'pending',
-        ]);
 
         return $this->successResponse(
             [
@@ -124,14 +77,64 @@ class RequestDocumentController extends Controller
         );
     }
 
+    public function bulkStore(Request $request, ServiceRequest $serviceRequest)
+    {
+        if ($response = $this->denyUnlessCanUpload($request, $serviceRequest)) {
+            return $response;
+        }
+
+        $requiredDefinitions = $this->requiredDocumentDefinitions($serviceRequest);
+
+        $validated = $request->validate([
+            'documents' => ['required', 'array', 'min:1'],
+            'documents.*.document_type' => ['required', 'string', 'max:255'],
+            'documents.*.file' => ['required', 'file'],
+        ]);
+
+        $prepared = [];
+
+        foreach ($validated['documents'] as $index => $item) {
+            if ($response = $this->validateDocumentItem(
+                $item['document_type'],
+                $item['file'],
+                $requiredDefinitions,
+                "documents.{$index}.document_type",
+                "documents.{$index}.file"
+            )) {
+                return $response;
+            }
+
+            $prepared[] = [
+                'document_type' => $item['document_type'],
+                'file' => $item['file'],
+            ];
+        }
+
+        $documents = [];
+
+        foreach ($prepared as $item) {
+            $documents[] = $this->createRequestDocument(
+                $request,
+                $serviceRequest,
+                $item['document_type'],
+                $item['file'],
+                $requiredDefinitions
+            );
+        }
+
+        return $this->successResponse(
+            [
+                'documents' => RequestDocumentResource::collection(collect($documents)),
+            ],
+            'Documents uploaded successfully',
+            201
+        );
+    }
+
     public function download(Request $request, ServiceRequest $serviceRequest, RequestDocument $document)
     {
-        if ($serviceRequest->user_id !== $request->user()->id) {
-            return $this->errorResponse(
-                'You are not allowed to download documents for this service request.',
-                null,
-                403
-            );
+        if ($response = $this->denyUnlessOwner($request, $serviceRequest, 'download')) {
+            return $response;
         }
 
         if ($document->service_request_id !== $serviceRequest->id) {
@@ -159,12 +162,8 @@ class RequestDocumentController extends Controller
 
     public function destroy(Request $request, ServiceRequest $serviceRequest, RequestDocument $document)
     {
-        if ($serviceRequest->user_id !== $request->user()->id) {
-            return $this->errorResponse(
-                'You are not allowed to delete documents for this service request.',
-                null,
-                403
-            );
+        if ($response = $this->denyUnlessOwner($request, $serviceRequest, 'delete')) {
+            return $response;
         }
 
         if ($document->service_request_id !== $serviceRequest->id) {
@@ -190,5 +189,142 @@ class RequestDocumentController extends Controller
         $document->delete();
 
         return $this->successResponse(null, 'Document deleted successfully');
+    }
+
+    private function denyUnlessOwner(Request $request, ServiceRequest $serviceRequest, string $action): ?JsonResponse
+    {
+        if ($serviceRequest->user_id !== $request->user()->id) {
+            return $this->errorResponse(
+                "You are not allowed to {$action} documents for this service request.",
+                null,
+                403
+            );
+        }
+
+        return null;
+    }
+
+    private function denyUnlessCanUpload(Request $request, ServiceRequest $serviceRequest): ?JsonResponse
+    {
+        if ($response = $this->denyUnlessOwner($request, $serviceRequest, 'upload')) {
+            return $response;
+        }
+
+        if (in_array($serviceRequest->status, ['completed', 'cancelled', 'rejected'], true)) {
+            return $this->errorResponse(
+                'Documents cannot be uploaded for this service request status.',
+                null,
+                422
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<array{
+     *     key: string,
+     *     label: string,
+     *     required: bool,
+     *     accepted_types: list<string>,
+     *     max_size_mb: int
+     * }>
+     */
+    private function requiredDocumentDefinitions(ServiceRequest $serviceRequest): array
+    {
+        $serviceRequest->loadMissing('service');
+
+        return RequiredDocumentDefinition::normalizeList(
+            $serviceRequest->service?->required_documents ?? []
+        );
+    }
+
+    private function validateDocumentItem(
+        string $documentType,
+        UploadedFile $file,
+        array $requiredDefinitions,
+        string $typeField,
+        string $fileField
+    ): ?JsonResponse {
+        $resolvedKey = RequiredDocumentDefinition::resolveTypeKey(
+            $documentType,
+            $requiredDefinitions
+        );
+
+        if ($requiredDefinitions !== [] && $resolvedKey === null) {
+            return $this->errorResponse(
+                'The document type is not required for this service.',
+                [
+                    $typeField => ['The document type must match a required document key or label.'],
+                ],
+                422
+            );
+        }
+
+        $definition = $resolvedKey !== null
+            ? RequiredDocumentDefinition::find($resolvedKey, $requiredDefinitions)
+            : null;
+
+        $acceptedTypes = $definition['accepted_types'] ?? RequiredDocumentDefinition::DEFAULT_ACCEPTED_TYPES;
+        $maxSizeKb = ($definition['max_size_mb'] ?? RequiredDocumentDefinition::DEFAULT_MAX_SIZE_MB) * 1024;
+
+        $validator = Validator::make(
+            [$fileField => $file],
+            [
+                $fileField => [
+                    'file',
+                    'mimes:'.implode(',', $acceptedTypes),
+                    'max:'.$maxSizeKb,
+                ],
+            ]
+        );
+
+        if ($validator->fails()) {
+            return $this->errorResponse(
+                'Validation failed.',
+                $validator->errors()->toArray(),
+                422
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  list<array{
+     *     key: string,
+     *     label: string,
+     *     required: bool,
+     *     accepted_types: list<string>,
+     *     max_size_mb: int
+     * }>  $requiredDefinitions
+     */
+    private function createRequestDocument(
+        Request $request,
+        ServiceRequest $serviceRequest,
+        string $documentType,
+        UploadedFile $file,
+        array $requiredDefinitions
+    ): RequestDocument {
+        $resolvedKey = RequiredDocumentDefinition::resolveTypeKey(
+            $documentType,
+            $requiredDefinitions
+        );
+
+        $path = $file->store(
+            'request-documents/'.$serviceRequest->id,
+            'public'
+        );
+
+        return RequestDocument::create([
+            'service_request_id' => $serviceRequest->id,
+            'uploaded_by' => $request->user()->id,
+            'document_type' => $resolvedKey ?? $documentType,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'mime_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+            'status' => 'pending',
+        ]);
     }
 }

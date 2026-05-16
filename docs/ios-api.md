@@ -789,6 +789,41 @@ These endpoints are **not** part of the citizen app. Do not call them from iOS.
 
 ---
 
+### Bulk upload documents
+
+| | |
+|---|---|
+| **Method** | `POST` |
+| **Path** | `/my-requests/{serviceRequest}/documents/bulk` |
+| **Auth** | Yes |
+
+**Request** (`multipart/form-data`)
+
+| Field | Notes |
+|-------|--------|
+| `documents[0][document_type]` | Key or legacy label |
+| `documents[0][file]` | File (jpg, jpeg, png, pdf; max 5 MB per file) |
+| `documents[1][document_type]` | … |
+| `documents[1][file]` | … |
+
+At least one entry is required. Same ownership and status rules as single upload. Each item is validated before any file is stored.
+
+**Response** `201`
+
+```json
+{
+  "success": true,
+  "message": "Documents uploaded successfully",
+  "data": {
+    "documents": []
+  }
+}
+```
+
+`data.documents[]` uses `RequestDocumentResource` (same shape as single upload).
+
+---
+
 ### Download document
 
 | | |
