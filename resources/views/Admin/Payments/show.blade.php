@@ -45,9 +45,11 @@
             </select>
 
             <select name="payment_method" class="w-full border rounded px-3 py-2 mb-3">
+                <option value="" {{ is_null($payment->payment_method) ? 'selected' : '' }}>-- Not set --</option>
                 <option value="cash" {{ $payment->payment_method === 'cash' ? 'selected' : '' }}>Cash</option>
                 <option value="card" {{ $payment->payment_method === 'card' ? 'selected' : '' }}>Card</option>
                 <option value="online" {{ $payment->payment_method === 'online' ? 'selected' : '' }}>Online</option>
+                <option value="cryptocurrency" {{ $payment->payment_method === 'cryptocurrency' ? 'selected' : '' }}>Cryptocurrency</option>
             </select>
 
             <textarea name="payment_details"

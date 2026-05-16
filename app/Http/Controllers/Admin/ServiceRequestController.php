@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Service;
+use App\Models\Payment;
 use Illuminate\Http\Request as HttpRequest;
 
 class ServiceRequestController extends Controller
@@ -67,6 +68,19 @@ class ServiceRequestController extends Controller
 
         if ($status === 'completed') {
             $request->completed_at = now();
+
+            // ✅ AUTO-CREATE PAYMENT ON COMPLETION
+            Payment::firstOrCreate(
+                ['service_request_id' => $request->id],
+                [
+                    'user_id'               => $request->user_id,
+                    'amount'                => $request->service->base_fee,
+                    'currency'              => 'LBP',
+                    'payment_method'        => null,
+                    'status'                => 'pending',
+                    'transaction_reference' => uniqid('PAY-'),
+                ]
+            );
         }
 
         if ($status === 'rejected') {

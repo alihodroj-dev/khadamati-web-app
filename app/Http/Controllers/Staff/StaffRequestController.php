@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use Illuminate\Http\Request as HttpRequest;
 use App\Models\ServiceRequest;
 
@@ -46,6 +47,18 @@ class StaffRequestController extends Controller
 
         if ($httpRequest->status === 'completed') {
             $request->completed_at = now();
+
+            Payment::firstOrCreate(
+                ['service_request_id' => $request->id],
+                [
+                    'user_id'               => $request->user_id,
+                    'amount'                => $request->service->base_fee,
+                    'currency'              => 'LBP',
+                    'payment_method'        => null,
+                    'status'                => 'pending',
+                    'transaction_reference' => uniqid('PAY-'),
+                ]
+            );
         }
 
         $request->save();
