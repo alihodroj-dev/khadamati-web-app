@@ -226,38 +226,85 @@ Common HTTP status codes: `200`, `201`, `401`, `403`, `404`, `422`.
 
 ---
 
-### Verify ID (mock)
+### Identity preview (pre-registration)
 
 | | |
 |---|---|
 | **Method** | `POST` |
-| **Path** | `/verify-id` |
-| **Auth** | Yes (citizens only) |
+| **Path** | `/identity/preview` |
+| **Auth** | No |
 
-**Request** (`multipart` if uploading document)
+**Request** (`multipart/form-data`)
 
-```json
-{
-  "national_id": "CTZ-000001",
-  "id_document": "<file optional>"
-}
-```
+| Field | Type | Rules |
+|-------|------|-------|
+| `id_front` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
+| `id_back` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
 
 **Response** `200`
 
 ```json
 {
   "success": true,
+  "message": "Identity preview generated successfully.",
+  "errors": null,
   "data": {
-    "full_name": "Jane Citizen",
-    "national_id": "CTZ-000001",
-    "date_of_birth": null,
-    "verification_status": "verified"
+    "verification_session_token": "64-char-token",
+    "fields": [
+      {
+        "key": "first_name",
+        "label": "First Name",
+        "type": "text",
+        "value": "Ali",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "last_name",
+        "label": "Last Name",
+        "type": "text",
+        "value": "Hodroj",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "father_name",
+        "label": "Father Name",
+        "type": "text",
+        "value": "",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "mother_name",
+        "label": "Mother Name",
+        "type": "text",
+        "value": "",
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "date_of_birth",
+        "label": "Date of Birth",
+        "type": "date",
+        "value": null,
+        "editable": true,
+        "required": true
+      },
+      {
+        "key": "national_id",
+        "label": "National ID",
+        "type": "text",
+        "value": "",
+        "editable": true,
+        "required": true
+      }
+    ]
   }
 }
 ```
 
-**Notes:** Mock verification only; updates the user's `national_id`. No external API yet.
+**Notes:** OCR runs on the front ID image only (OCR.space). Parsed values are best-effort; empty fields remain editable on iOS. Store `verification_session_token` for a future registration/confirm step. Session expires after 24 hours.
 
 ---
 
@@ -962,6 +1009,6 @@ document: <file>
 | Register, login, categories, services, offices, service feedback, track | No |
 | Everything else | Yes |
 
-**Multipart endpoints:** `POST /register`, `POST /verify-id`, `POST /my-requests/{id}/documents`
+**Multipart endpoints:** `POST /register`, `POST /identity/preview`, `POST /my-requests/{id}/documents`
 
 **File download:** `GET /my-requests/{id}/documents/{id}/download`

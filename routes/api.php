@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FeedbackController;
-use App\Http\Controllers\Api\IdVerificationController;
+use App\Http\Controllers\Api\IdentityPreviewController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\PaymentController;
@@ -36,6 +36,8 @@ Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);
 Route::get('/offices', [OfficeController::class, 'index']);
 Route::get('/offices/{office}', [OfficeController::class, 'show']);
 
+Route::post('/identity/preview', [IdentityPreviewController::class, 'preview']);
+
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/me', [AuthController::class, 'me']);
@@ -48,8 +50,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
     Route::delete('/device-tokens/{deviceToken}', [DeviceTokenController::class, 'destroy']);
-
-    Route::post('/verify-id', [IdVerificationController::class, 'verify']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
