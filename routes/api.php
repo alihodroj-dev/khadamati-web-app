@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payments', [PaymentController::class, 'index']);
     Route::post('/payments', [PaymentController::class, 'store']);
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
+    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt']);
     Route::post('/payments/{payment}/process', [PaymentController::class, 'process']);
     Route::patch('/payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid']);
     Route::patch('/payments/{payment}/refund', [PaymentController::class, 'refund']);

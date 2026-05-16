@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PaymentReceiptResource;
 use App\Http\Resources\PaymentResource;
 use App\Models\Appointment;
 use App\Models\Payment;
@@ -141,6 +142,26 @@ class PaymentController extends Controller
         return $this->successResponse(
             new PaymentResource($payment),
             'Payment retrieved successfully.'
+        );
+    }
+
+    public function receipt(Payment $payment)
+    {
+        $this->authorize('receipt', $payment);
+
+        if ($payment->status !== 'paid') {
+            return $this->errorResponse(
+                'Receipt is only available for paid payments.',
+                null,
+                422
+            );
+        }
+
+        $payment->load(['serviceRequest.service', 'user']);
+
+        return $this->successResponse(
+            new PaymentReceiptResource($payment),
+            'Payment receipt retrieved successfully.'
         );
     }
 

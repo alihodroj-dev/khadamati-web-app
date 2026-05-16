@@ -48,4 +48,13 @@ class PaymentPolicy
     {
         return $user->isAdmin();
     }
+
+    public function receipt(User $user, Payment $payment): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isCitizen() && $payment->user_id === $user->id;
+    }
 }
