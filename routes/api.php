@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PaymentController;
@@ -71,5 +72,22 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin only: assign requests to staff
     Route::middleware('role:admin')->group(function () {
         Route::post('/admin/requests/{serviceRequest}/assign', [StaffRequestController::class, 'assign']);
+
+        Route::get('/admin/users', [AdminController::class, 'users']);
+        Route::post('/admin/users', [AdminController::class, 'createUser']);
+        Route::patch('/admin/users/{user}', [AdminController::class, 'updateUser']);
+        Route::patch('/admin/users/{user}/role', [AdminController::class, 'updateRole']);
+        Route::patch('/admin/users/{user}/activation', [AdminController::class, 'updateActivation']);
+        Route::get('/admin/staff', [AdminController::class, 'staff']);
+
+        Route::get('/admin/services', [AdminController::class, 'services']);
+        Route::post('/admin/services', [AdminController::class, 'createService']);
+        Route::patch('/admin/services/{service}', [AdminController::class, 'updateService']);
+        Route::delete('/admin/services/{service}', [AdminController::class, 'deleteService']);
+
+        Route::get('/admin/service-categories', [AdminController::class, 'categories']);
+        Route::post('/admin/service-categories', [AdminController::class, 'createCategory']);
+        Route::patch('/admin/service-categories/{serviceCategory}', [AdminController::class, 'updateCategory']);
+        Route::delete('/admin/service-categories/{serviceCategory}', [AdminController::class, 'deleteCategory']);
     });
 });
