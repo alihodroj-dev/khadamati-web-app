@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
@@ -72,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Staff & Admin: request management
     Route::middleware('role:staff,admin')->group(function () {
+        Route::get('/dashboard/statistics', [DashboardController::class, 'statistics']);
         Route::get('/staff/dashboard', [StaffRequestController::class, 'dashboard']);
         Route::get('/staff/requests', [StaffRequestController::class, 'index']);
         Route::get('/staff/requests/{serviceRequest}', [StaffRequestController::class, 'show']);
