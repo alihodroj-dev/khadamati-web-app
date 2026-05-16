@@ -105,8 +105,8 @@ class PaymentController extends Controller
 
         $payment->user?->notify(new PaymentUpdatedNotification(
             $payment,
-            'Payment processed',
-            $status === 'paid' ? 'Your payment was completed successfully.' : 'Your payment failed.'
+            'Payment initiated',
+            'Your payment has been initiated.'
         ));
 
         return $this->successResponse(

@@ -47,10 +47,10 @@ class ServiceRequestController extends Controller
         $serviceRequest->load('service.category');
 
         return $this->successResponse(
-            'Service request submitted successfully',
             [
                 'service_request' => new ServiceRequestResource($serviceRequest),
             ],
+            'Service request submitted successfully',
             201
         );
     }
@@ -70,10 +70,10 @@ class ServiceRequestController extends Controller
             ->get();
 
         return $this->successResponse(
-            'Service requests retrieved successfully',
             [
                 'service_requests' => ServiceRequestResource::collection($requests),
-            ]
+            ],
+            'Service requests retrieved successfully'
         );
     }
 
@@ -96,17 +96,17 @@ class ServiceRequestController extends Controller
         ]);
 
         return $this->successResponse(
-            'Service request retrieved successfully',
             [
                 'service_request' => new ServiceRequestResource($serviceRequest),
-            ]
+            ],
+            'Service request retrieved successfully'
         );
     }
 
     private function generateReferenceNumber(): string
     {
         do {
-            $reference = 'KHR-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
+            $reference = 'KHR-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
         } while (ServiceRequest::where('reference_number', $reference)->exists());
 
         return $reference;

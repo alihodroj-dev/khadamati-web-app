@@ -36,10 +36,10 @@ class ServiceController extends Controller
             ->get();
 
         return $this->successResponse(
-            'Services retrieved successfully',
             [
                 'services' => ServiceResource::collection($services),
-            ]
+            ],
+            'Services retrieved successfully'
         );
     }
 
@@ -56,10 +56,10 @@ class ServiceController extends Controller
         $service->load('category');
 
         return $this->successResponse(
-            'Service retrieved successfully',
             [
                 'service' => new ServiceResource($service),
-            ]
+            ],
+            'Service retrieved successfully'
         );
     }
 }

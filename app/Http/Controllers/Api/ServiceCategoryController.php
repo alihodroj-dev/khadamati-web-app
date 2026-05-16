@@ -21,10 +21,10 @@ class ServiceCategoryController extends Controller
             ->get();
 
         return $this->successResponse(
-            'Service categories retrieved successfully',
             [
                 'categories' => ServiceCategoryResource::collection($categories),
-            ]
+            ],
+            'Service categories retrieved successfully'
         );
     }
 
@@ -45,10 +45,10 @@ class ServiceCategoryController extends Controller
         ]);
 
         return $this->successResponse(
-            'Service category retrieved successfully',
             [
                 'category' => new ServiceCategoryResource($serviceCategory),
-            ]
+            ],
+            'Service category retrieved successfully'
         );
     }
 }
