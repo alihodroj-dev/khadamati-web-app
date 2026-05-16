@@ -26,6 +26,11 @@ class FeedbackPolicy
         return $user->isCitizen();
     }
 
+    public function update(User $user, Feedback $feedback): bool
+    {
+        return $user->isCitizen() && $feedback->user_id === $user->id;
+    }
+
     public function delete(User $user, Feedback $feedback): bool
     {
         return $user->isAdmin();

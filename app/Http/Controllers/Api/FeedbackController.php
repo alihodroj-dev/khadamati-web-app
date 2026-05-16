@@ -85,6 +85,25 @@ class FeedbackController extends Controller
         );
     }
 
+    public function update(Request $request, Feedback $feedback)
+    {
+        $this->authorize('update', $feedback);
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['nullable', 'string'],
+        ]);
+
+        $feedback->update($validated);
+
+        $feedback->load(['user', 'serviceRequest.service']);
+
+        return $this->successResponse(
+            new FeedbackResource($feedback),
+            'Feedback updated successfully.'
+        );
+    }
+
     public function destroy(Feedback $feedback)
     {
         $this->authorize('delete', $feedback);

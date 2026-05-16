@@ -97,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/feedback', [FeedbackController::class, 'index']);
     Route::post('/feedback', [FeedbackController::class, 'store']);
     Route::get('/feedback/{feedback}', [FeedbackController::class, 'show']);
+    Route::patch('/feedback/{feedback}', [FeedbackController::class, 'update']);
     Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy']);
 
     // Staff & Admin: request management
