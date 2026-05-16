@@ -29,6 +29,7 @@ class User extends Authenticatable
         'role',
         'phone',
         'national_id',
+        'id_document_path',
         'is_active',
     ];
 

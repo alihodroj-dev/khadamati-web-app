@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Http\Resources\UserResource;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +21,7 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8'],
             'phone' => ['nullable', 'string'],
             'national_id' => ['nullable', 'string', 'unique:users,national_id'],
+            'id_document' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
         $user = User::create([
@@ -31,11 +33,20 @@ class AuthController extends Controller
             'role' => User::ROLE_CITIZEN,
         ]);
 
+        if ($request->hasFile('id_document')) {
+            $path = $request->file('id_document')->store(
+                'id-documents/' . $user->id,
+                'public'
+            );
+
+            $user->update(['id_document_path' => $path]);
+        }
+
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
             [
-                'user' => $user,
+                'user' => new UserResource($user->fresh()),
                 'token' => $token,
             ],
             'Registered successfully',
