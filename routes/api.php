@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\IdVerificationController;
 use App\Http\Controllers\Api\NotificationController;
@@ -37,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update']);
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
     Route::patch('/profile/notification-preferences', [ProfileController::class, 'updateNotificationPreferences']);
+
+    Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+    Route::delete('/device-tokens/{deviceToken}', [DeviceTokenController::class, 'destroy']);
 
     Route::post('/verify-id', [IdVerificationController::class, 'verify']);
 

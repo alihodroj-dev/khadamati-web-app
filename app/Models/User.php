@@ -97,6 +97,11 @@ class User extends Authenticatable
         return $this->hasMany(Feedback::class);
     }
 
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
+
     // Role Checks
     public function isCitizen(): bool
     {
