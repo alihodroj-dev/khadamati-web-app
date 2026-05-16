@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\StaffRequestController;
+use App\Http\Controllers\Api\TrackingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -24,6 +25,8 @@ Route::get('/service-categories/{serviceCategory}', [ServiceCategoryController::
 
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{service}', [ServiceController::class, 'show']);
+
+Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
