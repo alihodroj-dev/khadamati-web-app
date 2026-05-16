@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::patch('/profile', [ProfileController::class, 'update']);
+    Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);

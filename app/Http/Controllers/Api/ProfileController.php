@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -40,5 +41,30 @@ class ProfileController extends Controller
             new UserResource($user->fresh()),
             'Profile updated successfully.'
         );
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return $this->errorResponse(
+                'The current password is incorrect.',
+                ['current_password' => ['The current password is incorrect.']],
+                422
+            );
+        }
+
+        $user->update(['password' => $validated['password']]);
+
+        $currentTokenId = $request->user()->currentAccessToken()->id;
+        $user->tokens()->where('id', '!=', $currentTokenId)->delete();
+
+        return $this->successResponse(null, 'Password updated successfully.');
     }
 }
