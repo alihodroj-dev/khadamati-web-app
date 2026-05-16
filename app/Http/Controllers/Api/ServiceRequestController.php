@@ -9,6 +9,7 @@ use App\Models\ServiceRequest;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ServiceRequestController extends Controller
 {
@@ -18,6 +19,16 @@ class ServiceRequestController extends Controller
         'pending',
         'under_review',
         'requires_action',
+    ];
+
+    private const STATUSES = [
+        'pending',
+        'under_review',
+        'requires_action',
+        'approved',
+        'rejected',
+        'completed',
+        'cancelled',
     ];
 
     public function store(Request $request)
@@ -64,12 +75,50 @@ class ServiceRequestController extends Controller
 
     public function myRequests(Request $request)
     {
+        $validated = $request->validate([
+            'status' => ['nullable', 'string', Rule::in(self::STATUSES)],
+            'service_id' => ['nullable', 'integer', 'exists:services,id'],
+            'category_id' => ['nullable', 'integer', 'exists:service_categories,id'],
+            'from_date' => ['nullable', 'date', 'date_format:Y-m-d'],
+            'to_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after_or_equal:from_date'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+
         $query = ServiceRequest::query()
             ->where('user_id', $request->user()->id)
             ->with('service.category');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if (! empty($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        if (! empty($validated['service_id'])) {
+            $query->where('service_id', $validated['service_id']);
+        }
+
+        if (! empty($validated['category_id'])) {
+            $query->whereHas('service', function ($serviceQuery) use ($validated) {
+                $serviceQuery->where('service_category_id', $validated['category_id']);
+            });
+        }
+
+        if (! empty($validated['from_date'])) {
+            $query->whereDate('submitted_at', '>=', $validated['from_date']);
+        }
+
+        if (! empty($validated['to_date'])) {
+            $query->whereDate('submitted_at', '<=', $validated['to_date']);
+        }
+
+        if (! empty($validated['search'])) {
+            $term = $validated['search'];
+            $query->where(function ($searchQuery) use ($term) {
+                $searchQuery
+                    ->where('reference_number', 'like', '%'.$term.'%')
+                    ->orWhereHas('service', function ($serviceQuery) use ($term) {
+                        $serviceQuery->where('name', 'like', '%'.$term.'%');
+                    });
+            });
         }
 
         $requests = $query
