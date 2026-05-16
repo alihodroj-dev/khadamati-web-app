@@ -4,10 +4,11 @@ namespace Tests\Feature;
 
 use App\Http\Resources\ServiceRequestResource;
 use App\Models\Service;
+use App\Models\User;
 use App\Models\ServiceCategory;
 use App\Models\ServiceRequest;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class PublicTrackingTest extends TestCase
@@ -60,6 +61,39 @@ class PublicTrackingTest extends TestCase
         $this->assertSame('https://example.com/api/track/qr-token', $payload['tracking_api_url']);
         $this->assertSame('https://example.com/track/qr-token', $payload['tracking_web_url']);
         $this->assertArrayNotHasKey('tracking_url', $payload);
+        $this->assertCount(3, $payload['timeline']);
+        $this->assertSame('submitted', $payload['timeline'][0]['key']);
+    }
+
+    public function test_citizen_cannot_see_staff_notes_in_service_request_resource(): void
+    {
+        $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
+        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+
+        $serviceRequest = $this->createTrackedRequest(
+            trackingToken: 'citizen-token',
+            referenceNumber: 'KHR-CIT-001',
+        );
+        $serviceRequest->update([
+            'assigned_staff_id' => $staff->id,
+            'staff_notes' => 'Internal staff note',
+        ]);
+
+        $citizenRequest = Request::create('/api/my-requests/1', 'GET');
+        $citizenRequest->setUserResolver(fn () => $citizen);
+
+        $payload = (new ServiceRequestResource($serviceRequest))
+            ->toArray($citizenRequest);
+
+        $this->assertArrayNotHasKey('staff_notes', $payload);
+
+        $staffRequest = Request::create('/api/my-requests/1', 'GET');
+        $staffRequest->setUserResolver(fn () => $staff);
+
+        $staffPayload = (new ServiceRequestResource($serviceRequest))
+            ->toArray($staffRequest);
+
+        $this->assertSame('Internal staff note', $staffPayload['staff_notes']);
     }
 
     protected function createTrackedRequest(

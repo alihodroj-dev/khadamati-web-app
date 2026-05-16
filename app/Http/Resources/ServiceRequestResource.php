@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\RequestDocument;
 use App\Support\RequiredDocumentDefinition;
+use App\Support\ServiceRequestTimelineBuilder;
 use App\Support\ServiceRequestTrackingUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -57,9 +58,10 @@ class ServiceRequestResource extends JsonResource
             'appointment' => new AppointmentResource($this->whenLoaded('appointment')),
             'payment' => new PaymentResource($this->whenLoaded('payment')),
             'feedback' => new FeedbackResource($this->whenLoaded('feedback')),
+            'timeline' => app(ServiceRequestTimelineBuilder::class)->build($this->resource),
 
             'citizen_notes' => $this->citizen_notes,
-            'staff_notes' => $this->staff_notes,
+            ...($this->canViewStaffNotes($request) ? ['staff_notes' => $this->staff_notes] : []),
             'rejection_reason' => $this->rejection_reason,
             'submitted_data' => $this->submitted_data ?? [],
 
@@ -69,5 +71,21 @@ class ServiceRequestResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    private function canViewStaffNotes(Request $request): bool
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isStaff()
+            && (int) $this->assigned_staff_id === (int) $user->id;
     }
 }

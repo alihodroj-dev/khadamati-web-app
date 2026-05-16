@@ -779,7 +779,34 @@ Discovery stats (list and show):
 | **Path** | `/my-requests/{serviceRequest}` |
 | **Auth** | Yes |
 
-**Response** `200` — `data.service_request` with `service`, `office`, `documents`, `requirement_documents`, `official_documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`.
+**Response** `200` — `data.service_request` with `service`, `office`, `documents`, `requirement_documents`, `official_documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`, `timeline`.
+
+`timeline` is computed from `submitted_at`, `reviewed_at`, `completed_at`, and `status` (no extra table):
+
+```json
+"timeline": [
+  {
+    "key": "submitted",
+    "label": "Request Submitted",
+    "status": "completed",
+    "occurred_at": "2026-05-10T09:00:00.000000Z"
+  },
+  {
+    "key": "reviewed",
+    "label": "Under Review",
+    "status": "completed",
+    "occurred_at": "2026-05-11T10:00:00.000000Z"
+  },
+  {
+    "key": "completed",
+    "label": "Completed",
+    "status": "pending",
+    "occurred_at": null
+  }
+]
+```
+
+Step `status` is `completed` or `pending`. `staff_notes` is omitted for citizens; only admins and assigned staff receive it.
 
 `required_documents` and `missing_documents` are arrays of objects (legacy string values in the database are normalized automatically):
 
