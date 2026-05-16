@@ -299,12 +299,19 @@ class PaymentController extends Controller
                 'provider' => 'mock',
                 'network' => 'testnet',
                 'wallet_address' => '0x'.strtolower(Str::random(40)),
+                'expires_at' => now()->addHours(24)->toISOString(),
+            ];
+        }
+
+        if ($paymentMethod === 'card') {
+            return [
+                'provider' => 'mock',
+                'environment' => 'sandbox',
             ];
         }
 
         return [
             'provider' => 'mock',
-            'environment' => 'sandbox',
         ];
     }
 }

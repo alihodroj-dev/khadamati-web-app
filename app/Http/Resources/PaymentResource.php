@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\PaymentNextActionBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,7 @@ class PaymentResource extends JsonResource
             'status' => $this->status,
             'transaction_reference' => $this->transaction_reference,
             'payment_details' => $this->payment_details ?? [],
+            'next_action' => PaymentNextActionBuilder::for($this->resource),
             'paid_at' => $this->paid_at?->toISOString(),
             'service_request' => $this->whenLoaded('serviceRequest', fn () => [
                 'id' => $this->serviceRequest->id,

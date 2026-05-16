@@ -973,12 +973,50 @@ document: <file>
 }
 ```
 
-**Response** `201` — `PaymentResource`.
+**Response** `201` — `PaymentResource` with `next_action` when status is `pending`.
+
+**Card** (`payment_method: "card"`) — mock checkout; confirm in sandbox via process endpoint:
+
+```json
+{
+  "id": 42,
+  "payment_method": "card",
+  "status": "pending",
+  "next_action": {
+    "type": "mock_card_confirmation",
+    "message": "Use /payments/42/process in sandbox"
+  }
+}
+```
+
+**Crypto** (`payment_method: "crypto"`) — mock on-chain transfer instructions:
+
+```json
+{
+  "id": 43,
+  "payment_method": "crypto",
+  "status": "pending",
+  "next_action": {
+    "type": "crypto_transfer",
+    "network": "testnet",
+    "wallet_address": "0xabcdef...",
+    "expires_at": "2026-05-18T12:00:00.000000Z"
+  },
+  "payment_details": {
+    "provider": "mock",
+    "network": "testnet",
+    "wallet_address": "0xabcdef...",
+    "expires_at": "2026-05-18T12:00:00.000000Z"
+  }
+}
+```
+
+**Cash** — no `next_action` (`null`). Staff may mark paid via admin flows.
 
 **Notes:**
 - `amount` optional — defaults to service `base_fee`.
 - `422` if fee is 0 or payment already exists (`pending`/`paid`).
-- Crypto payments include mock `payment_details` (`wallet_address`, `network`).
+- No real card or crypto gateway is integrated; all flows are mocked.
 
 ---
 
@@ -1011,9 +1049,16 @@ document: <file>
 }
 ```
 
-**Response** `200` — `mock_status`: `paid` or `failed` (default `paid`).
+**Response** `200` — updated `PaymentResource`. `next_action` is `null` after processing (no longer `pending`).
 
-**Notes:** Sandbox only. Own pending payments only.
+```json
+{
+  "mock_status": "paid",
+  "mock_message": "Sandbox success"
+}
+```
+
+**Notes:** Sandbox/mock only — simulates card confirmation or crypto settlement. Own pending payments only. Default `mock_status` is `paid`.
 
 ---
 
