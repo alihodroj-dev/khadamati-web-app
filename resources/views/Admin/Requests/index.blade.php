@@ -42,11 +42,11 @@
 
     <x-slot name="head">
 
-        <th class="px-4 py-3 text-left">Reference</th>
-        <th class="px-4 py-3 text-left">Service</th>
-        <th class="px-4 py-3 text-left">Status</th>
-        <th class="px-4 py-3 text-left">Staff</th>
-        <th class="px-4 py-3 text-left">Actions</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Reference</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Service</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Staff</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
 
     </x-slot>
 
@@ -54,20 +54,20 @@
 
         @forelse($requests as $req)
 
-            <tr class="border-t hover:bg-gray-50">
+            <tr class="hover:bg-gray-50 transition-colors">
 
                 {{-- Reference --}}
-                <td class="px-4 py-3 font-semibold text-gray-900">
+                <td class="px-4 py-4 text-sm text-gray-700">
                     {{ $req->reference_number }}
                 </td>
 
                 {{-- Service --}}
-                <td class="px-4 py-3 text-gray-700">
+                <td class="px-4 py-4 text-sm text-gray-700">
                     {{ $req->service->name ?? '-' }}
                 </td>
 
                 {{-- Status --}}
-                <td class="px-4 py-3">
+                <td class="px-4 py-4 text-sm text-gray-700">
 
                     <span class="px-3 py-1 rounded-full text-xs font-semibold
                         @if($req->status === 'pending') bg-yellow-100 text-yellow-800
@@ -85,12 +85,12 @@
                 </td>
 
                 {{-- Staff --}}
-                <td class="px-4 py-3 text-gray-700">
+                <td class="px-4 py-4 text-sm text-gray-700">
                     {{ $req->staff->name ?? 'Not assigned' }}
                 </td>
 
                 {{-- Actions (3) --}}
-                <td class="px-4 py-3 flex gap-3">
+                <td class="px-4 py-4 text-sm text-gray-700">
 
                     {{-- 1. VIEW --}}
                     <a href="{{ route('admin.requests.show', $req->id) }}"
@@ -122,8 +122,8 @@
 
         @empty
 
-            <tr>
-                <td colspan="5" class="text-center py-6 text-gray-500">
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-4 text-sm text-gray-700">
                     No requests found
                 </td>
             </tr>

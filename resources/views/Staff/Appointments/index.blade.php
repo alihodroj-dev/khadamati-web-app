@@ -24,11 +24,11 @@
 
     <x-slot name="head">
 
-        <th class="px-4 py-3">Reference</th>
-        <th class="px-4 py-3">Date</th>
-        <th class="px-4 py-3">Time</th>
-        <th class="px-4 py-3">Status</th>
-        <th class="px-4 py-3">Actions</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Reference</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Date</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Time</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
 
     </x-slot>
 
@@ -36,25 +36,25 @@
 
         @forelse($appointments as $app)
 
-    <tr class="border-t">
+    <tr class="hover:bg-gray-50 transition-colors">
 
-        <td class="px-4 py-3">
+        <td class="px-4 py-4 text-sm text-gray-700">
             {{ $app->serviceRequest->reference_number ?? '-' }}
         </td>
 
-        <td class="px-4 py-3">
+        <td class="px-4 py-4 text-sm text-gray-700">
             {{ $app->appointment_date }}
         </td>
 
-        <td class="px-4 py-3">
+        <td class="px-4 py-4 text-sm text-gray-700">
             {{ $app->appointment_time }}
         </td>
 
-        <td class="px-4 py-3">
+        <td class="px-4 py-4 text-sm text-gray-700">
             {{ ucfirst($app->status) }}
         </td>
 
-        <td class="px-4 py-3">
+        <td class="px-4 py-4 text-sm text-gray-700">
             <a href="{{ route('staff.appointments.show', $app->id) }}"
                class="text-blue-600 hover:underline">
                 View
@@ -64,8 +64,8 @@
     </tr>
 
     @empty
-        <tr>
-            <td colspan="5" class="text-center py-6 text-gray-500">
+        <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4 text-sm text-gray-700">
                 No appointments found
             </td>
         </tr>

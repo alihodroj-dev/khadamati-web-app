@@ -18,23 +18,23 @@
     <x-table>
         {{-- HEAD --}}
         <x-slot name="head">
-            <th class="px-4 py-3 text-left border border-gray-200">ID</th>
-            <th class="px-4 py-3 text-left border border-gray-200">Name</th>
-            <th class="px-4 py-3 text-left border border-gray-200">Role</th>
-            <th class="px-4 py-3 text-left border border-gray-200 w-80">Actions</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Role</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
         </x-slot>
 
         {{-- BODY --}}
         <x-slot name="body">
             @forelse($users as $user)
-                <tr class="border-t hover:bg-gray-50">
-                    <td class="px-4 py-3 border border-gray-200 text-center">
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         {{ $user->id }}
                     </td>
-                    <td class="px-4 py-3 font-medium text-gray-900 border border-gray-200 text-center">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         {{ $user->name }}
                     </td>
-                    <td class="px-4 py-3 border border-gray-200 text-center">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         <span style="
                             @switch($user->role)
                                 @case('admin')
@@ -55,7 +55,7 @@
                         </span>
                     </td>
 
-                    <td class="px-4 py-3 border border-gray-200 text-center">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         <div class="flex gap-2 justify-center">
                             <a href="{{ route('admin.users.show', $user->id) }}">
                                 <x-button>Details</x-button>
@@ -77,8 +77,8 @@
                     </td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="4" class="text-center py-6 text-gray-500">No Users found</td>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-4 text-sm text-gray-700">No Users found</td>
                 </tr>
             @endforelse
         </x-slot>

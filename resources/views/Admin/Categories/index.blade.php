@@ -18,28 +18,28 @@
     <x-table>
         {{-- HEAD --}}
         <x-slot name="head">
-            <th class="px-4 py-3 text-left border border-gray-200">ID</th>
-            <th class="px-4 py-3 text-left border border-gray-200">Name</th>
-            <th class="px-4 py-3 text-left border border-gray-200">Status</th>
-            <th class="px-4 py-3 text-left border border-gray-200 w-80">Actions</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
         </x-slot>
 
         {{-- BODY --}}
         <x-slot name="body">
             @forelse($categories as $category)
-                <tr class="border-t hover:bg-gray-50">
-                    <td class="px-4 py-3 border border-gray-200 text-center">
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         {{ $category->id }}
                     </td>
-                    <td class="px-4 py-3 font-medium text-gray-900 border border-gray-200 text-center">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         {{ $category->name }}
                     </td>
-                    <td class="px-4 py-3 border border-gray-200 text-center">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         <span style="{{ $category->is_active ? 'background-color:#dcfce7;color:#166534' : 'background-color:#fee2e2;color:#991b1b' }}; padding:4px 12px; border-radius:9999px; font-size:12px; font-weight:500;">
                             {{ $category->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 border border-gray-200 text-center">
+                    <td class="px-4 py-4 text-sm text-gray-700">
                         <div class="flex gap-2 justify-center">
                             <a href="{{ route('admin.categories.show', $category->id) }}">
                                 <x-button>Details</x-button>
@@ -61,8 +61,8 @@
                     </td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="4" class="text-center py-6 text-gray-500">No categories found</td>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-4 text-sm text-gray-700">No categories found</td>
                 </tr>
             @endforelse
         </x-slot>
