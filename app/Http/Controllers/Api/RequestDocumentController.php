@@ -92,6 +92,39 @@ class RequestDocumentController extends Controller
         );
     }
 
+    public function download(Request $request, ServiceRequest $serviceRequest, RequestDocument $document)
+    {
+        if ($serviceRequest->user_id !== $request->user()->id) {
+            return $this->errorResponse(
+                'You are not allowed to download documents for this service request.',
+                null,
+                403
+            );
+        }
+
+        if ($document->service_request_id !== $serviceRequest->id) {
+            return $this->errorResponse(
+                'Document not found for this service request.',
+                null,
+                404
+            );
+        }
+
+        if (! $document->file_path || ! Storage::disk('public')->exists($document->file_path)) {
+            return $this->errorResponse(
+                'Document file not found.',
+                null,
+                404
+            );
+        }
+
+        return Storage::disk('public')->download(
+            $document->file_path,
+            $document->file_name,
+            ['Content-Type' => $document->mime_type ?? 'application/octet-stream']
+        );
+    }
+
     public function destroy(Request $request, ServiceRequest $serviceRequest, RequestDocument $document)
     {
         if ($serviceRequest->user_id !== $request->user()->id) {

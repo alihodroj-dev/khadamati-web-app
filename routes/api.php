@@ -64,6 +64,11 @@ Route::middleware('auth:sanctum')->group(function () {
         'store',
     ]);
 
+    Route::get('/my-requests/{serviceRequest}/documents/{document}/download', [
+        RequestDocumentController::class,
+        'download',
+    ]);
+
     Route::delete('/my-requests/{serviceRequest}/documents/{document}', [
         RequestDocumentController::class,
         'destroy',
