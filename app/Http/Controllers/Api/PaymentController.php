@@ -12,10 +12,15 @@ use App\Notifications\PaymentUpdatedNotification;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
     use ApiResponse;
+
+    private const STATUSES = ['pending', 'paid', 'failed', 'refunded'];
+
+    private const PAYMENT_METHODS = ['card', 'cash', 'crypto'];
 
     public function index(Request $request)
     {
@@ -35,7 +40,30 @@ class PaymentController extends Controller
                 $q->where('assigned_staff_id', $user->id);
             });
         } else {
+            $validated = $request->validate([
+                'status' => ['nullable', 'string', Rule::in(self::STATUSES)],
+                'payment_method' => ['nullable', 'string', Rule::in(self::PAYMENT_METHODS)],
+                'from_date' => ['nullable', 'date', 'date_format:Y-m-d'],
+                'to_date' => ['nullable', 'date', 'date_format:Y-m-d', 'after_or_equal:from_date'],
+            ]);
+
             $query->where('user_id', $user->id);
+
+            if (! empty($validated['status'])) {
+                $query->where('status', $validated['status']);
+            }
+
+            if (! empty($validated['payment_method'])) {
+                $query->where('payment_method', $validated['payment_method']);
+            }
+
+            if (! empty($validated['from_date'])) {
+                $query->whereDate('created_at', '>=', $validated['from_date']);
+            }
+
+            if (! empty($validated['to_date'])) {
+                $query->whereDate('created_at', '<=', $validated['to_date']);
+            }
         }
 
         $payments = $query->get();
