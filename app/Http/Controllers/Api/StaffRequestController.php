@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Notifications\RequestUpdatedNotification;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -95,6 +96,12 @@ class StaffRequestController extends Controller
         $serviceRequest->update($updateData);
         $serviceRequest->load(['user', 'service', 'assignedStaff', 'documents']);
 
+        $serviceRequest->user?->notify(new RequestUpdatedNotification(
+            $serviceRequest,
+            'Request status updated',
+            'Your request status is now '.$serviceRequest->status.'.'
+        ));
+
         return $this->successResponse(
             new ServiceRequestResource($serviceRequest),
             'Service request status updated.'
@@ -122,6 +129,18 @@ class StaffRequestController extends Controller
         ]);
 
         $serviceRequest->load(['user', 'service', 'assignedStaff']);
+
+        $staffUser->notify(new RequestUpdatedNotification(
+            $serviceRequest,
+            'Request assigned',
+            'A service request has been assigned to you.'
+        ));
+
+        $serviceRequest->user?->notify(new RequestUpdatedNotification(
+            $serviceRequest,
+            'Request under review',
+            'Your request has been assigned to staff for review.'
+        ));
 
         return $this->successResponse(
             new ServiceRequestResource($serviceRequest),

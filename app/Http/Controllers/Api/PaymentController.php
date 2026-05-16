@@ -7,6 +7,7 @@ use App\Http\Resources\PaymentResource;
 use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Notifications\PaymentUpdatedNotification;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -102,6 +103,12 @@ class PaymentController extends Controller
 
         $payment->load(['serviceRequest', 'appointment']);
 
+        $payment->user?->notify(new PaymentUpdatedNotification(
+            $payment,
+            'Payment processed',
+            $status === 'paid' ? 'Your payment was completed successfully.' : 'Your payment failed.'
+        ));
+
         return $this->successResponse(
             new PaymentResource($payment),
             'Payment initiated successfully.',
@@ -175,7 +182,13 @@ class PaymentController extends Controller
             'paid_at' => now(),
         ]);
 
-        $payment->load(['serviceRequest', 'appointment']);
+        $payment->load(['serviceRequest', 'appointment', 'user']);
+
+        $payment->user?->notify(new PaymentUpdatedNotification(
+            $payment,
+            'Payment marked as paid',
+            'Your payment has been marked as paid.'
+        ));
 
         return $this->successResponse(
             new PaymentResource($payment),
@@ -197,7 +210,13 @@ class PaymentController extends Controller
 
         $payment->update(['status' => 'refunded']);
 
-        $payment->load(['serviceRequest', 'appointment']);
+        $payment->load(['serviceRequest', 'appointment', 'user']);
+
+        $payment->user?->notify(new PaymentUpdatedNotification(
+            $payment,
+            'Payment refunded',
+            'Your payment has been refunded.'
+        ));
 
         return $this->successResponse(
             new PaymentResource($payment),

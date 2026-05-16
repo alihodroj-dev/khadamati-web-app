@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use App\Models\ServiceRequest;
+use App\Notifications\AppointmentUpdatedNotification;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -22,7 +23,7 @@ class AppointmentController extends Controller
             $appointments = Appointment::with([
                 'user',
                 'staff',
-                'serviceRequest'
+                'serviceRequest',
             ])->latest()->get();
 
         } elseif ($user->isStaff()) {
@@ -30,22 +31,22 @@ class AppointmentController extends Controller
             $appointments = Appointment::with([
                 'user',
                 'staff',
-                'serviceRequest'
+                'serviceRequest',
             ])
-            ->where('staff_id', $user->id)
-            ->latest()
-            ->get();
+                ->where('staff_id', $user->id)
+                ->latest()
+                ->get();
 
         } else {
 
             $appointments = Appointment::with([
                 'user',
                 'staff',
-                'serviceRequest'
+                'serviceRequest',
             ])
-            ->where('user_id', $user->id)
-            ->latest()
-            ->get();
+                ->where('user_id', $user->id)
+                ->latest()
+                ->get();
         }
 
         return $this->successResponse(
@@ -61,20 +62,20 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'service_request_id' => [
                 'required',
-                'exists:service_requests,id'
+                'exists:service_requests,id',
             ],
             'appointment_date' => [
                 'required',
                 'date',
-                'after_or_equal:today'
+                'after_or_equal:today',
             ],
             'appointment_time' => [
                 'required',
-                'date_format:H:i'
+                'date_format:H:i',
             ],
             'notes' => [
                 'nullable',
-                'string'
+                'string',
             ],
         ]);
 
@@ -103,8 +104,14 @@ class AppointmentController extends Controller
         $appointment->load([
             'user',
             'staff',
-            'serviceRequest'
+            'serviceRequest',
         ]);
+
+        $appointment->user?->notify(new AppointmentUpdatedNotification(
+            $appointment,
+            'Appointment booked',
+            'Your appointment has been booked successfully.'
+        ));
 
         return $this->successResponse(
             new AppointmentResource($appointment),
@@ -120,7 +127,7 @@ class AppointmentController extends Controller
         $appointment->load([
             'user',
             'staff',
-            'serviceRequest'
+            'serviceRequest',
         ]);
 
         return $this->successResponse(
@@ -137,23 +144,23 @@ class AppointmentController extends Controller
             'appointment_date' => [
                 'sometimes',
                 'date',
-                'after_or_equal:today'
+                'after_or_equal:today',
             ],
             'appointment_time' => [
                 'sometimes',
-                'date_format:H:i'
+                'date_format:H:i',
             ],
             'status' => [
                 'sometimes',
-                'in:scheduled,confirmed,cancelled,completed,missed'
+                'in:scheduled,confirmed,cancelled,completed,missed',
             ],
             'staff_id' => [
                 'nullable',
-                'exists:users,id'
+                'exists:users,id',
             ],
             'notes' => [
                 'nullable',
-                'string'
+                'string',
             ],
         ]);
 
@@ -162,8 +169,20 @@ class AppointmentController extends Controller
         $appointment->load([
             'user',
             'staff',
-            'serviceRequest'
+            'serviceRequest',
         ]);
+
+        $appointment->user?->notify(new AppointmentUpdatedNotification(
+            $appointment,
+            'Appointment updated',
+            'Your appointment has been updated.'
+        ));
+
+        $appointment->staff?->notify(new AppointmentUpdatedNotification(
+            $appointment,
+            'Appointment updated',
+            'An assigned appointment has been updated.'
+        ));
 
         return $this->successResponse(
             new AppointmentResource($appointment),
