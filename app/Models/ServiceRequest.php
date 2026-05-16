@@ -10,6 +10,7 @@ class ServiceRequest extends Model
     protected $fillable = [
         'user_id',
         'service_id',
+        'office_id',
         'assigned_staff_id',
         'reference_number',
         'tracking_token',
@@ -38,6 +39,11 @@ class ServiceRequest extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function office()
+    {
+        return $this->belongsTo(Office::class);
     }
 
     public function assignedStaff()

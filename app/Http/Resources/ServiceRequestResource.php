@@ -20,9 +20,11 @@ class ServiceRequestResource extends JsonResource
 
             'user_id' => $this->user_id,
             'service_id' => $this->service_id,
+            'office_id' => $this->office_id,
             'assigned_staff_id' => $this->assigned_staff_id,
 
             'service' => new ServiceResource($this->whenLoaded('service')),
+            'office' => new OfficeResource($this->whenLoaded('office')),
             'citizen' => $this->whenLoaded('user'),
             'assigned_staff' => $this->whenLoaded('assignedStaff'),
             'documents' => RequestDocumentResource::collection($this->whenLoaded('documents')),

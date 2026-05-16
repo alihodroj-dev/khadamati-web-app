@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ServiceRequestResource;
+use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Traits\ApiResponse;
@@ -35,6 +36,7 @@ class ServiceRequestController extends Controller
     {
         $validated = $request->validate([
             'service_id' => ['required', 'exists:services,id'],
+            'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'citizen_notes' => ['nullable', 'string'],
             'submitted_data' => ['nullable', 'array'],
         ]);
@@ -51,9 +53,23 @@ class ServiceRequestController extends Controller
             );
         }
 
+        $officeId = $this->resolveOfficeIdForRequest(
+            $service,
+            $validated['office_id'] ?? null
+        );
+
+        if ($officeId === false) {
+            $message = $service->office_id
+                ? 'The selected office does not match this service.'
+                : 'The selected office is not available.';
+
+            return $this->errorResponse($message, null, 422);
+        }
+
         $serviceRequest = ServiceRequest::create([
             'user_id' => $request->user()->id,
             'service_id' => $service->id,
+            'office_id' => $officeId,
             'reference_number' => $this->generateReferenceNumber(),
             'tracking_token' => ServiceRequest::generateTrackingToken(),
             'status' => 'pending',
@@ -62,7 +78,7 @@ class ServiceRequestController extends Controller
             'submitted_at' => now(),
         ]);
 
-        $serviceRequest->load('service.category');
+        $serviceRequest->load(['service.category', 'office']);
 
         return $this->successResponse(
             [
@@ -86,7 +102,7 @@ class ServiceRequestController extends Controller
 
         $query = ServiceRequest::query()
             ->where('user_id', $request->user()->id)
-            ->with('service.category');
+            ->with(['service.category', 'office']);
 
         if (! empty($validated['status'])) {
             $query->where('status', $validated['status']);
@@ -145,6 +161,7 @@ class ServiceRequestController extends Controller
 
         $serviceRequest->load([
             'service.category',
+            'office',
             'documents',
             'appointment',
             'payment',
@@ -178,12 +195,37 @@ class ServiceRequestController extends Controller
         }
 
         $serviceRequest->update(['status' => 'cancelled']);
-        $serviceRequest->load('service.category');
+        $serviceRequest->load(['service.category', 'office']);
 
         return $this->successResponse(
             new ServiceRequestResource($serviceRequest),
             'Service request cancelled successfully.'
         );
+    }
+
+    /**
+     * @return int|null|false office id, null if none, false if invalid office
+     */
+    private function resolveOfficeIdForRequest(Service $service, ?int $requestedOfficeId): int|null|false
+    {
+        if ($service->office_id) {
+            if ($requestedOfficeId !== null && (int) $requestedOfficeId !== (int) $service->office_id) {
+                return false;
+            }
+
+            return (int) $service->office_id;
+        }
+
+        if ($requestedOfficeId === null) {
+            return null;
+        }
+
+        $officeExists = Office::query()
+            ->where('id', $requestedOfficeId)
+            ->where('is_active', true)
+            ->exists();
+
+        return $officeExists ? (int) $requestedOfficeId : false;
     }
 
     private function generateReferenceNumber(): string

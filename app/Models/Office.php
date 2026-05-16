@@ -31,4 +31,9 @@ class Office extends Model
     {
         return $this->hasMany(Service::class);
     }
+
+    public function serviceRequests()
+    {
+        return $this->hasMany(ServiceRequest::class);
+    }
 }
