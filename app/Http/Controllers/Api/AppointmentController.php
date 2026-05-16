@@ -112,6 +112,11 @@ class AppointmentController extends Controller
                 'nullable',
                 'string',
             ],
+            'staff_id' => [
+                'nullable',
+                'integer',
+                'exists:users,id',
+            ],
         ]);
 
         $serviceRequest = ServiceRequest::findOrFail(
@@ -127,9 +132,47 @@ class AppointmentController extends Controller
             );
         }
 
+        $staffId = $validated['staff_id'] ?? $serviceRequest->assigned_staff_id;
+
+        if ($staffId) {
+            $slotTaken = Appointment::query()
+                ->whereDate('appointment_date', $validated['appointment_date'])
+                ->whereTime('appointment_time', $validated['appointment_time'])
+                ->where('staff_id', $staffId)
+                ->whereNotIn('status', ['cancelled'])
+                ->exists();
+
+            if ($slotTaken) {
+                return $this->errorResponse(
+                    'The selected appointment slot is unavailable.',
+                    [
+                        'appointment_time' => ['This time slot is already booked.'],
+                    ],
+                    422
+                );
+            }
+        } else {
+            $existingForRequest = Appointment::query()
+                ->where('service_request_id', $serviceRequest->id)
+                ->where('user_id', auth()->id())
+                ->whereNotIn('status', ['cancelled'])
+                ->exists();
+
+            if ($existingForRequest) {
+                return $this->errorResponse(
+                    'An appointment already exists for this service request.',
+                    [
+                        'service_request_id' => ['You already have an appointment for this request.'],
+                    ],
+                    422
+                );
+            }
+        }
+
         $appointment = Appointment::create([
             'service_request_id' => $validated['service_request_id'],
             'user_id' => auth()->id(),
+            'staff_id' => $staffId,
             'appointment_date' => $validated['appointment_date'],
             'appointment_time' => $validated['appointment_time'],
             'notes' => $validated['notes'] ?? null,
