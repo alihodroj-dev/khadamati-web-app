@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class ServiceRequest extends Model
 {
@@ -11,6 +12,7 @@ class ServiceRequest extends Model
         'service_id',
         'assigned_staff_id',
         'reference_number',
+        'tracking_token',
         'status',
         'citizen_notes',
         'staff_notes',
@@ -86,5 +88,14 @@ class ServiceRequest extends Model
             ->all();
 
         return array_values(array_diff($required, $uploadedTypes));
+    }
+
+    public static function generateTrackingToken(): string
+    {
+        do {
+            $token = Str::random(48);
+        } while (static::where('tracking_token', $token)->exists());
+
+        return $token;
     }
 }

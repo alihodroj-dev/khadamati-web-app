@@ -44,6 +44,7 @@ class ServiceRequestController extends Controller
             'user_id' => $request->user()->id,
             'service_id' => $service->id,
             'reference_number' => $this->generateReferenceNumber(),
+            'tracking_token' => ServiceRequest::generateTrackingToken(),
             'status' => 'pending',
             'citizen_notes' => $validated['citizen_notes'] ?? null,
             'submitted_data' => $validated['submitted_data'] ?? null,

@@ -12,6 +12,10 @@ class ServiceRequestResource extends JsonResource
         return [
             'id' => $this->id,
             'reference_number' => $this->reference_number,
+            'tracking_token' => $this->tracking_token,
+            'tracking_url' => $this->tracking_token
+                ? rtrim(config('app.url'), '/').'/track/'.$this->tracking_token
+                : null,
             'status' => $this->status,
 
             'user_id' => $this->user_id,
