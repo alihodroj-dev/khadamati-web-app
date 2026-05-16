@@ -23,7 +23,7 @@ class RequestDocumentClassificationTest extends TestCase
             'service_request_id' => $serviceRequest->id,
             'uploaded_by' => $user->id,
             'source' => RequestDocument::SOURCE_STAFF,
-            'purpose' => RequestDocument::PURPOSE_CERTIFICATE,
+            'purpose' => RequestDocument::PURPOSE_OFFICIAL_RESPONSE,
             'document_type' => 'certificate',
             'file_name' => 'cert.pdf',
             'file_path' => 'request-documents/1/cert.pdf',
@@ -55,7 +55,7 @@ class RequestDocumentClassificationTest extends TestCase
             'service_request_id' => $serviceRequest->id,
             'uploaded_by' => $user->id,
             'source' => RequestDocument::SOURCE_STAFF,
-            'purpose' => RequestDocument::PURPOSE_CERTIFICATE,
+            'purpose' => RequestDocument::PURPOSE_OFFICIAL_RESPONSE,
             'document_type' => 'certificate',
             'file_name' => 'cert.pdf',
             'file_path' => 'request-documents/1/cert.pdf',
@@ -70,7 +70,8 @@ class RequestDocumentClassificationTest extends TestCase
             ->assertJsonCount(2, 'data.documents')
             ->assertJsonCount(1, 'data.requirement_documents')
             ->assertJsonCount(1, 'data.official_documents')
-            ->assertJsonPath('data.official_documents.0.purpose', 'certificate');
+            ->assertJsonPath('data.official_documents.0.purpose', 'official_response')
+            ->assertJsonPath('data.requirement_documents.0.status', 'pending');
     }
 
     private function createServiceRequestFor(User $user, array $requiredDocuments): ServiceRequest

@@ -763,7 +763,7 @@ Each `RequestDocumentResource` includes:
 | `source` | `citizen`, `staff`, `system` | Who provided the file |
 | `purpose` | `requirement`, `official_response`, `certificate`, `receipt`, `other` | Why the file exists |
 
-Citizen uploads use `source: citizen`, `purpose: requirement`. Staff uploads use `source: staff` with `purpose` derived from their document type (e.g. `certificate` → `certificate`). Future system-generated files use `source: system`.
+Citizen uploads use `source: citizen`, `purpose: requirement`, `status: pending` (until reviewed). Staff official uploads use `source: staff`, `purpose: official_response`, `status: approved`. The staff `document_type` field (e.g. `certificate`, `receipt`) is descriptive only. Future system-generated files use `source: system`.
 
 Use `requirement_documents` for the upload checklist UI and `official_documents` for completed outputs (certificates, receipts, staff responses). `documents` remains the full list.
 
