@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AppointmentResource;
@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\ServiceRequest;
 use App\Notifications\AppointmentUpdatedNotification;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
@@ -52,6 +53,40 @@ class AppointmentController extends Controller
         return $this->successResponse(
             AppointmentResource::collection($appointments),
             'Appointments retrieved successfully.'
+        );
+    }
+
+    public function availability(Request $request)
+    {
+        $this->authorize('viewAny', Appointment::class);
+
+        $validated = $request->validate([
+            'date' => ['required', 'date', 'date_format:Y-m-d'],
+            'staff_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $query = Appointment::query()
+            ->whereDate('appointment_date', $validated['date'])
+            ->whereNotIn('status', ['cancelled']);
+
+        if (! empty($validated['staff_id'])) {
+            $query->where('staff_id', $validated['staff_id']);
+        }
+
+        $unavailableTimes = $query
+            ->orderBy('appointment_time')
+            ->pluck('appointment_time')
+            ->map(fn ($time) => Carbon::parse($time)->format('H:i'))
+            ->unique()
+            ->values()
+            ->all();
+
+        return $this->successResponse(
+            [
+                'date' => $validated['date'],
+                'unavailable_times' => $unavailableTimes,
+            ],
+            'Appointment availability retrieved successfully.'
         );
     }
 

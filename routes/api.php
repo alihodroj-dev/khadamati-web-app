@@ -77,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'destroy',
     ]);
 
+    Route::get('/appointments/availability', [AppointmentController::class, 'availability']);
     Route::apiResource('appointments', AppointmentController::class);
 
     // Payments
