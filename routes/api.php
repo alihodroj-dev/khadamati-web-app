@@ -42,6 +42,7 @@ Route::get('/services/{service}', [ServiceController::class, 'show']);
 Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);
 
 Route::get('/offices', [OfficeController::class, 'index']);
+Route::get('/offices/{office}/feedback', [OfficeController::class, 'feedback']);
 Route::get('/offices/{office}', [OfficeController::class, 'show']);
 
 /*

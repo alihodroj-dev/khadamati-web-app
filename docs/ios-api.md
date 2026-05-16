@@ -682,6 +682,38 @@ Filters combine with AND. Default sort is `name` ascending; with `near_lat`/`nea
 
 ---
 
+### Public office feedback
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **Path** | `/offices/{office}/feedback` |
+| **Auth** | No |
+
+**Query:** `rating` (1–5, optional)
+
+**Response** `200`
+
+```json
+{
+  "data": {
+    "feedback": [
+      {
+        "rating": 5,
+        "comment": "Very helpful staff.",
+        "created_at": "2026-05-10T14:30:00.000000Z",
+        "citizen_name": "Jane",
+        "service_name": "Passport Renewal"
+      }
+    ]
+  }
+}
+```
+
+**Notes:** Only feedback linked to **completed** requests where `service_requests.office_id` matches the office. Public-safe fields only — first name (or `Citizen`), no email, phone, national ID, or user object.
+
+---
+
 ## Requests
 
 ### Create request
@@ -1355,7 +1387,7 @@ Minimal HTML status page (reference, service name, status, timestamps). Same tok
 
 | Area | Auth required |
 |------|----------------|
-| Auth (preview, register/complete, social login, login/OTP), categories, services, offices, service feedback, track | No |
+| Auth (preview, register/complete, social login, login/OTP), categories, services, offices, service/office feedback, track | No |
 | Everything else | Yes |
 
 **iOS auth (public):** `POST /identity/preview`, `POST /register/complete`, `POST /auth/google`, `POST /auth/apple`, `POST /login`, `POST /login/verify-otp`, `POST /login/resend-otp`

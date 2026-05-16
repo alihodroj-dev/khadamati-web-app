@@ -6,7 +6,7 @@ use App\Support\CitizenDisplayName;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PublicServiceFeedbackResource extends JsonResource
+class PublicOfficeFeedbackResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -15,6 +15,7 @@ class PublicServiceFeedbackResource extends JsonResource
             'comment' => $this->comment,
             'created_at' => $this->created_at?->toISOString(),
             'citizen_name' => CitizenDisplayName::fromUser($this->user),
+            'service_name' => $this->serviceRequest?->service?->name,
         ];
     }
 }

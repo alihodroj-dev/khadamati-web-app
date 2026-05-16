@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OfficeResource;
+use App\Http\Resources\PublicOfficeFeedbackResource;
+use App\Models\Feedback;
 use App\Models\Office;
 use App\Models\Service;
 use App\Support\GeoDistance;
@@ -109,6 +111,43 @@ class OfficeController extends Controller
                 'office' => new OfficeResource($office),
             ],
             'Office retrieved successfully.'
+        );
+    }
+
+    public function feedback(Request $request, Office $office)
+    {
+        if (! $office->is_active) {
+            return $this->errorResponse(
+                'Office not found.',
+                null,
+                404
+            );
+        }
+
+        $validated = $request->validate([
+            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $query = Feedback::query()
+            ->with(['user', 'serviceRequest.service'])
+            ->whereHas('serviceRequest', function ($serviceRequestQuery) use ($office) {
+                $serviceRequestQuery
+                    ->where('office_id', $office->id)
+                    ->where('status', 'completed');
+            })
+            ->latest();
+
+        if (isset($validated['rating'])) {
+            $query->where('rating', $validated['rating']);
+        }
+
+        $feedback = $query->get();
+
+        return $this->successResponse(
+            [
+                'feedback' => PublicOfficeFeedbackResource::collection($feedback),
+            ],
+            'Office feedback retrieved successfully.'
         );
     }
 
