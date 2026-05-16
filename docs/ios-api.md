@@ -836,7 +836,29 @@ document: <file>
 | **Path** | `/appointments` |
 | **Auth** | Yes |
 
-**Response** `200` — citizen sees own appointments only.
+**Response** `200` — citizen sees own appointments only. Each item is an `AppointmentResource`:
+
+```json
+{
+  "id": 1,
+  "status": "scheduled",
+  "appointment_date": "2026-05-20",
+  "appointment_time": "09:00",
+  "notes": null,
+  "service_request": {
+    "id": 12,
+    "reference_number": "KHR-20260516-ABCDEF",
+    "tracking_token": "abc123token",
+    "status": "under_review"
+  },
+  "citizen": { "id": 1, "name": "Jane Citizen", "email": "jane@example.com" },
+  "staff": { "id": 3, "name": "Staff User", "email": "staff@example.com" },
+  "created_at": "2026-05-16T10:00:00.000000Z",
+  "updated_at": "2026-05-16T10:00:00.000000Z"
+}
+```
+
+**Date formats:** `appointment_date` is `Y-m-d`; `appointment_time` is `H:i`; `created_at` / `updated_at` are ISO 8601.
 
 ---
 
@@ -874,7 +896,7 @@ document: <file>
 | **Path** | `/appointments/{appointment}` |
 | **Auth** | Yes |
 
-**Response** `200`.
+**Response** `200` — `AppointmentResource` (same shape as list).
 
 ---
 
