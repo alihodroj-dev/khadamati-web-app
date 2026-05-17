@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Support\StaffOfficeScope;
 
 class ServiceRequestPolicy
 {
@@ -19,7 +20,7 @@ class ServiceRequestPolicy
         }
 
         if ($user->isStaff()) {
-            return $serviceRequest->assigned_staff_id === $user->id;
+            return StaffOfficeScope::canAccessOffice($user, $serviceRequest->office_id);
         }
 
         return $serviceRequest->user_id === $user->id;
@@ -31,7 +32,8 @@ class ServiceRequestPolicy
             return true;
         }
 
-        return $user->isStaff() && $serviceRequest->assigned_staff_id === $user->id;
+        return $user->isStaff()
+            && StaffOfficeScope::canAccessOffice($user, $serviceRequest->office_id);
     }
 
     public function assign(User $user, ServiceRequest $serviceRequest): bool

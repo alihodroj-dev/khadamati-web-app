@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Notifications\PaymentUpdatedNotification;
+use App\Support\StaffOfficeScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -36,9 +37,7 @@ class PaymentController extends Controller
                 $query->where('status', $request->status);
             }
         } elseif ($user->isStaff()) {
-            $query->whereHas('serviceRequest', function ($q) use ($user) {
-                $q->where('assigned_staff_id', $user->id);
-            });
+            StaffOfficeScope::applyPaymentScope($query, $user);
         } else {
             $validated = $request->validate([
                 'status' => ['nullable', 'string', Rule::in(self::STATUSES)],

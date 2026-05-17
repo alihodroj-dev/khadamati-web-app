@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Office;
 use App\Models\User;
 use App\Support\AdminFormInput;
+use App\Support\UserOfficeAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -13,14 +15,16 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::latest()->paginate(10);
+        $users = User::query()->with('office')->latest()->paginate(10);
 
         return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
-        return view('admin.users.create');
+        $offices = Office::query()->where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.users.create', compact('offices'));
     }
 
     public function store(Request $request)
@@ -40,8 +44,9 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
+        $offices = Office::query()->where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.users.edit', compact('user'));
+        return view('admin.users.edit', compact('user', 'offices'));
     }
 
     public function update(Request $request, $id)
@@ -79,7 +84,7 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::query()->with('office')->findOrFail($id);
 
         return view('admin.users.show', compact('user'));
     }
@@ -109,6 +114,7 @@ class UserController extends Controller
                 Rule::in([User::ROLE_CITIZEN, User::ROLE_STAFF, User::ROLE_ADMIN]),
             ],
             'is_active' => ['required', Rule::in(['0', '1', 0, 1, true, false])],
+            ...UserOfficeAssignment::officeIdRules($request, $user),
         ]);
 
         $data = [
@@ -117,6 +123,10 @@ class UserController extends Controller
             'phone' => $validated['phone'] ?? null,
             'national_id' => $validated['national_id'] ?? null,
             'role' => $validated['role'],
+            'office_id' => UserOfficeAssignment::resolveOfficeId(
+                $validated['role'],
+                $validated['office_id'] ?? null
+            ),
             'is_active' => AdminFormInput::boolean($validated['is_active']),
         ];
 

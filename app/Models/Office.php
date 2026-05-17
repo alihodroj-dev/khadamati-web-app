@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Office extends Model
 {
@@ -33,6 +34,11 @@ class Office extends Model
     public function municipality(): BelongsTo
     {
         return $this->belongsTo(Municipality::class);
+    }
+
+    public function staffUsers(): HasMany
+    {
+        return $this->hasMany(User::class)->where('role', User::ROLE_STAFF);
     }
 
     public function services()

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Office;
 use App\Models\RequestDocument;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -65,6 +66,14 @@ class StaffRequestDocumentUploadTest extends TestCase
 
     private function createAssignedServiceRequest(User $staff, User $citizen): ServiceRequest
     {
+        $office = Office::query()->create([
+            'name' => 'Main Office',
+            'address' => 'Center',
+            'is_active' => true,
+        ]);
+
+        $staff->update(['office_id' => $office->id]);
+
         $category = ServiceCategory::query()->create([
             'name' => 'Civil',
             'is_active' => true,
@@ -72,6 +81,7 @@ class StaffRequestDocumentUploadTest extends TestCase
 
         $service = Service::query()->create([
             'service_category_id' => $category->id,
+            'office_id' => $office->id,
             'name' => 'Residency',
             'base_fee' => 10,
             'required_documents' => ['National ID copy'],
@@ -81,6 +91,7 @@ class StaffRequestDocumentUploadTest extends TestCase
         return ServiceRequest::query()->create([
             'user_id' => $citizen->id,
             'service_id' => $service->id,
+            'office_id' => $office->id,
             'assigned_staff_id' => $staff->id,
             'reference_number' => 'REQ-'.uniqid(),
             'tracking_token' => ServiceRequest::generateTrackingToken(),

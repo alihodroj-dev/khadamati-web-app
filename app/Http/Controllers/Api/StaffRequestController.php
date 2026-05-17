@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Notifications\RequestUpdatedNotification;
+use App\Support\StaffOfficeScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -26,9 +27,7 @@ class StaffRequestController extends Controller
             ->with(['user', 'service.category', 'assignedStaff', 'documents'])
             ->latest();
 
-        if ($user->isStaff()) {
-            $query->where('assigned_staff_id', $user->id);
-        }
+        StaffOfficeScope::applyServiceRequestScope($query, $user);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -122,6 +121,15 @@ class StaffRequestController extends Controller
             return $this->errorResponse('The selected user is not a staff member.', null, 422);
         }
 
+        if ($serviceRequest->office_id !== null
+            && (int) $staffUser->office_id !== (int) $serviceRequest->office_id) {
+            return $this->errorResponse(
+                'Staff member must belong to the same office as the service request.',
+                null,
+                422
+            );
+        }
+
         $serviceRequest->update([
             'assigned_staff_id' => $validated['staff_id'],
             'status' => $serviceRequest->status === 'pending' ? 'under_review' : $serviceRequest->status,
@@ -155,9 +163,7 @@ class StaffRequestController extends Controller
             ->with(['user', 'staff', 'serviceRequest.service'])
             ->latest();
 
-        if ($user->isStaff()) {
-            $query->where('staff_id', $user->id);
-        }
+        StaffOfficeScope::applyAppointmentScope($query, $user);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -208,11 +214,9 @@ class StaffRequestController extends Controller
         $paymentQuery = Payment::query();
 
         if ($user->isStaff()) {
-            $requestQuery->where('assigned_staff_id', $user->id);
-            $appointmentQuery->where('staff_id', $user->id);
-            $paymentQuery->whereHas('serviceRequest', function ($q) use ($user) {
-                $q->where('assigned_staff_id', $user->id);
-            });
+            StaffOfficeScope::applyServiceRequestScope($requestQuery, $user);
+            StaffOfficeScope::applyAppointmentScope($appointmentQuery, $user);
+            StaffOfficeScope::applyPaymentScope($paymentQuery, $user);
         }
 
         return $this->successResponse(

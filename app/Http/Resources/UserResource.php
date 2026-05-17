@@ -34,6 +34,8 @@ class UserResource extends JsonResource
                 ? Storage::disk('public')->url($this->id_back_path)
                 : null,
             'role' => $this->role,
+            'office_id' => $this->office_id,
+            'office' => new OfficeResource($this->whenLoaded('office')),
             'is_active' => (bool) $this->is_active,
             'push_notifications_enabled' => (bool) $this->push_notifications_enabled,
             'email_notifications_enabled' => (bool) $this->email_notifications_enabled,

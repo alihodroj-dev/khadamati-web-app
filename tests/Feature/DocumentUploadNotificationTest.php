@@ -23,9 +23,18 @@ class DocumentUploadNotificationTest extends TestCase
         Notification::fake();
         Storage::fake('public');
 
-        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+        $office = Office::query()->create([
+            'name' => 'Beirut Office',
+            'address' => 'Hamra',
+            'is_active' => true,
+        ]);
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'office_id' => $office->id,
+        ]);
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
-        $serviceRequest = $this->createServiceRequest($citizen, $staff);
+        $serviceRequest = $this->createServiceRequest($citizen, $staff, $office);
 
         $this->actingAs($citizen)->post(
             "/api/my-requests/{$serviceRequest->id}/documents",
@@ -66,9 +75,18 @@ class DocumentUploadNotificationTest extends TestCase
         Notification::fake();
         Storage::fake('public');
 
-        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+        $office = Office::query()->create([
+            'name' => 'Beirut Office',
+            'address' => 'Hamra',
+            'is_active' => true,
+        ]);
+
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'office_id' => $office->id,
+        ]);
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
-        $serviceRequest = $this->createServiceRequest($citizen, $staff);
+        $serviceRequest = $this->createServiceRequest($citizen, $staff, $office);
 
         $this->actingAs($staff)->post(
             route('staff.requests.uploadDocument', $serviceRequest->id),
@@ -81,13 +99,17 @@ class DocumentUploadNotificationTest extends TestCase
         Notification::assertSentTo($citizen, DocumentUploadedNotification::class);
     }
 
-    private function createServiceRequest(User $citizen, ?User $staff): ServiceRequest
+    private function createServiceRequest(User $citizen, ?User $staff, ?Office $office = null): ServiceRequest
     {
-        $office = Office::query()->create([
+        $office ??= Office::query()->create([
             'name' => 'Beirut Office',
             'address' => 'Hamra',
             'is_active' => true,
         ]);
+
+        if ($staff !== null && $staff->office_id === null) {
+            $staff->update(['office_id' => $office->id]);
+        }
 
         $category = ServiceCategory::query()->create([
             'name' => 'Civil',

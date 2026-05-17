@@ -136,6 +136,12 @@ class AdminWebCrudTest extends TestCase
     {
         $this->actingAsAdmin();
 
+        $office = Office::query()->create([
+            'name' => 'Main Office',
+            'address' => 'Center',
+            'is_active' => true,
+        ]);
+
         $this->post(route('admin.users.store'), [
             'name' => 'Jane Citizen',
             'email' => 'jane@example.com',
@@ -145,6 +151,19 @@ class AdminWebCrudTest extends TestCase
             'role' => User::ROLE_CITIZEN,
             'is_active' => '1',
         ])->assertRedirect(route('admin.users.index'));
+
+        $this->post(route('admin.users.store'), [
+            'name' => 'Staff Member',
+            'email' => 'staff.member@example.com',
+            'password' => 'password123',
+            'role' => User::ROLE_STAFF,
+            'office_id' => $office->id,
+            'is_active' => '1',
+        ])->assertRedirect(route('admin.users.index'));
+
+        $staff = User::query()->where('email', 'staff.member@example.com')->first();
+        $this->assertNotNull($staff);
+        $this->assertSame($office->id, $staff->office_id);
 
         $user = User::query()->where('email', 'jane@example.com')->first();
         $this->assertNotNull($user);
@@ -156,6 +175,7 @@ class AdminWebCrudTest extends TestCase
             'phone' => '96171111111',
             'national_id' => 'NID-100',
             'role' => User::ROLE_STAFF,
+            'office_id' => $office->id,
             'is_active' => '0',
         ])->assertRedirect(route('admin.users.index'));
 

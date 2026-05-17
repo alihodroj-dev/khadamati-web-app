@@ -85,7 +85,6 @@ class ServiceRequestResource extends JsonResource
             return true;
         }
 
-        return $user->isStaff()
-            && (int) $this->assigned_staff_id === (int) $user->id;
+        return $user->isStaff() && $user->managesOffice($this->office_id);
     }
 }

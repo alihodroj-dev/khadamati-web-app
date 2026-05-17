@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\FeedbackResource;
 use App\Models\Feedback;
 use App\Models\ServiceRequest;
+use App\Support\StaffOfficeScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -21,8 +22,14 @@ class FeedbackController extends Controller
             ->with(['user', 'serviceRequest.service'])
             ->latest();
 
-        if (! $request->user()->isAdmin()) {
-            $query->where('user_id', $request->user()->id);
+        $user = $request->user();
+
+        if ($user->isAdmin()) {
+            // Admins see all feedback.
+        } elseif ($user->isStaff()) {
+            StaffOfficeScope::applyFeedbackScope($query, $user);
+        } else {
+            $query->where('user_id', $user->id);
         }
 
         return $this->successResponse(

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Appointment;
+use App\Support\StaffOfficeScope;
 
 class StaffAppointmentController extends Controller
 {
@@ -13,10 +14,10 @@ class StaffAppointmentController extends Controller
      */
     public function index()
     {
-        $appointments = Appointment::with(['serviceRequest', 'user'])
-            ->where('staff_id', auth()->id())
-            ->latest()
-            ->paginate(10);
+        $appointments = StaffOfficeScope::applyAppointmentScope(
+            Appointment::with(['serviceRequest', 'user'])->latest(),
+            auth()->user()
+        )->paginate(10);
 
         return view('staff.appointments.index', compact('appointments'));
     }
@@ -26,11 +27,12 @@ class StaffAppointmentController extends Controller
      */
     public function today()
     {
-        $appointments = Appointment::with(['serviceRequest', 'user'])
-            ->where('staff_id', auth()->id())
-            ->whereDate('appointment_date', now()->toDateString())
-            ->orderBy('appointment_time')
-            ->get();
+        $appointments = StaffOfficeScope::applyAppointmentScope(
+            Appointment::with(['serviceRequest', 'user'])
+                ->whereDate('appointment_date', now()->toDateString())
+                ->orderBy('appointment_time'),
+            auth()->user()
+        )->get();
 
         return view('staff.appointments.today', compact('appointments'));
     }
@@ -40,9 +42,10 @@ class StaffAppointmentController extends Controller
      */
     public function show($id)
     {
-        $appointment = Appointment::with(['serviceRequest', 'user'])
-            ->where('staff_id', auth()->id())
-            ->findOrFail($id);
+        $appointment = StaffOfficeScope::applyAppointmentScope(
+            Appointment::with(['serviceRequest', 'user']),
+            auth()->user()
+        )->findOrFail($id);
 
         return view('staff.appointments.show', compact('appointment'));
     }
@@ -52,8 +55,10 @@ class StaffAppointmentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $appointment = Appointment::where('staff_id', auth()->id())
-            ->findOrFail($id);
+        $appointment = StaffOfficeScope::applyAppointmentScope(
+            Appointment::query(),
+            auth()->user()
+        )->findOrFail($id);
 
         $appointment->update([
             'status' => $request->status,

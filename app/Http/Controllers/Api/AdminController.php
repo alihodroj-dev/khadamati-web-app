@@ -11,6 +11,7 @@ use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
+use App\Support\UserOfficeAssignment;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -24,7 +25,7 @@ class AdminController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::query()->latest();
+        $query = User::query()->with('office')->latest();
 
         if ($request->filled('role')) {
             $query->where('role', $request->role);
@@ -52,13 +53,19 @@ class AdminController extends Controller
             'phone' => ['nullable', 'string'],
             'national_id' => ['nullable', 'string', 'unique:users,national_id'],
             'is_active' => ['sometimes', 'boolean'],
+            ...UserOfficeAssignment::officeIdRules($request),
         ]);
 
         $user = User::create([
             ...$validated,
+            'office_id' => UserOfficeAssignment::resolveOfficeId(
+                $validated['role'],
+                $validated['office_id'] ?? null
+            ),
             'password' => Hash::make($validated['password']),
             'is_active' => $validated['is_active'] ?? true,
         ]);
+        $user->load('office');
 
         return $this->successResponse(
             new UserResource($user),
@@ -77,13 +84,25 @@ class AdminController extends Controller
             'phone' => ['nullable', 'string'],
             'national_id' => ['nullable', 'string', Rule::unique('users', 'national_id')->ignore($user->id)],
             'password' => ['sometimes', 'string', 'min:8'],
+            'role' => ['sometimes', Rule::in([User::ROLE_CITIZEN, User::ROLE_STAFF, User::ROLE_ADMIN])],
+            ...UserOfficeAssignment::officeIdRules($request, $user),
         ]);
 
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         }
 
+        if (array_key_exists('role', $validated) || array_key_exists('office_id', $validated)) {
+            $role = $validated['role'] ?? $user->role;
+            $validated['office_id'] = UserOfficeAssignment::resolveOfficeId(
+                $role,
+                $validated['office_id'] ?? $user->office_id
+            );
+            $validated['role'] = $role;
+        }
+
         $user->update($validated);
+        $user->load('office');
 
         return $this->successResponse(
             new UserResource($user),
@@ -97,9 +116,17 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'role' => ['required', Rule::in([User::ROLE_CITIZEN, User::ROLE_STAFF, User::ROLE_ADMIN])],
+            ...UserOfficeAssignment::officeIdRules($request, $user),
         ]);
 
-        $user->update(['role' => $validated['role']]);
+        $user->update([
+            'role' => $validated['role'],
+            'office_id' => UserOfficeAssignment::resolveOfficeId(
+                $validated['role'],
+                $validated['office_id'] ?? null
+            ),
+        ]);
+        $user->load('office');
 
         return $this->successResponse(
             new UserResource($user),
@@ -116,6 +143,7 @@ class AdminController extends Controller
         ]);
 
         $user->update(['is_active' => $validated['is_active']]);
+        $user->load('office');
 
         return $this->successResponse(
             new UserResource($user),
@@ -128,6 +156,7 @@ class AdminController extends Controller
         $this->authorize('viewAny', User::class);
 
         $staff = User::where('role', User::ROLE_STAFF)
+            ->with('office')
             ->latest()
             ->get();
 

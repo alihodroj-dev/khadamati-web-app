@@ -9,6 +9,7 @@ use App\Models\Office;
 use App\Models\ServiceRequest;
 use App\Notifications\AppointmentUpdatedNotification;
 use App\Support\AppointmentAvailabilityBuilder;
+use App\Support\StaffOfficeScope;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,10 +29,10 @@ class AppointmentController extends Controller
 
         } elseif ($user->isStaff()) {
 
-            $appointments = Appointment::with($this->appointmentRelations())
-                ->where('staff_id', $user->id)
-                ->latest()
-                ->get();
+            $appointments = StaffOfficeScope::applyAppointmentScope(
+                Appointment::with($this->appointmentRelations())->latest(),
+                $user
+            )->get();
 
         } else {
 

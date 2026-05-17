@@ -66,6 +66,8 @@
 
         </div>
 
+        @include('admin.users._office_field', ['offices' => $offices])
+
         {{-- Active Status --}}
         <div class="mb-6">
 

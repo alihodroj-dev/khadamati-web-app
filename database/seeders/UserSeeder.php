@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Office;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -21,12 +22,15 @@ class UserSeeder extends Seeder
             ]
         );
 
+        $defaultOfficeId = Office::query()->value('id');
+
         User::updateOrCreate(
             ['email' => 'staff@khadamati.com'],
             [
                 'name' => 'Staff User',
                 'password' => bcrypt('password'),
                 'role' => User::ROLE_STAFF,
+                'office_id' => $defaultOfficeId,
                 'phone' => '+96170000002',
                 'national_id' => 'STF-000001',
                 'is_active' => true,

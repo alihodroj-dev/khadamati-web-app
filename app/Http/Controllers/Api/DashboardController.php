@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Feedback;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
+use App\Support\StaffOfficeScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -23,14 +24,10 @@ class DashboardController extends Controller
         $feedbackQuery = Feedback::query();
 
         if ($user->isStaff()) {
-            $requestQuery->where('assigned_staff_id', $user->id);
-            $appointmentQuery->where('staff_id', $user->id);
-            $paymentQuery->whereHas('serviceRequest', function ($q) use ($user) {
-                $q->where('assigned_staff_id', $user->id);
-            });
-            $feedbackQuery->whereHas('serviceRequest', function ($q) use ($user) {
-                $q->where('assigned_staff_id', $user->id);
-            });
+            StaffOfficeScope::applyServiceRequestScope($requestQuery, $user);
+            StaffOfficeScope::applyAppointmentScope($appointmentQuery, $user);
+            StaffOfficeScope::applyPaymentScope($paymentQuery, $user);
+            StaffOfficeScope::applyFeedbackScope($feedbackQuery, $user);
         }
 
         return $this->successResponse(

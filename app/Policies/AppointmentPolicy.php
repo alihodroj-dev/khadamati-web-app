@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Appointment;
 use App\Models\User;
+use App\Support\StaffOfficeScope;
 
 class AppointmentPolicy
 {
@@ -19,7 +20,12 @@ class AppointmentPolicy
         }
 
         if ($user->isStaff()) {
-            return $appointment->staff_id === $user->id;
+            $appointment->loadMissing('serviceRequest');
+
+            return StaffOfficeScope::canAccessOffice(
+                $user,
+                $appointment->serviceRequest?->office_id
+            );
         }
 
         return $appointment->user_id === $user->id;
@@ -37,7 +43,12 @@ class AppointmentPolicy
         }
 
         if ($user->isStaff()) {
-            return $appointment->staff_id === $user->id;
+            $appointment->loadMissing('serviceRequest');
+
+            return StaffOfficeScope::canAccessOffice(
+                $user,
+                $appointment->serviceRequest?->office_id
+            );
         }
 
         return $appointment->user_id === $user->id

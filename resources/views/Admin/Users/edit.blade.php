@@ -28,6 +28,8 @@
             </select>
         </div>
 
+        @include('admin.users._office_field', ['offices' => $offices, 'user' => $user])
+
         {{-- Active Status --}}
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>

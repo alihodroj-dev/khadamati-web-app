@@ -75,6 +75,15 @@
                     </span>
                 </div>
 
+                @if($user->role === 'staff')
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Office</span>
+                        <span class="text-gray-900 font-medium">
+                            {{ $user->office?->name ?? '—' }}
+                        </span>
+                    </div>
+                @endif
+
                 <div class="flex justify-between items-center">
                     <span class="text-gray-600">Status</span>
                     <span class="px-3 py-1 rounded-full text-xs {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">

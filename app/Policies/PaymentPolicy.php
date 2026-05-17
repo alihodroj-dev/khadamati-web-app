@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Payment;
 use App\Models\User;
+use App\Support\StaffOfficeScope;
 
 class PaymentPolicy
 {
@@ -19,7 +20,10 @@ class PaymentPolicy
         }
 
         if ($user->isStaff()) {
-            return $payment->serviceRequest?->assigned_staff_id === $user->id;
+            return StaffOfficeScope::canAccessOffice(
+                $user,
+                $payment->serviceRequest?->office_id
+            );
         }
 
         return $payment->user_id === $user->id;

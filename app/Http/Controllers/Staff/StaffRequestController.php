@@ -8,7 +8,7 @@ use App\Models\RequestDocument;
 use App\Notifications\DocumentUploadedNotification;
 use Illuminate\Http\Request as HttpRequest;
 use App\Models\ServiceRequest;
-
+use App\Support\StaffOfficeScope;
 use Illuminate\Support\Facades\Storage;
 
 class StaffRequestController extends Controller
@@ -18,10 +18,10 @@ class StaffRequestController extends Controller
      */
     public function index()
     {
-        $requests = ServiceRequest::with(['service', 'user', 'payment'])
-            ->where('assigned_staff_id', auth()->id())
-            ->latest()
-            ->paginate(10);
+        $requests = StaffOfficeScope::applyServiceRequestScope(
+            ServiceRequest::with(['service', 'user', 'payment'])->latest(),
+            auth()->user()
+        )->paginate(10);
 
         return view('staff.requests.index', compact('requests'));
     }
@@ -31,9 +31,10 @@ class StaffRequestController extends Controller
      */
     public function show($id)
     {
-        $request = ServiceRequest::with(['service', 'user', 'documents'])
-            ->where('assigned_staff_id', auth()->id())
-            ->findOrFail($id);
+        $request = StaffOfficeScope::applyServiceRequestScope(
+            ServiceRequest::with(['service', 'user', 'documents']),
+            auth()->user()
+        )->findOrFail($id);
 
         return view('staff.requests.show', compact('request'));
     }
@@ -43,8 +44,10 @@ class StaffRequestController extends Controller
      */
     public function updateStatus(HttpRequest $httpRequest, $id)
     {
-        $request = ServiceRequest::where('assigned_staff_id', auth()->id())
-            ->findOrFail($id);
+        $request = StaffOfficeScope::applyServiceRequestScope(
+            ServiceRequest::query(),
+            auth()->user()
+        )->findOrFail($id);
 
         $request->status = $httpRequest->status;
         $request->staff_notes = $httpRequest->staff_notes;
@@ -72,8 +75,10 @@ class StaffRequestController extends Controller
 
     public function uploadDocument(HttpRequest $httpRequest, $id)
     {
-        $request = ServiceRequest::where('assigned_staff_id', auth()->id())
-            ->findOrFail($id);
+        $request = StaffOfficeScope::applyServiceRequestScope(
+            ServiceRequest::query(),
+            auth()->user()
+        )->findOrFail($id);
 
         $httpRequest->validate([
             'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',

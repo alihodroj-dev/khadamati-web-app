@@ -7,6 +7,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Support\StaffOfficeScope;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -32,6 +34,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'office_id',
         'phone',
         'national_id',
         'id_document_path',
@@ -54,6 +57,11 @@ class User extends Authenticatable
             'email_notifications_enabled' => 'boolean',
             'sms_notifications_enabled' => 'boolean',
         ];
+    }
+
+    public function office(): BelongsTo
+    {
+        return $this->belongsTo(Office::class);
     }
 
     // Service Requests
@@ -129,5 +137,10 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function managesOffice(?int $officeId): bool
+    {
+        return StaffOfficeScope::canAccessOffice($this, $officeId);
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Resources\ServiceRequestResource;
+use App\Models\Office;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\ServiceCategory;
@@ -68,11 +69,20 @@ class PublicTrackingTest extends TestCase
     public function test_citizen_cannot_see_staff_notes_in_service_request_resource(): void
     {
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
-        $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
+        $office = Office::query()->create([
+            'name' => 'Main Office',
+            'address' => 'Center',
+            'is_active' => true,
+        ]);
+        $staff = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'office_id' => $office->id,
+        ]);
 
         $serviceRequest = $this->createTrackedRequest(
             trackingToken: 'citizen-token',
             referenceNumber: 'KHR-CIT-001',
+            officeId: $office->id,
         );
         $serviceRequest->update([
             'assigned_staff_id' => $staff->id,
@@ -101,6 +111,7 @@ class PublicTrackingTest extends TestCase
         string $referenceNumber,
         string $status = 'pending',
         string $serviceName = 'Test Service',
+        ?int $officeId = null,
     ): ServiceRequest {
         $category = ServiceCategory::create([
             'name' => 'Test Category',
@@ -118,6 +129,7 @@ class PublicTrackingTest extends TestCase
         return ServiceRequest::create([
             'user_id' => $user->id,
             'service_id' => $service->id,
+            'office_id' => $officeId,
             'reference_number' => $referenceNumber,
             'tracking_token' => $trackingToken,
             'status' => $status,
