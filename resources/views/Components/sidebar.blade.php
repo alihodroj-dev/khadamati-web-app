@@ -133,6 +133,13 @@
                     <i class="ti ti-calendar text-lg" aria-hidden="true"></i>
                     My Appointments
                 </a>
+
+                <a href="{{ route('staff.office.edit') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                    {{ request()->routeIs('staff.office.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                    style="{{ request()->routeIs('staff.office.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                    <i class="ti ti-building text-lg" aria-hidden="true"></i>
+                    Office Profile
+                </a>
             </div>
 
         @endif

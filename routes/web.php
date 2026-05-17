@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\NotificationController;
 
 use App\Http\Controllers\Staff\StaffDashboardController;
+use App\Http\Controllers\Staff\StaffOfficeController;
 use App\Http\Controllers\Staff\StaffRequestController;
 use App\Http\Controllers\Staff\StaffAppointmentController;
 
@@ -236,6 +237,12 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])
             ->name('staff.dashboard');
+
+        Route::get('/office', [StaffOfficeController::class, 'edit'])
+            ->name('staff.office.edit');
+
+        Route::put('/office', [StaffOfficeController::class, 'update'])
+            ->name('staff.office.update');
 
         // REQUESTS
         Route::get('/requests', [StaffRequestController::class, 'index'])

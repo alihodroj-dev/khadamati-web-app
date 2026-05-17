@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\RequestDocumentController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceRequestController;
+use App\Http\Controllers\Api\StaffOfficeController;
 use App\Http\Controllers\Api\StaffRequestController;
 use App\Http\Controllers\Api\StaffServiceController;
 use App\Http\Controllers\Api\TrackingController;
@@ -132,6 +133,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/feedback/{feedback}', [FeedbackController::class, 'show']);
     Route::patch('/feedback/{feedback}', [FeedbackController::class, 'update']);
     Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy']);
+
+    Route::middleware('role:staff')->group(function () {
+        Route::get('/staff/office', [StaffOfficeController::class, 'show']);
+        Route::patch('/staff/office', [StaffOfficeController::class, 'update']);
+    });
 
     // Staff & Admin: request management
     Route::middleware('role:staff,admin')->group(function () {

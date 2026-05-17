@@ -14,7 +14,13 @@ class OfficePolicy
 
     public function update(User $user, Office $office): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isStaff()
+            && $user->office_id !== null
+            && (int) $user->office_id === (int) $office->id;
     }
 
     public function delete(User $user, Office $office): bool
