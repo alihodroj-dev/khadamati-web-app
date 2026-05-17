@@ -27,13 +27,13 @@ class GoogleIdTokenVerificationService
      */
     public function verify(string $idToken): array
     {
-        $clientId = config('services.google.client_id');
+        $webClientId = config('services.google.web_client_id');
 
-        if (empty($clientId)) {
-            throw new RuntimeException('Google client ID is not configured.');
+        if (empty($webClientId)) {
+            throw new RuntimeException('Google web client ID is not configured.');
         }
 
-        $client = new Client(['client_id' => $clientId]);
+        $client = new Client(['client_id' => $webClientId]);
         $payload = $client->verifyIdToken($idToken);
 
         if (! is_array($payload)) {
@@ -46,7 +46,7 @@ class GoogleIdTokenVerificationService
             throw new InvalidArgumentException('Invalid token issuer.');
         }
 
-        if (($payload['aud'] ?? '') !== $clientId) {
+        if (($payload['aud'] ?? '') !== $webClientId) {
             throw new InvalidArgumentException('Invalid token audience.');
         }
 

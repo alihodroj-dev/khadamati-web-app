@@ -42,7 +42,7 @@ class OcrSpaceIdentityServiceTest extends TestCase
         $this->assertNull($result['error']);
 
         Http::assertSent(function ($request) {
-            return $request->hasHeader('apiKey', 'test-api-key');
+            return $request->hasHeader('apikey', 'test-api-key');
         });
     }
 

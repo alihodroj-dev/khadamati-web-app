@@ -36,6 +36,9 @@ Route::post('/identity/preview', [IdentityPreviewController::class, 'preview']);
 Route::post('/register/complete', [AuthController::class, 'completeRegistration']);
 Route::post('/auth/google', [AuthController::class, 'google']);
 Route::post('/auth/apple', [AuthController::class, 'apple']);
+Route::post('/auth/request-otp', [AuthController::class, 'requestOtp']);
+Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/auth/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/login/resend-otp', [AuthController::class, 'resendOtp']);
@@ -66,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/profile/complete', [ProfileController::class, 'complete']);
     Route::patch('/profile', [ProfileController::class, 'update']);
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
     Route::patch('/profile/notification-preferences', [ProfileController::class, 'updateNotificationPreferences']);

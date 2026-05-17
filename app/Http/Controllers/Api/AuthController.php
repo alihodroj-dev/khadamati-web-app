@@ -11,6 +11,7 @@ use App\Services\GoogleAuthenticationService;
 use App\Services\GoogleIdTokenVerificationService;
 use App\Services\OtpLoginService;
 use App\Services\RegistrationCompletionService;
+use App\Support\UserProfileCompletion;
 use App\Traits\ApiResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -55,10 +56,7 @@ class AuthController extends Controller
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
-            [
-                'user' => new UserResource($user),
-                'token' => $token,
-            ],
+            $this->authenticationPayload($user, $token),
             'Registered successfully',
             201
         );
@@ -142,10 +140,7 @@ class AuthController extends Controller
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
-            [
-                'user' => new UserResource($user->fresh()),
-                'token' => $token,
-            ],
+            $this->authenticationPayload($user, $token),
             'Logged in successfully'
         );
     }
@@ -191,26 +186,19 @@ class AuthController extends Controller
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
-            [
-                'user' => new UserResource($user->fresh()),
-                'token' => $token,
-            ],
+            $this->authenticationPayload($user, $token),
             'Logged in successfully'
         );
     }
 
-    public function login(Request $request, OtpLoginService $otpLoginService)
+    public function requestOtp(Request $request, OtpLoginService $otpLoginService)
     {
         $validated = $request->validate([
             'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
         ]);
 
         try {
-            $challenge = $otpLoginService->initiateLogin(
-                $validated['email'],
-                $validated['password']
-            );
+            $challenge = $otpLoginService->requestOtp($validated['email']);
         } catch (ValidationException $e) {
             $message = collect($e->errors())->flatten()->first() ?? 'Invalid credentials.';
 
@@ -256,12 +244,14 @@ class AuthController extends Controller
         $token = $user->createToken('khadamati-ios-app')->plainTextToken;
 
         return $this->successResponse(
-            [
-                'user' => new UserResource($user->fresh()),
-                'token' => $token,
-            ],
+            $this->authenticationPayload($user->fresh(), $token),
             'Logged in successfully'
         );
+    }
+
+    public function login(Request $request, OtpLoginService $otpLoginService)
+    {
+        return $this->requestOtp($request, $otpLoginService);
     }
 
     public function resendOtp(Request $request, OtpLoginService $otpLoginService)
@@ -309,5 +299,21 @@ class AuthController extends Controller
             null,
             'Logged out successfully'
         );
+    }
+
+    /**
+     * @return array{
+     *     user: UserResource,
+     *     token: string,
+     *     profile_completed: bool
+     * }
+     */
+    protected function authenticationPayload(User $user, string $token): array
+    {
+        return [
+            'user' => new UserResource($user),
+            'token' => $token,
+            'profile_completed' => UserProfileCompletion::isCompleted($user),
+        ];
     }
 }

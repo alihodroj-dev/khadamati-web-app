@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Services\ProfileCompletionService;
+use App\Support\UserProfileCompletion;
 use App\Traits\ApiResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -66,6 +69,55 @@ class ProfileController extends Controller
         $user->tokens()->where('id', '!=', $currentTokenId)->delete();
 
         return $this->successResponse(null, 'Password updated successfully.');
+    }
+
+    public function complete(
+        Request $request,
+        ProfileCompletionService $profileCompletionService
+    ) {
+        $user = $request->user();
+
+        if (! $user->isCitizen()) {
+            return $this->errorResponse(
+                'Only citizens can complete a profile.',
+                null,
+                403
+            );
+        }
+
+        $validated = $request->validate([
+            'verification_session_token' => ['required', 'string'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'father_name' => ['required', 'string', 'max:255'],
+            'mother_name' => ['required', 'string', 'max:255'],
+            'date_of_birth' => ['required', 'date'],
+            'national_id' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'national_id')->ignore($user->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        try {
+            $user = $profileCompletionService->complete($user, $validated);
+        } catch (ValidationException $e) {
+            return $this->errorResponse(
+                'Profile could not be completed.',
+                $e->errors(),
+                422
+            );
+        }
+
+        return $this->successResponse(
+            [
+                'user' => new UserResource($user),
+                'profile_completed' => UserProfileCompletion::isCompleted($user),
+            ],
+            'Profile completed successfully.'
+        );
     }
 
     public function updateNotificationPreferences(Request $request)

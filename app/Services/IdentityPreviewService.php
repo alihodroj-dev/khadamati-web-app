@@ -18,6 +18,7 @@ class IdentityPreviewService
     /**
      * @return array{
      *     verification_session_token: string,
+     *     ocr: array{success: bool, error: null|string},
      *     fields: list<array{
      *         key: string,
      *         label: string,
@@ -56,6 +57,10 @@ class IdentityPreviewService
 
         return [
             'verification_session_token' => $session->session_token,
+            'ocr' => [
+                'success' => $ocrResult['success'],
+                'error' => $ocrResult['error'],
+            ],
             'fields' => $this->formBuilder->build($extractedData),
         ];
     }

@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Support\ArabicTransliterator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -44,6 +46,8 @@ class OcrSpaceIdentityService
         $apiKey = config('services.ocr_space.api_key');
 
         if (empty($apiKey)) {
+            Log::warning('OCR.space skipped: OCR_SPACE_API_KEY is not configured.');
+
             return $this->failureResult($emptyFields, self::ERROR_CONFIGURATION);
         }
 
@@ -65,10 +69,18 @@ class OcrSpaceIdentityService
             return $this->failureResult($emptyFields, self::ERROR_EMPTY);
         }
 
+        $extractedFields = $this->parseExtractedFields($rawText);
+
+        Log::info('OCR.space extracted identity fields.', [
+            'file_path' => $filePath,
+            'raw_text' => $rawText,
+            'extracted_fields' => $extractedFields,
+        ]);
+
         return [
             'success' => true,
             'raw_text' => $rawText,
-            'extracted_fields' => $this->parseExtractedFields($rawText),
+            'extracted_fields' => $extractedFields,
             'error' => null,
         ];
     }
@@ -81,23 +93,46 @@ class OcrSpaceIdentityService
         $endpoint = config('services.ocr_space.endpoint');
         $fileName = basename($absolutePath);
 
+        // OCR.space expects multipart text fields as strings (see their Postman collection).
         $httpResponse = Http::withHeaders([
-            'apiKey' => $apiKey,
+            'apikey' => $apiKey,
         ])->attach(
             'file',
             fopen($absolutePath, 'r'),
             $fileName
-        )->post($endpoint);
+        )->post($endpoint, [
+            'language' => (string) config('services.ocr_space.language', 'auto'),
+            'isOverlayRequired' => 'false',
+            'OCREngine' => (string) config('services.ocr_space.engine', 3),
+        ]);
 
         if (! $httpResponse->successful()) {
+            Log::warning('OCR.space HTTP request failed.', [
+                'file' => $fileName,
+                'http_status' => $httpResponse->status(),
+                'body' => $httpResponse->body(),
+            ]);
+
             throw new \RuntimeException('OCR HTTP request failed.');
         }
 
         $payload = $httpResponse->json();
 
         if (! is_array($payload)) {
+            Log::warning('OCR.space response was not valid JSON.', [
+                'file' => $fileName,
+                'body' => $httpResponse->body(),
+            ]);
+
             throw new \RuntimeException('OCR response was not valid JSON.');
         }
+
+        Log::info('OCR.space API response.', [
+            'file' => $fileName,
+            'language' => config('services.ocr_space.language'),
+            'engine' => config('services.ocr_space.engine'),
+            'response' => $payload,
+        ]);
 
         return $payload;
     }
@@ -109,6 +144,11 @@ class OcrSpaceIdentityService
     protected function parseOcrApiResponse(array $response): array
     {
         if (($response['OCRExitCode'] ?? 0) !== 1) {
+            Log::warning('OCR.space processing error.', [
+                'ocr_exit_code' => $response['OCRExitCode'] ?? null,
+                'error_message' => $response['ErrorMessage'] ?? null,
+            ]);
+
             return [
                 'success' => false,
                 'raw_text' => '',
@@ -175,14 +215,161 @@ class OcrSpaceIdentityService
             return $data;
         }
 
-        $data['national_id'] = $this->extractNationalId($rawText) ?? '';
-        $data['date_of_birth'] = $this->extractDateOfBirth($rawText);
+        if ($this->containsArabic($rawText)) {
+            $data = $this->parseLebaneseIdArabicText($rawText);
+        } else {
+            $data['national_id'] = $this->extractNationalId($rawText) ?? '';
+            $data['date_of_birth'] = $this->extractDateOfBirth($rawText);
 
-        $labeledNames = $this->extractLabeledNames($rawText);
-        $data = array_merge($data, $labeledNames);
+            $labeledNames = $this->extractLabeledNames($rawText);
+            $data = array_merge($data, $labeledNames);
 
-        if ($data['first_name'] === '' && $data['last_name'] === '') {
-            $data = array_merge($data, $this->extractNamesFromLines($rawText));
+            if ($data['first_name'] === '' && $data['last_name'] === '') {
+                $data = array_merge($data, $this->extractNamesFromLines($rawText));
+            }
+        }
+
+        return $this->transliterateExtractedFields($data);
+    }
+
+    /**
+     * @return array{
+     *     first_name: string,
+     *     last_name: string,
+     *     father_name: string,
+     *     mother_name: string,
+     *     date_of_birth: null|string,
+     *     national_id: string
+     * }
+     */
+    public function parseLebaneseIdArabicText(string $rawText): array
+    {
+        $data = $this->emptyExtractedFields();
+
+        $data['first_name'] = $this->extractArabicLabeledValue($rawText, [
+            'الاسم',
+        ]) ?? '';
+        $data['last_name'] = $this->extractArabicLabeledValue($rawText, [
+            'الشهرة',
+        ]) ?? '';
+        $data['father_name'] = $this->extractArabicLabeledValue($rawText, [
+            'اسم الأب',
+            'اسم الاب',
+        ]) ?? '';
+        $data['mother_name'] = $this->extractArabicLabeledValue($rawText, [
+            'اسم الام وشهرتها',
+            'اسم الأم وشهرتها',
+            'اسم الام',
+            'اسم الأم',
+        ]) ?? '';
+
+        $dateValue = $this->extractArabicLabeledValue($rawText, [
+            'تاريخ الولادة',
+        ]);
+
+        if ($dateValue !== null) {
+            $data['date_of_birth'] = $this->normalizeArabicDate($dateValue);
+        }
+
+        $data['national_id'] = $this->extractArabicNationalId($rawText) ?? '';
+
+        return $data;
+    }
+
+    protected function containsArabic(string $text): bool
+    {
+        return (bool) preg_match('/[\x{0600}-\x{06FF}]/u', $text);
+    }
+
+    /**
+     * @param  list<string>  $labels
+     */
+    protected function extractArabicLabeledValue(string $rawText, array $labels): ?string
+    {
+        foreach ($labels as $label) {
+            $escapedLabel = preg_quote($label, '/');
+            $pattern = '/'.$escapedLabel.'\s*[：\:]\s*([^\r\n]+)/u';
+
+            if (preg_match($pattern, $rawText, $matches)) {
+                return trim($matches[1]);
+            }
+        }
+
+        return null;
+    }
+
+    protected function extractArabicNationalId(string $rawText): ?string
+    {
+        $lines = preg_split('/\R+/', $rawText) ?: [];
+
+        for ($index = count($lines) - 1; $index >= 0; $index--) {
+            $line = trim(ArabicTransliterator::normalizeDigits((string) $lines[$index]));
+            $line = preg_replace('/\s+/u', '', $line) ?? '';
+
+            if ($line !== '' && preg_match('/^\d{8,}$/', $line)) {
+                return $line;
+            }
+        }
+
+        $normalized = ArabicTransliterator::normalizeDigits($rawText);
+
+        if (preg_match('/\b(\d{8,})\b/', $normalized, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    protected function normalizeArabicDate(string $value): ?string
+    {
+        $value = ArabicTransliterator::normalizeDigits(trim($value));
+        $value = str_replace(['.', '/'], '-', $value);
+
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $value, $matches)) {
+            return sprintf(
+                '%04d-%02d-%02d',
+                (int) $matches[3],
+                (int) $matches[2],
+                (int) $matches[1]
+            );
+        }
+
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+            return sprintf('%s-%s-%s', $matches[1], $matches[2], $matches[3]);
+        }
+
+        return $this->normalizeDate($value);
+    }
+
+    /**
+     * @param  array{
+     *     first_name: string,
+     *     last_name: string,
+     *     father_name: string,
+     *     mother_name: string,
+     *     date_of_birth: null|string,
+     *     national_id: string
+     * }  $data
+     * @return array{
+     *     first_name: string,
+     *     last_name: string,
+     *     father_name: string,
+     *     mother_name: string,
+     *     date_of_birth: null|string,
+     *     national_id: string
+     * }
+     */
+    protected function transliterateExtractedFields(array $data): array
+    {
+        $data['first_name'] = ArabicTransliterator::transliterate($data['first_name']);
+        $data['last_name'] = ArabicTransliterator::transliterate($data['last_name']);
+        $data['father_name'] = ArabicTransliterator::transliterate($data['father_name']);
+        $data['mother_name'] = ArabicTransliterator::transliterate($data['mother_name']);
+        $data['national_id'] = ArabicTransliterator::normalizeDigits($data['national_id']);
+
+        if ($data['date_of_birth'] !== null) {
+            $data['date_of_birth'] = $this->normalizeArabicDate($data['date_of_birth'])
+                ?? $data['date_of_birth'];
         }
 
         return $data;
@@ -367,6 +554,8 @@ class OcrSpaceIdentityService
      */
     protected function failureResult(array $extractedFields, string $error): array
     {
+        Log::info('Identity OCR failed.', ['error' => $error]);
+
         return [
             'success' => false,
             'raw_text' => '',

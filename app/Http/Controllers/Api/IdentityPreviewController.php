@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\IdentityPreviewRequest;
 use App\Services\IdentityPreviewService;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
 
 class IdentityPreviewController extends Controller
 {
@@ -15,16 +15,11 @@ class IdentityPreviewController extends Controller
         private IdentityPreviewService $identityPreviewService
     ) {}
 
-    public function preview(Request $request)
+    public function preview(IdentityPreviewRequest $request)
     {
-        $request->validate([
-            'id_front' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-            'id_back' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-        ]);
-
         $result = $this->identityPreviewService->createPreview(
-            $request->file('id_front'),
-            $request->file('id_back')
+            $request->resolvedIdFront(),
+            $request->resolvedIdBack()
         );
 
         return $this->successResponse(

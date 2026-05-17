@@ -41,7 +41,8 @@ class RegistrationCompleteTest extends TestCase
             ->assertJsonPath('data.user.first_name', 'Ali')
             ->assertJsonPath('data.user.name', 'Ali Hodroj')
             ->assertJsonPath('data.user.national_id', '123456789')
-            ->assertJsonStructure(['data' => ['user', 'token']]);
+            ->assertJsonPath('data.profile_completed', true)
+            ->assertJsonStructure(['data' => ['user', 'token', 'profile_completed']]);
 
         $user = User::query()->where('email', 'ali@example.com')->first();
 
@@ -62,7 +63,7 @@ class RegistrationCompleteTest extends TestCase
     public function test_google_registration_complete_links_social_account(): void
     {
         Storage::fake('public');
-        config(['services.google.client_id' => 'test-client-id.apps.googleusercontent.com']);
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
 
         $session = $this->createConsumableSession();
 

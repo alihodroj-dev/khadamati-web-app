@@ -24,21 +24,9 @@ class OtpLoginService
      *     expires_at: string
      * }
      */
-    public function initiateLogin(string $email, string $password): array
+    public function requestOtp(string $email): array
     {
-        $user = User::query()->where('email', $email)->first();
-
-        if (! $user || ! $user->password || ! Hash::check($password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid credentials.'],
-            ]);
-        }
-
-        if (! $user->is_active) {
-            throw ValidationException::withMessages([
-                'email' => ['Your account is inactive.'],
-            ]);
-        }
+        $user = $this->resolveUserForOtp($email);
 
         $this->invalidatePendingChallenges($user);
 
@@ -58,6 +46,14 @@ class OtpLoginService
             'challenge_token' => $challenge->challenge_token,
             'expires_at' => $challenge->expires_at->toISOString(),
         ];
+    }
+
+    /**
+     * @deprecated Use requestOtp() for passwordless email login.
+     */
+    public function initiateLogin(string $email, string $password): array
+    {
+        return $this->requestOtp($email);
     }
 
     public function verifyOtp(string $challengeToken, string $otp): User
@@ -88,7 +84,54 @@ class OtpLoginService
             ]);
         }
 
-        return $user;
+        if ($user->email_verified_at === null) {
+            $user->forceFill(['email_verified_at' => now()]);
+            $user->save();
+        }
+
+        return $user->fresh();
+    }
+
+    protected function resolveUserForOtp(string $email): User
+    {
+        $email = strtolower(trim($email));
+
+        $user = User::query()->where('email', $email)->first();
+
+        if ($user) {
+            if (! $user->is_active) {
+                throw ValidationException::withMessages([
+                    'email' => ['Your account is inactive.'],
+                ]);
+            }
+
+            if (! $user->isCitizen()) {
+                throw ValidationException::withMessages([
+                    'email' => ['This email cannot be used for citizen sign-in.'],
+                ]);
+            }
+
+            return $user;
+        }
+
+        return User::create([
+            'name' => $this->placeholderNameFromEmail($email),
+            'email' => $email,
+            'password' => null,
+            'role' => User::ROLE_CITIZEN,
+            'is_active' => true,
+        ]);
+    }
+
+    protected function placeholderNameFromEmail(string $email): string
+    {
+        $localPart = strstr($email, '@', true);
+
+        if (is_string($localPart) && $localPart !== '') {
+            return $localPart;
+        }
+
+        return 'Citizen';
     }
 
     /**

@@ -54,11 +54,13 @@ class IdentityPreviewTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     'verification_session_token',
+                    'ocr' => ['success', 'error'],
                     'fields' => [
                         ['key', 'label', 'type', 'value', 'editable', 'required'],
                     ],
                 ],
             ])
+            ->assertJsonPath('data.ocr.success', true)
             ->assertJsonPath('data.fields.0.key', 'first_name')
             ->assertJsonPath('data.fields.0.value', 'Ali')
             ->assertJsonPath('data.fields.1.value', 'Hodroj')
@@ -103,6 +105,7 @@ class IdentityPreviewTest extends TestCase
         ]);
 
         $response->assertOk()
+            ->assertJsonPath('data.ocr.success', false)
             ->assertJsonPath('data.fields.0.value', '')
             ->assertJsonPath('data.fields.4.value', null);
 
@@ -120,6 +123,72 @@ class IdentityPreviewTest extends TestCase
         $response->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation failed.');
+    }
+
+    public function test_identity_preview_accepts_base64_images(): void
+    {
+        Storage::fake('public');
+
+        $this->mock(OcrSpaceIdentityService::class, function ($mock) {
+            $mock->shouldReceive('extractFromFrontIdPath')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'raw_text' => 'الاسم: علي',
+                    'extracted_fields' => [
+                        'first_name' => 'Ali',
+                        'last_name' => '',
+                        'father_name' => '',
+                        'mother_name' => '',
+                        'date_of_birth' => null,
+                        'national_id' => '',
+                    ],
+                    'error' => null,
+                ]);
+        });
+
+        $front = base64_encode(UploadedFile::fake()->image('front.jpg')->getContent());
+        $back = base64_encode(UploadedFile::fake()->image('back.jpg')->getContent());
+
+        $response = $this->postJson('/api/identity/preview', [
+            'id_front_base64' => $front,
+            'id_back_base64' => $back,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.fields.0.value', 'Ali');
+    }
+
+    public function test_identity_preview_accepts_multipart_post(): void
+    {
+        Storage::fake('public');
+
+        $this->mock(OcrSpaceIdentityService::class, function ($mock) {
+            $mock->shouldReceive('extractFromFrontIdPath')
+                ->once()
+                ->andReturn([
+                    'success' => false,
+                    'raw_text' => '',
+                    'extracted_fields' => [
+                        'first_name' => '',
+                        'last_name' => '',
+                        'father_name' => '',
+                        'mother_name' => '',
+                        'date_of_birth' => null,
+                        'national_id' => '',
+                    ],
+                    'error' => OcrSpaceIdentityService::ERROR_EMPTY,
+                ]);
+        });
+
+        $response = $this->post('/api/identity/preview', [
+            'id_front' => UploadedFile::fake()->image('front.jpg'),
+            'id_back' => UploadedFile::fake()->image('back.jpg'),
+        ], [
+            'Accept' => 'application/json',
+        ]);
+
+        $response->assertOk();
     }
 
     public function test_verify_id_route_is_removed(): void

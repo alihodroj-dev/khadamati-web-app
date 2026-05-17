@@ -1,0 +1,327 @@
+{
+  "info": {
+    "_postman_id": "khadamati-ios-auth-flow",
+    "name": "Khadamati iOS Auth Flow",
+    "description": "End-to-end mobile authentication flow: identity OCR preview, registration, passwordless email OTP, social sign-in, and profile completion. Set base_url before running. In local, OTP codes are written to Laravel logs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "verification_session_token", "value": "", "type": "string" },
+    { "key": "challenge_token", "value": "", "type": "string" },
+    { "key": "otp", "value": "123456", "type": "string" },
+    { "key": "email", "value": "citizen@example.com", "type": "string" },
+    { "key": "password", "value": "password123", "type": "string" },
+    { "key": "google_id_token", "value": "google-native-id-token", "type": "string" },
+    { "key": "apple_identity_token", "value": "apple-identity-token", "type": "string" },
+    { "key": "profile_completed", "value": "false", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. New citizen — identity and registration",
+      "item": [
+        {
+          "name": "Identity Preview (OCR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.verification_session_token) {",
+                  "  pm.collectionVariables.set('verification_session_token', json.data.verification_session_token);",
+                  "}",
+                  "pm.test('Identity preview succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "id_front", "type": "file", "src": [] },
+                { "key": "id_back", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{base_url}}/identity/preview"
+          }
+        },
+        {
+          "name": "Complete Registration (email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.token) {",
+                  "  pm.collectionVariables.set('token', json.data.token);",
+                  "}",
+                  "if (json?.data?.profile_completed !== undefined) {",
+                  "  pm.collectionVariables.set('profile_completed', String(json.data.profile_completed));",
+                  "}",
+                  "pm.test('Registration returns token and completed profile', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(json.data.profile_completed).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_session_token\": \"{{verification_session_token}}\",\n  \"auth_provider\": \"email\",\n  \"email\": \"{{email}}\",\n  \"first_name\": \"Ali\",\n  \"last_name\": \"Hodroj\",\n  \"father_name\": \"Salah\",\n  \"mother_name\": \"Fatma Alyan\",\n  \"date_of_birth\": \"2004-11-27\",\n  \"national_id\": \"00073028821\",\n  \"phone\": \"+96170000001\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\"\n}"
+            },
+            "url": "{{base_url}}/register/complete"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Returning citizen — email OTP",
+      "item": [
+        {
+          "name": "Request OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.challenge_token) {",
+                  "  pm.collectionVariables.set('challenge_token', json.data.challenge_token);",
+                  "}",
+                  "pm.test('OTP challenge issued', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(json.data.requires_otp).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/request-otp"
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_token\": \"{{challenge_token}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/resend-otp"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.token) {",
+                  "  pm.collectionVariables.set('token', json.data.token);",
+                  "}",
+                  "if (json?.data?.profile_completed !== undefined) {",
+                  "  pm.collectionVariables.set('profile_completed', String(json.data.profile_completed));",
+                  "}",
+                  "pm.test('Verify OTP returns auth payload', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(json.data).to.have.property('user');",
+                  "  pm.expect(json.data).to.have.property('token');",
+                  "  pm.expect(json.data).to.have.property('profile_completed');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_token\": \"{{challenge_token}}\",\n  \"otp\": \"{{otp}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/verify-otp"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Social sign-in",
+      "item": [
+        {
+          "name": "Google Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);",
+                  "if (json?.data?.profile_completed !== undefined) {",
+                  "  pm.collectionVariables.set('profile_completed', String(json.data.profile_completed));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_token\": \"{{google_id_token}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/google"
+          }
+        },
+        {
+          "name": "Apple Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);",
+                  "if (json?.data?.profile_completed !== undefined) {",
+                  "  pm.collectionVariables.set('profile_completed', String(json.data.profile_completed));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identity_token\": \"{{apple_identity_token}}\",\n  \"full_name\": \"Ali Hodroj\"\n}"
+            },
+            "url": "{{base_url}}/auth/apple"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Complete profile (after social / incomplete OTP)",
+      "item": [
+        {
+          "name": "Identity Preview (for profile completion)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.verification_session_token) {",
+                  "  pm.collectionVariables.set('verification_session_token', json.data.verification_session_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "id_front", "type": "file", "src": [] },
+                { "key": "id_back", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{base_url}}/identity/preview"
+          }
+        },
+        {
+          "name": "Complete Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Profile completed', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(json.data.profile_completed).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_session_token\": \"{{verification_session_token}}\",\n  \"first_name\": \"Ali\",\n  \"last_name\": \"Hodroj\",\n  \"father_name\": \"Salah\",\n  \"mother_name\": \"Fatma Alyan\",\n  \"date_of_birth\": \"2004-11-27\",\n  \"national_id\": \"00073028821\",\n  \"phone\": \"+96170000001\"\n}"
+            },
+            "url": "{{base_url}}/profile/complete"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Session",
+      "item": [
+        {
+          "name": "Me",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/logout"
+          }
+        }
+      ]
+    }
+  ]
+}

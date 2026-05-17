@@ -23,7 +23,7 @@ class GoogleAuthTest extends TestCase
 
     public function test_google_auth_creates_citizen_user_and_social_account(): void
     {
-        config(['services.google.client_id' => 'test-client-id.apps.googleusercontent.com']);
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
 
         $payload = [
             'sub' => 'google-user-123',
@@ -53,10 +53,12 @@ class GoogleAuthTest extends TestCase
             ->assertJsonPath('errors', null)
             ->assertJsonPath('data.user.email', 'citizen@example.com')
             ->assertJsonPath('data.user.role', User::ROLE_CITIZEN)
+            ->assertJsonPath('data.profile_completed', false)
             ->assertJsonStructure([
                 'data' => [
                     'user' => ['id', 'name', 'email', 'role'],
                     'token',
+                    'profile_completed',
                 ],
             ]);
 
@@ -76,7 +78,7 @@ class GoogleAuthTest extends TestCase
 
     public function test_google_auth_links_existing_user_by_email(): void
     {
-        config(['services.google.client_id' => 'test-client-id.apps.googleusercontent.com']);
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
 
         $existingUser = User::factory()->create([
             'email' => 'existing@example.com',
@@ -121,7 +123,7 @@ class GoogleAuthTest extends TestCase
 
     public function test_google_auth_returns_existing_social_account_user(): void
     {
-        config(['services.google.client_id' => 'test-client-id.apps.googleusercontent.com']);
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
 
         $user = User::factory()->create([
             'email' => 'linked@example.com',
@@ -169,7 +171,7 @@ class GoogleAuthTest extends TestCase
 
     public function test_google_auth_rejects_invalid_token(): void
     {
-        config(['services.google.client_id' => 'test-client-id.apps.googleusercontent.com']);
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
 
         $this->mock(GoogleIdTokenVerificationService::class, function ($mock) {
             $mock->shouldReceive('verify')
@@ -189,7 +191,7 @@ class GoogleAuthTest extends TestCase
 
     public function test_google_auth_rejects_inactive_user(): void
     {
-        config(['services.google.client_id' => 'test-client-id.apps.googleusercontent.com']);
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
 
         User::factory()->create([
             'email' => 'inactive@example.com',

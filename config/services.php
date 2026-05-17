@@ -36,16 +36,20 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'ios_client_id' => env('GOOGLE_IOS_CLIENT_ID'),
+        'web_client_id' => env('GOOGLE_WEB_CLIENT_ID'),
     ],
 
     'apple' => [
         'client_id' => env('APPLE_CLIENT_ID'),
+        'issuer' => env('APPLE_ISSUER', 'https://appleid.apple.com'),
     ],
 
     'ocr_space' => [
         'api_key' => env('OCR_SPACE_API_KEY'),
         'endpoint' => env('OCR_SPACE_ENDPOINT', 'https://api.ocr.space/parse/image'),
+        'language' => env('OCR_SPACE_LANGUAGE', 'auto'),
+        'engine' => (int) env('OCR_SPACE_ENGINE', 3),
     ],
 
 ];

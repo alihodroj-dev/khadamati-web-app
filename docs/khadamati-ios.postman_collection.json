@@ -1,0 +1,580 @@
+{
+  "info": {
+    "_postman_id": "9d52cf35-7a71-4f7b-bf0e-khadamati-ios",
+    "name": "Khadamati iOS API",
+    "description": "Citizen-facing Khadamati iOS REST API collection generated from docs/ios-api.md. Set base_url and token collection variables before running authenticated requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api", "type": "string" },
+    { "key": "web_base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "verification_session_token", "value": "", "type": "string" },
+    { "key": "challenge_token", "value": "", "type": "string" },
+    { "key": "otp", "value": "123456", "type": "string" },
+    { "key": "category_id", "value": "1", "type": "string" },
+    { "key": "service_id", "value": "1", "type": "string" },
+    { "key": "office_id", "value": "1", "type": "string" },
+    { "key": "service_request_id", "value": "1", "type": "string" },
+    { "key": "document_id", "value": "1", "type": "string" },
+    { "key": "appointment_id", "value": "1", "type": "string" },
+    { "key": "payment_id", "value": "1", "type": "string" },
+    { "key": "feedback_id", "value": "1", "type": "string" },
+    { "key": "notification_id", "value": "00000000-0000-0000-0000-000000000000", "type": "string" },
+    { "key": "device_token_id", "value": "1", "type": "string" },
+    { "key": "tracking_token", "value": "", "type": "string" },
+    { "key": "email", "value": "jane@example.com", "type": "string" },
+    { "key": "password", "value": "password123", "type": "string" },
+    { "key": "google_id_token", "value": "google-native-id-token", "type": "string" },
+    { "key": "apple_identity_token", "value": "apple-identity-token", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Identity Preview",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "id_front", "type": "file", "src": [] },
+                { "key": "id_back", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/identity/preview", "host": ["{{base_url}}"], "path": ["identity", "preview"] }
+          }
+        },
+        {
+          "name": "Complete Registration - Email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_session_token\": \"{{verification_session_token}}\",\n  \"auth_provider\": \"email\",\n  \"email\": \"{{email}}\",\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Citizen\",\n  \"father_name\": \"Father\",\n  \"mother_name\": \"Mother\",\n  \"date_of_birth\": \"2001-05-10\",\n  \"national_id\": \"123456789\",\n  \"phone\": \"+96170000001\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/register/complete", "host": ["{{base_url}}"], "path": ["register", "complete"] }
+          }
+        },
+        {
+          "name": "Complete Registration - Google",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_session_token\": \"{{verification_session_token}}\",\n  \"auth_provider\": \"google\",\n  \"provider_token\": \"{{google_id_token}}\",\n  \"email\": \"{{email}}\",\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Citizen\",\n  \"father_name\": \"Father\",\n  \"mother_name\": \"Mother\",\n  \"date_of_birth\": \"2001-05-10\",\n  \"national_id\": \"123456789\",\n  \"phone\": \"+96170000001\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/register/complete", "host": ["{{base_url}}"], "path": ["register", "complete"] }
+          }
+        },
+        {
+          "name": "Google Sign In",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id_token\": \"{{google_id_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/google", "host": ["{{base_url}}"], "path": ["auth", "google"] }
+          }
+        },
+        {
+          "name": "Apple Sign In",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identity_token\": \"{{apple_identity_token}}\",\n  \"full_name\": \"Jane Citizen\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/apple", "host": ["{{base_url}}"], "path": ["auth", "apple"] }
+          }
+        },
+        {
+          "name": "Email Login - Request OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/request-otp", "host": ["{{base_url}}"], "path": ["auth", "request-otp"] }
+          }
+        },
+        {
+          "name": "Email Login - Verify OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"challenge_token\": \"{{challenge_token}}\",\n  \"otp\": \"{{otp}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/verify-otp", "host": ["{{base_url}}"], "path": ["auth", "verify-otp"] }
+          }
+        },
+        {
+          "name": "Email Login - Resend OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"challenge_token\": \"{{challenge_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/resend-otp", "host": ["{{base_url}}"], "path": ["auth", "resend-otp"] }
+          }
+        },
+        {
+          "name": "Me",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] } }
+        },
+        {
+          "name": "Logout",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] } }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/profile", "host": ["{{base_url}}"], "path": ["profile"] } }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Citizen\",\n  \"phone\": \"+96170000001\",\n  \"national_id\": \"123456789\"\n}" },
+            "url": { "raw": "{{base_url}}/profile", "host": ["{{base_url}}"], "path": ["profile"] }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}" },
+            "url": { "raw": "{{base_url}}/profile/password", "host": ["{{base_url}}"], "path": ["profile", "password"] }
+          }
+        },
+        {
+          "name": "Update Notification Preferences",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"push_notifications_enabled\": true,\n  \"email_notifications_enabled\": true,\n  \"sms_notifications_enabled\": false\n}" },
+            "url": { "raw": "{{base_url}}/profile/notification-preferences", "host": ["{{base_url}}"], "path": ["profile", "notification-preferences"] }
+          }
+        },
+        {
+          "name": "Register Device Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"apns-device-token\",\n  \"platform\": \"ios\"\n}" },
+            "url": { "raw": "{{base_url}}/device-tokens", "host": ["{{base_url}}"], "path": ["device-tokens"] }
+          }
+        },
+        {
+          "name": "Delete Device Token",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/device-tokens/{{device_token_id}}", "host": ["{{base_url}}"], "path": ["device-tokens", "{{device_token_id}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Categories And Services",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{base_url}}/service-categories", "host": ["{{base_url}}"], "path": ["service-categories"] } }
+        },
+        {
+          "name": "Show Category",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{base_url}}/service-categories/{{category_id}}", "host": ["{{base_url}}"], "path": ["service-categories", "{{category_id}}"] } }
+        },
+        {
+          "name": "List Services",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services?office_id={{office_id}}&category_id={{category_id}}&search=",
+              "host": ["{{base_url}}"],
+              "path": ["services"],
+              "query": [
+                { "key": "office_id", "value": "{{office_id}}", "disabled": true },
+                { "key": "category_id", "value": "{{category_id}}", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Show Service",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{base_url}}/services/{{service_id}}", "host": ["{{base_url}}"], "path": ["services", "{{service_id}}"] } }
+        },
+        {
+          "name": "Public Service Feedback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/{{service_id}}/feedback?rating=",
+              "host": ["{{base_url}}"],
+              "path": ["services", "{{service_id}}", "feedback"],
+              "query": [{ "key": "rating", "value": "", "disabled": true }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Offices",
+      "item": [
+        {
+          "name": "List Offices",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/offices?service_id={{service_id}}&category_id={{category_id}}&search=&near_lat=33.8938&near_lng=35.5018",
+              "host": ["{{base_url}}"],
+              "path": ["offices"],
+              "query": [
+                { "key": "service_id", "value": "{{service_id}}", "disabled": true },
+                { "key": "category_id", "value": "{{category_id}}", "disabled": true },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "near_lat", "value": "33.8938", "disabled": true },
+                { "key": "near_lng", "value": "35.5018", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Show Office",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{base_url}}/offices/{{office_id}}", "host": ["{{base_url}}"], "path": ["offices", "{{office_id}}"] } }
+        },
+        {
+          "name": "Public Office Feedback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/offices/{{office_id}}/feedback?rating=",
+              "host": ["{{base_url}}"],
+              "path": ["offices", "{{office_id}}", "feedback"],
+              "query": [{ "key": "rating", "value": "", "disabled": true }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Requests",
+      "item": [
+        {
+          "name": "Create Service Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"service_id\": {{service_id}},\n  \"office_id\": {{office_id}},\n  \"citizen_notes\": \"Optional note\",\n  \"submitted_data\": {}\n}" },
+            "url": { "raw": "{{base_url}}/service-requests", "host": ["{{base_url}}"], "path": ["service-requests"] }
+          }
+        },
+        {
+          "name": "List My Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/my-requests?status=&service_id={{service_id}}&category_id={{category_id}}&from_date=&to_date=&search=",
+              "host": ["{{base_url}}"],
+              "path": ["my-requests"],
+              "query": [
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "service_id", "value": "{{service_id}}", "disabled": true },
+                { "key": "category_id", "value": "{{category_id}}", "disabled": true },
+                { "key": "from_date", "value": "", "disabled": true },
+                { "key": "to_date", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Show My Request",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}"] } }
+        },
+        {
+          "name": "Cancel My Request",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/cancel", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "cancel"] } }
+        },
+        {
+          "name": "Get Certificate Placeholder",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/certificate", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "certificate"] } }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "List Request Documents",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/documents", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "documents"] } }
+        },
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "document_type", "value": "national_id_copy", "type": "text" },
+                { "key": "document", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/documents", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "documents"] }
+          }
+        },
+        {
+          "name": "Bulk Upload Documents",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "documents[0][document_type]", "value": "national_id_copy", "type": "text" },
+                { "key": "documents[0][file]", "type": "file", "src": [] },
+                { "key": "documents[1][document_type]", "value": "proof_of_residence", "type": "text" },
+                { "key": "documents[1][file]", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/documents/bulk", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "documents", "bulk"] }
+          }
+        },
+        {
+          "name": "Download Document",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/documents/{{document_id}}/download", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "documents", "{{document_id}}", "download"] } }
+        },
+        {
+          "name": "Delete Document",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/my-requests/{{service_request_id}}/documents/{{document_id}}", "host": ["{{base_url}}"], "path": ["my-requests", "{{service_request_id}}", "documents", "{{document_id}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "item": [
+        {
+          "name": "Public API Tracking",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{base_url}}/track/{{tracking_token}}", "host": ["{{base_url}}"], "path": ["track", "{{tracking_token}}"] } }
+        },
+        {
+          "name": "Public Web Tracking",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{web_base_url}}/track/{{tracking_token}}", "host": ["{{web_base_url}}"], "path": ["track", "{{tracking_token}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/appointments/availability?date=2026-05-17&service_request_id={{service_request_id}}&staff_id=",
+              "host": ["{{base_url}}"],
+              "path": ["appointments", "availability"],
+              "query": [
+                { "key": "date", "value": "2026-05-17" },
+                { "key": "service_request_id", "value": "{{service_request_id}}", "disabled": true },
+                { "key": "staff_id", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Appointments",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/appointments", "host": ["{{base_url}}"], "path": ["appointments"] } }
+        },
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"service_request_id\": {{service_request_id}},\n  \"appointment_date\": \"2026-05-17\",\n  \"appointment_time\": \"09:00\",\n  \"notes\": \"Optional appointment note\"\n}" },
+            "url": { "raw": "{{base_url}}/appointments", "host": ["{{base_url}}"], "path": ["appointments"] }
+          }
+        },
+        {
+          "name": "Show Appointment",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/appointments/{{appointment_id}}", "host": ["{{base_url}}"], "path": ["appointments", "{{appointment_id}}"] } }
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"appointment_date\": \"2026-05-18\",\n  \"appointment_time\": \"10:00\",\n  \"notes\": \"Updated note\"\n}" },
+            "url": { "raw": "{{base_url}}/appointments/{{appointment_id}}", "host": ["{{base_url}}"], "path": ["appointments", "{{appointment_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Appointment",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/appointments/{{appointment_id}}", "host": ["{{base_url}}"], "path": ["appointments", "{{appointment_id}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments?status=&payment_method=&from_date=&to_date=",
+              "host": ["{{base_url}}"],
+              "path": ["payments"],
+              "query": [
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "payment_method", "value": "", "disabled": true },
+                { "key": "from_date", "value": "", "disabled": true },
+                { "key": "to_date", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Card Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"service_request_id\": {{service_request_id}},\n  \"payment_method\": \"card\",\n  \"currency\": \"USD\"\n}" },
+            "url": { "raw": "{{base_url}}/payments", "host": ["{{base_url}}"], "path": ["payments"] }
+          }
+        },
+        {
+          "name": "Create Crypto Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"service_request_id\": {{service_request_id}},\n  \"payment_method\": \"crypto\",\n  \"currency\": \"USD\"\n}" },
+            "url": { "raw": "{{base_url}}/payments", "host": ["{{base_url}}"], "path": ["payments"] }
+          }
+        },
+        {
+          "name": "Show Payment",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["payments", "{{payment_id}}"] } }
+        },
+        {
+          "name": "Process Mock Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"mock_status\": \"paid\",\n  \"mock_message\": \"Sandbox success\"\n}" },
+            "url": { "raw": "{{base_url}}/payments/{{payment_id}}/process", "host": ["{{base_url}}"], "path": ["payments", "{{payment_id}}", "process"] }
+          }
+        },
+        {
+          "name": "Payment Receipt",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/payments/{{payment_id}}/receipt", "host": ["{{base_url}}"], "path": ["payments", "{{payment_id}}", "receipt"] } }
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "List My Feedback",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/feedback", "host": ["{{base_url}}"], "path": ["feedback"] } }
+        },
+        {
+          "name": "Submit Feedback",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"service_request_id\": {{service_request_id}},\n  \"rating\": 5,\n  \"comment\": \"Fast and helpful service.\"\n}" },
+            "url": { "raw": "{{base_url}}/feedback", "host": ["{{base_url}}"], "path": ["feedback"] }
+          }
+        },
+        {
+          "name": "Show Feedback",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/feedback/{{feedback_id}}", "host": ["{{base_url}}"], "path": ["feedback", "{{feedback_id}}"] } }
+        },
+        {
+          "name": "Update Feedback",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated feedback.\"\n}" },
+            "url": { "raw": "{{base_url}}/feedback/{{feedback_id}}", "host": ["{{base_url}}"], "path": ["feedback", "{{feedback_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Feedback",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/feedback/{{feedback_id}}", "host": ["{{base_url}}"], "path": ["feedback", "{{feedback_id}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications?unread_only=true",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"],
+              "query": [{ "key": "unread_only", "value": "true", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{base_url}}/notifications/{{notification_id}}/read", "host": ["{{base_url}}"], "path": ["notifications", "{{notification_id}}", "read"] } }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{base_url}}/notifications/read-all", "host": ["{{base_url}}"], "path": ["notifications", "read-all"] } }
+        }
+      ]
+    },
+    {
+      "name": "Deprecated - Not For iOS",
+      "item": [
+        {
+          "name": "Legacy Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Legacy User\",\n  \"email\": \"legacy@example.com\",\n  \"password\": \"password123\"\n}" },
+            "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] },
+            "description": "Deprecated. Do not call from the citizen iOS app."
+          }
+        }
+      ]
+    }
+  ]
+}

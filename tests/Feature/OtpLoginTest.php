@@ -13,18 +13,18 @@ class OtpLoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_returns_otp_challenge_instead_of_token(): void
+    public function test_request_otp_returns_challenge_without_password(): void
     {
         Log::spy();
 
         $user = User::factory()->create([
             'email' => 'citizen@example.com',
-            'password' => Hash::make('password123'),
+            'password' => null,
+            'role' => User::ROLE_CITIZEN,
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/request-otp', [
             'email' => 'citizen@example.com',
-            'password' => 'password123',
         ]);
 
         $response->assertOk()
@@ -65,14 +65,15 @@ class OtpLoginTest extends TestCase
             'channel' => OtpChallenge::CHANNEL_EMAIL,
         ]);
 
-        $response = $this->postJson('/api/login/verify-otp', [
+        $response = $this->postJson('/api/auth/verify-otp', [
             'challenge_token' => $challenge->challenge_token,
             'otp' => $otp,
         ]);
 
         $response->assertOk()
             ->assertJsonPath('data.user.email', 'citizen@example.com')
-            ->assertJsonStructure(['data' => ['user', 'token']]);
+            ->assertJsonPath('data.profile_completed', false)
+            ->assertJsonStructure(['data' => ['user', 'token', 'profile_completed']]);
 
         $challenge->refresh();
 
@@ -136,19 +137,91 @@ class OtpLoginTest extends TestCase
         Log::shouldHaveReceived('info')->with('Login OTP generated.', \Mockery::type('array'));
     }
 
-    public function test_login_rejects_invalid_credentials(): void
+    public function test_request_otp_creates_empty_citizen_for_new_email(): void
     {
-        User::factory()->create([
-            'email' => 'citizen@example.com',
-            'password' => Hash::make('password123'),
+        Log::spy();
+
+        $response = $this->postJson('/api/auth/request-otp', [
+            'email' => 'newuser@example.com',
         ]);
 
-        $response = $this->postJson('/api/login', [
-            'email' => 'citizen@example.com',
-            'password' => 'wrong-password',
+        $response->assertOk()
+            ->assertJsonPath('data.requires_otp', true);
+
+        $user = User::query()->where('email', 'newuser@example.com')->first();
+
+        $this->assertNotNull($user);
+        $this->assertSame(User::ROLE_CITIZEN, $user->role);
+        $this->assertNull($user->password);
+        $this->assertNull($user->first_name);
+        $this->assertNull($user->national_id);
+        $this->assertDatabaseHas('otp_challenges', [
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_new_user_can_verify_otp_and_sign_in_with_incomplete_profile(): void
+    {
+        Log::spy();
+
+        $this->postJson('/api/auth/request-otp', [
+            'email' => 'brandnew@example.com',
+        ])->assertOk();
+
+        $user = User::query()->where('email', 'brandnew@example.com')->firstOrFail();
+
+        $otp = '111222';
+
+        $challenge = OtpChallenge::query()
+            ->where('user_id', $user->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $challenge->update(['otp_hash' => Hash::make($otp)]);
+
+        $response = $this->postJson('/api/auth/verify-otp', [
+            'challenge_token' => $challenge->challenge_token,
+            'otp' => $otp,
         ]);
 
-        $response->assertUnprocessable();
-        $this->assertDatabaseCount('otp_challenges', 0);
+        $response->assertOk()
+            ->assertJsonPath('data.profile_completed', false)
+            ->assertJsonPath('data.user.email', 'brandnew@example.com');
+
+        $this->assertNotNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_verify_otp_returns_profile_completed_true_for_complete_profile(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'complete@example.com',
+            'password' => null,
+            'first_name' => 'Ali',
+            'last_name' => 'Hodroj',
+            'father_name' => 'Salah',
+            'mother_name' => 'Fatima',
+            'date_of_birth' => '2004-11-27',
+            'national_id' => '00073028821',
+            'id_front_path' => 'id-documents/1/front.jpg',
+            'id_back_path' => 'id-documents/1/back.jpg',
+        ]);
+
+        $otp = '654321';
+
+        $challenge = OtpChallenge::create([
+            'challenge_token' => 'complete-profile-token',
+            'user_id' => $user->id,
+            'otp_hash' => Hash::make($otp),
+            'expires_at' => now()->addMinutes(10),
+            'channel' => OtpChallenge::CHANNEL_EMAIL,
+        ]);
+
+        $response = $this->postJson('/api/auth/verify-otp', [
+            'challenge_token' => $challenge->challenge_token,
+            'otp' => $otp,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.profile_completed', true);
     }
 }

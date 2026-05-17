@@ -13,8 +13,6 @@ use Throwable;
 
 class AppleIdentityTokenVerificationService
 {
-    private const ISSUER = 'https://appleid.apple.com';
-
     private const KEYS_URL = 'https://appleid.apple.com/auth/keys';
 
     /**
@@ -31,9 +29,14 @@ class AppleIdentityTokenVerificationService
     public function verify(string $identityToken): array
     {
         $clientId = config('services.apple.client_id');
+        $issuer = config('services.apple.issuer');
 
         if (empty($clientId)) {
             throw new RuntimeException('Apple client ID is not configured.');
+        }
+
+        if (empty($issuer)) {
+            throw new RuntimeException('Apple issuer is not configured.');
         }
 
         try {
@@ -47,7 +50,7 @@ class AppleIdentityTokenVerificationService
 
         $payload = $this->normalizePayload($decoded);
 
-        if (($payload['iss'] ?? '') !== self::ISSUER) {
+        if (($payload['iss'] ?? '') !== $issuer) {
             throw new InvalidArgumentException('Invalid token issuer.');
         }
 
