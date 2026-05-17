@@ -8,6 +8,9 @@ use Illuminate\Support\Str;
 
 class ServiceRequest extends Model
 {
+    // DEFERRED(roadmap): Per-request citizen/staff chat (request_conversations/messages).
+    // citizen_notes/staff_notes are not chat. See docs/admin-office-roadmap.md#in-app-chat-with-citizens
+
     protected $fillable = [
         'user_id',
         'service_id',

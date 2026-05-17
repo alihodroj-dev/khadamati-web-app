@@ -7,6 +7,9 @@ use Illuminate\View\View;
 
 class NavbarComposer
 {
+    // DEFERRED(roadmap): Live badge/dropdown updates (Echo/Reverb/SSE), not page reload.
+    // Database notifications remain canonical. See docs/admin-office-roadmap.md#live-real-time-notifications
+
     public function __construct(
         private readonly WebNotificationHelper $webNotificationHelper,
     ) {}

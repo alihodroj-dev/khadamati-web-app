@@ -21,6 +21,8 @@
 
 </div>
 
+{{-- DEFERRED(roadmap): In-app chat panel per request — see docs/admin-office-roadmap.md#in-app-chat-with-citizens --}}
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
     <div class="lg:col-span-2 space-y-6">

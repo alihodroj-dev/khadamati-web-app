@@ -70,6 +70,8 @@ class ProfileController extends Controller
 
     public function updateNotificationPreferences(Request $request)
     {
+        // DEFERRED(roadmap): Staff/admin reminder preferences when email/SMS reminders ship.
+        // See docs/admin-office-roadmap.md#email--sms-appointment-reminders
         $user = $request->user();
 
         if (! $user->isCitizen()) {

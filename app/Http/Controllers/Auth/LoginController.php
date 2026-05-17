@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
+    // DEFERRED(roadmap): 2FA challenge after password for staff/admin web login.
+    // See docs/admin-office-roadmap.md#two-factor-authentication-2fa
+
     public function showLogin()
     {
         return view('Auth.login');

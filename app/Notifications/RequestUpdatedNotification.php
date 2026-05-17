@@ -18,6 +18,8 @@ class RequestUpdatedNotification extends Notification
 
     public function via(object $notifiable): array
     {
+        // DEFERRED(roadmap): Optional broadcast channel for live staff navbar updates.
+        // See docs/admin-office-roadmap.md#live-real-time-notifications
         return ['database'];
     }
 

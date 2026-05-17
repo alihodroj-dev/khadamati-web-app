@@ -20,6 +20,8 @@ class DocumentUploadedNotification extends Notification
 
     public function via(object $notifiable): array
     {
+        // DEFERRED(roadmap): Optional broadcast channel when citizens upload documents.
+        // See docs/admin-office-roadmap.md#live-real-time-notifications
         return ['database'];
     }
 

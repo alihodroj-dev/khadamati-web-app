@@ -363,6 +363,8 @@ class RequestDocumentController extends Controller
         ]);
     }
 
+    // DEFERRED(roadmap): Pair with broadcast for live staff alerts on citizen upload.
+    // See docs/admin-office-roadmap.md#live-real-time-notifications
     private function notifyAssignedStaffOfCitizenUpload(
         ServiceRequest $serviceRequest,
         ?RequestDocument $document,

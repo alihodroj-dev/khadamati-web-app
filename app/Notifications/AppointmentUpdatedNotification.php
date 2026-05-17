@@ -18,6 +18,8 @@ class AppointmentUpdatedNotification extends Notification
 
     public function via(object $notifiable): array
     {
+        // DEFERRED(roadmap): Add mail/sms channels + scheduled reminders; database only for now.
+        // See docs/admin-office-roadmap.md#email--sms-appointment-reminders
         return ['database'];
     }
 
