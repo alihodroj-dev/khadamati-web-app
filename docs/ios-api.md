@@ -1387,23 +1387,35 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 
 **Query:** `unread_only=true` (optional)
 
-**Response** `200`
+**Response** `200` — `data[]` items use `NotificationResource`:
 
 ```json
 {
   "data": [
     {
-      "id": "uuid",
-      "type": "payment.updated",
-      "title": "Payment initiated",
-      "body": "Your payment has been initiated.",
-      "data": { },
+      "id": "9d4e8b2a-1c3f-4b2a-9f0e-123456789abc",
+      "type": "request_update",
+      "title": "Request updated",
+      "body": "Your request is under review.",
+      "icon": "request",
+      "deep_link": {
+        "type": "service_request",
+        "id": 123
+      },
       "read_at": null,
       "created_at": "2026-05-16T10:00:00.000000Z"
     }
   ]
 }
 ```
+
+| `type` | `icon` | `deep_link.type` |
+|--------|--------|------------------|
+| `request_update` | `request` | `service_request` |
+| `payment_update` | `payment` | `payment` |
+| `appointment_update` | `appointment` | `appointment` |
+
+Use `deep_link` for in-app navigation (detail screens). Database notifications only — push delivery is not implemented yet.
 
 ---
 
