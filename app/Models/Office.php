@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Office extends Model
 {
     protected $fillable = [
+        'municipality_id',
         'name',
         'address',
         'phone',
@@ -26,6 +28,11 @@ class Office extends Model
             'working_hours' => 'array',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function municipality(): BelongsTo
+    {
+        return $this->belongsTo(Municipality::class);
     }
 
     public function services()

@@ -11,6 +11,8 @@ class OfficeResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'municipality_id' => $this->municipality_id,
+            'municipality' => new MunicipalityResource($this->whenLoaded('municipality')),
             'name' => $this->name,
             'address' => $this->address,
             'phone' => $this->phone,

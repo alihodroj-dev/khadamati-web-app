@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Appointment;
 use App\Models\Feedback;
+use App\Models\Municipality;
+use App\Models\Office;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -11,6 +13,8 @@ use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Policies\AppointmentPolicy;
 use App\Policies\FeedbackPolicy;
+use App\Policies\MunicipalityPolicy;
+use App\Policies\OfficePolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\ServiceCategoryPolicy;
 use App\Policies\ServicePolicy;
@@ -28,6 +32,8 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Service::class => ServicePolicy::class,
         ServiceCategory::class => ServiceCategoryPolicy::class,
+        Municipality::class => MunicipalityPolicy::class,
+        Office::class => OfficePolicy::class,
     ];
 
     public function boot(): void

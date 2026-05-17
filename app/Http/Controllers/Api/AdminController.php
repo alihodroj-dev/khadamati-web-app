@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OfficeResource;
 use App\Http\Resources\ServiceCategoryResource;
 use App\Http\Resources\ServiceResource;
 use App\Http\Resources\UserResource;
+use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
@@ -233,6 +235,33 @@ class AdminController extends Controller
         return $this->successResponse(null, 'Service category deleted successfully.');
     }
 
+    public function createOffice(Request $request)
+    {
+        $this->authorize('create', Office::class);
+
+        $office = Office::query()->create($this->validateOffice($request));
+        $office->load('municipality');
+
+        return $this->successResponse(
+            new OfficeResource($office),
+            'Office created successfully.',
+            201
+        );
+    }
+
+    public function updateOffice(Request $request, Office $office)
+    {
+        $this->authorize('update', $office);
+
+        $office->update($this->validateOffice($request, true));
+        $office->load('municipality');
+
+        return $this->successResponse(
+            new OfficeResource($office),
+            'Office updated successfully.'
+        );
+    }
+
     private function validateService(Request $request, bool $partial = false): array
     {
         $required = $partial ? 'sometimes' : 'required';
@@ -257,6 +286,23 @@ class AdminController extends Controller
             'name' => [$required, 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'icon' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+    }
+
+    private function validateOffice(Request $request, bool $partial = false): array
+    {
+        $required = $partial ? 'sometimes' : 'required';
+
+        return $request->validate([
+            'municipality_id' => ['nullable', 'integer', 'exists:municipalities,id'],
+            'name' => [$required, 'string', 'max:255'],
+            'address' => [$required, 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'working_hours' => ['nullable', 'array'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
     }

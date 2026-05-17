@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
@@ -162,5 +163,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/admin/service-categories', [AdminController::class, 'createCategory']);
         Route::patch('/admin/service-categories/{serviceCategory}', [AdminController::class, 'updateCategory']);
         Route::delete('/admin/service-categories/{serviceCategory}', [AdminController::class, 'deleteCategory']);
+
+        Route::get('/admin/municipalities', [MunicipalityController::class, 'index']);
+        Route::post('/admin/municipalities', [MunicipalityController::class, 'store']);
+        Route::patch('/admin/municipalities/{municipality}', [MunicipalityController::class, 'update']);
+        Route::delete('/admin/municipalities/{municipality}', [MunicipalityController::class, 'destroy']);
+
+        Route::post('/admin/offices', [AdminController::class, 'createOffice']);
+        Route::patch('/admin/offices/{office}', [AdminController::class, 'updateOffice']);
     });
 });

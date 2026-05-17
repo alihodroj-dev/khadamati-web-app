@@ -67,7 +67,10 @@ class OfficeController extends Controller
             });
         }
 
-        $offices = $query->withDiscoveryStats()->get();
+        $offices = $query
+            ->with('municipality')
+            ->withDiscoveryStats()
+            ->get();
 
         if (isset($validated['near_lat'], $validated['near_lng'])) {
             $lat = (float) $validated['near_lat'];
@@ -107,6 +110,7 @@ class OfficeController extends Controller
         }
 
         $office = Office::query()
+            ->with('municipality')
             ->withDiscoveryStats()
             ->whereKey($office->getKey())
             ->firstOrFail();
