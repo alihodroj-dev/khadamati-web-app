@@ -185,7 +185,7 @@ class PaymentController extends Controller
             );
         }
 
-        $payment->load(['serviceRequest.service', 'user']);
+        $payment->load(['serviceRequest.service', 'serviceRequest.office', 'user']);
 
         return $this->successResponse(
             new PaymentReceiptResource($payment),

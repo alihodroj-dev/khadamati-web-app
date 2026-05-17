@@ -1275,7 +1275,7 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 | **Path** | `/payments/{payment}/receipt` |
 | **Auth** | Yes |
 
-**Response** `200` — JSON receipt (paid payments only).
+**Response** `200` — JSON receipt (**paid** payments only; `422` otherwise). No PDF.
 
 ```json
 {
@@ -1285,15 +1285,22 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
     "transaction_reference": "TXN-ABC123",
     "request_reference_number": "KHR-20260516-ABCDEF",
     "service_name": "Birth Certificate Request",
+    "service_request_status": "completed",
+    "office_name": "Beirut Main Office",
     "amount": 5.0,
     "currency": "USD",
     "payment_method": "card",
     "payment_status": "paid",
+    "receipt_status": "valid",
     "paid_at": "2026-05-16T12:00:00.000000Z",
-    "citizen_name": "Jane Citizen"
+    "issued_at": "2026-05-16T12:00:00.000000Z",
+    "citizen_name": "Jane Citizen",
+    "citizen_national_id": "123456789"
   }
 }
 ```
+
+`issued_at` matches `paid_at`. `citizen_national_id` is included only for the authenticated payment owner when set on their profile (omitted for admins and other users).
 
 ---
 
