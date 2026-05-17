@@ -11,6 +11,7 @@ use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
+use App\Support\ServiceValidation;
 use App\Support\UserOfficeAssignment;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -168,7 +169,7 @@ class AdminController extends Controller
 
     public function services()
     {
-        $services = Service::with('category')
+        $services = Service::with(['category', 'office'])
             ->latest()
             ->get();
 
@@ -182,8 +183,10 @@ class AdminController extends Controller
     {
         $this->authorize('create', Service::class);
 
-        $service = Service::create($this->validateService($request));
-        $service->load('category');
+        $service = Service::create(
+            ServiceValidation::validate($request, $request->user())
+        );
+        $service->load(['category', 'office']);
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -196,8 +199,10 @@ class AdminController extends Controller
     {
         $this->authorize('update', $service);
 
-        $service->update($this->validateService($request, true));
-        $service->load('category');
+        $service->update(
+            ServiceValidation::validate($request, $request->user(), partial: true, service: $service)
+        );
+        $service->load(['category', 'office']);
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -326,22 +331,6 @@ class AdminController extends Controller
         $office->delete();
 
         return $this->successResponse(null, 'Office deleted successfully.');
-    }
-
-    private function validateService(Request $request, bool $partial = false): array
-    {
-        $required = $partial ? 'sometimes' : 'required';
-
-        return $request->validate([
-            'service_category_id' => [$required, 'exists:service_categories,id'],
-            'name' => [$required, 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'base_fee' => ['sometimes', 'numeric', 'min:0'],
-            'estimated_processing_days' => ['nullable', 'integer', 'min:0'],
-            'required_documents' => ['nullable', 'array'],
-            'requires_appointment' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
     }
 
     private function validateCategory(Request $request, bool $partial = false): array

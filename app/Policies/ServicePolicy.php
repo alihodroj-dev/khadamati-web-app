@@ -8,6 +8,11 @@ use App\Support\StaffOfficeScope;
 
 class ServicePolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->isAdmin() || ($user->isStaff() && $user->office_id !== null);
+    }
+
     public function view(User $user, Service $service): bool
     {
         if ($user->isAdmin()) {
@@ -15,8 +20,8 @@ class ServicePolicy
         }
 
         if ($user->isStaff()) {
-            return $service->office_id === null
-                || StaffOfficeScope::canAccessOffice($user, $service->office_id);
+            return $service->office_id !== null
+                && StaffOfficeScope::canAccessOffice($user, $service->office_id);
         }
 
         return true;
@@ -24,16 +29,22 @@ class ServicePolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || ($user->isStaff() && $user->office_id !== null);
     }
 
     public function update(User $user, Service $service): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isStaff()
+            && $service->office_id !== null
+            && StaffOfficeScope::canAccessOffice($user, $service->office_id);
     }
 
     public function delete(User $user, Service $service): bool
     {
-        return $user->isAdmin();
+        return $this->update($user, $service);
     }
 }

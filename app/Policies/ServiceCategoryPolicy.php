@@ -7,6 +7,16 @@ use App\Models\User;
 
 class ServiceCategoryPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->isAdmin() || $user->isStaff();
+    }
+
+    public function view(User $user, ServiceCategory $serviceCategory): bool
+    {
+        return $user->isAdmin() || $user->isStaff();
+    }
+
     public function create(User $user): bool
     {
         return $user->isAdmin();

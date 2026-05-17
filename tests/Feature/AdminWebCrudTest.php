@@ -108,7 +108,9 @@ class AdminWebCrudTest extends TestCase
 
         $service = Service::query()->where('name', 'Water Connection')->first();
         $this->assertNotNull($service);
-        $this->assertSame(['national_id', 'utility_bill'], $service->required_documents);
+        $this->assertCount(2, $service->required_documents);
+        $this->assertSame('national_id', $service->required_documents[0]['key']);
+        $this->assertSame('utility_bill', $service->required_documents[1]['key']);
 
         $this->put(route('admin.services.update', $service), [
             'service_category_id' => $category->id,

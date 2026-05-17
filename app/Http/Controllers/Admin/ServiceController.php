@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Support\AdminFormInput;
+use App\Support\RequiredDocumentDefinition;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,18 +15,20 @@ class ServiceController extends Controller
 {
     public function index()
     {
-        $services = Service::with('category')->latest()->paginate(10);
+        $services = Service::query()
+            ->with(['category', 'office'])
+            ->latest()
+            ->paginate(10);
 
         return view('admin.services.index', compact('services'));
     }
 
     public function create()
     {
-        $categories = ServiceCategory::query()
-            ->orderBy('name')
-            ->get();
+        $categories = ServiceCategory::query()->orderBy('name')->get();
+        $offices = Office::query()->where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.services.create', compact('categories'));
+        return view('admin.services.create', compact('categories', 'offices'));
     }
 
     public function store(Request $request)
@@ -40,8 +44,9 @@ class ServiceController extends Controller
     {
         $service = Service::findOrFail($id);
         $categories = ServiceCategory::query()->orderBy('name')->get();
+        $offices = Office::query()->where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.services.edit', compact('service', 'categories'));
+        return view('admin.services.edit', compact('service', 'categories', 'offices'));
     }
 
     public function update(Request $request, $id)
@@ -66,7 +71,7 @@ class ServiceController extends Controller
 
     public function show($id)
     {
-        $service = Service::with('category')->findOrFail($id);
+        $service = Service::query()->with(['category', 'office'])->findOrFail($id);
 
         return view('admin.services.show', compact('service'));
     }
@@ -78,6 +83,7 @@ class ServiceController extends Controller
     {
         $validated = $request->validate([
             'service_category_id' => ['required', 'exists:service_categories,id'],
+            'office_id' => ['nullable', 'exists:offices,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'base_fee' => ['required', 'numeric', 'min:0'],
@@ -89,12 +95,13 @@ class ServiceController extends Controller
 
         return [
             'service_category_id' => (int) $validated['service_category_id'],
+            'office_id' => ! empty($validated['office_id']) ? (int) $validated['office_id'] : null,
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'base_fee' => $validated['base_fee'],
             'estimated_processing_days' => $validated['estimated_processing_days'] ?? null,
-            'required_documents' => AdminFormInput::parseRequiredDocuments(
-                $validated['required_documents'] ?? null
+            'required_documents' => RequiredDocumentDefinition::normalizeList(
+                AdminFormInput::parseRequiredDocuments($validated['required_documents'] ?? null)
             ),
             'requires_appointment' => AdminFormInput::boolean($validated['requires_appointment']),
             'is_active' => AdminFormInput::boolean($validated['is_active']),

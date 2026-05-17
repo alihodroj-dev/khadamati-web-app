@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\StaffRequestController;
+use App\Http\Controllers\Api\StaffServiceController;
 use App\Http\Controllers\Api\TrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -141,6 +142,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/staff/requests/{serviceRequest}/status', [StaffRequestController::class, 'updateStatus']);
         Route::get('/staff/appointments', [StaffRequestController::class, 'appointments']);
         Route::patch('/staff/appointments/{appointment}', [StaffRequestController::class, 'updateAppointment']);
+
+        Route::get('/staff/service-categories', [StaffServiceController::class, 'categories']);
+        Route::get('/staff/services', [StaffServiceController::class, 'index']);
+        Route::post('/staff/services', [StaffServiceController::class, 'store']);
+        Route::get('/staff/services/{service}', [StaffServiceController::class, 'show']);
+        Route::patch('/staff/services/{service}', [StaffServiceController::class, 'update']);
+        Route::delete('/staff/services/{service}', [StaffServiceController::class, 'destroy']);
     });
 
     // Admin only: assign requests to staff

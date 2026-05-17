@@ -31,6 +31,28 @@ class AdminFormInput
     /**
      * @return array<string, mixed>|null
      */
+    /**
+     * @param  list<mixed>|null  $documents
+     */
+    public static function formatRequiredDocumentsForForm(?array $documents): string
+    {
+        if ($documents === null || $documents === []) {
+            return '';
+        }
+
+        $keys = [];
+
+        foreach ($documents as $document) {
+            if (is_array($document) && isset($document['key'])) {
+                $keys[] = (string) $document['key'];
+            } elseif (is_string($document) && trim($document) !== '') {
+                $keys[] = trim($document);
+            }
+        }
+
+        return implode(', ', $keys);
+    }
+
     public static function parseWorkingHours(?string $value): ?array
     {
         if ($value === null || trim($value) === '') {

@@ -20,6 +20,8 @@
         <x-slot name="head">
             <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">ID</th>
             <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Office</th>
+            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Price</th>
             <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
             <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
         </x-slot>
@@ -33,6 +35,12 @@
                     </td>
                     <td class="px-4 py-4 text-sm text-gray-700">
                         {{ $service->name }}
+                    </td>
+                    <td class="px-4 py-4 text-sm text-gray-700">
+                        {{ $service->office?->name ?? 'Global' }}
+                    </td>
+                    <td class="px-4 py-4 text-sm text-gray-700">
+                        {{ number_format((float) $service->base_fee, 2) }}
                     </td>
                     <td class="px-4 py-4 text-sm text-gray-700">
                         <span style="{{ $service->is_active ? 'background-color:#dcfce7;color:#166534' : 'background-color:#fee2e2;color:#991b1b' }}; padding:4px 12px; border-radius:9999px; font-size:12px; font-weight:500;">
