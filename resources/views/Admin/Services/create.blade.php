@@ -21,14 +21,17 @@
                 name="service_category_id" 
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
             >
-                <option value="" disabled selected>Select a category...</option>
-                
-                {{-- These will be replaced by your @foreach($categories as $category) loop later --}}
-                <option value="1">Civil Services</option>
-                <option value="2">Home Services</option>
-                <option value="3">Health & Safety</option>
-                <option value="4">Education</option>
+                <option value="" disabled {{ old('service_category_id') ? '' : 'selected' }}>Select a category...</option>
+
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" @selected((string) old('service_category_id') === (string) $category->id)>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
             </select>
+            @error('service_category_id')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <x-input label="Service Name" name="name" placeholder="e.g. Passport Renewal" />
