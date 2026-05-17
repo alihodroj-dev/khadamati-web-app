@@ -41,6 +41,16 @@ class Office extends Model
         return $this->hasMany(User::class)->where('role', User::ROLE_STAFF);
     }
 
+    public function timeSlots(): HasMany
+    {
+        return $this->hasMany(OfficeTimeSlot::class);
+    }
+
+    public function timeSlotBlocks(): HasMany
+    {
+        return $this->hasMany(OfficeTimeSlotBlock::class);
+    }
+
     public function services()
     {
         return $this->hasMany(Service::class);

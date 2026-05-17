@@ -7,6 +7,8 @@ use App\Models\Feedback;
 use App\Models\FeedbackResponse;
 use App\Models\Municipality;
 use App\Models\Office;
+use App\Models\OfficeTimeSlot;
+use App\Models\OfficeTimeSlotBlock;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -17,6 +19,8 @@ use App\Policies\FeedbackPolicy;
 use App\Policies\FeedbackResponsePolicy;
 use App\Policies\MunicipalityPolicy;
 use App\Policies\OfficePolicy;
+use App\Policies\OfficeTimeSlotBlockPolicy;
+use App\Policies\OfficeTimeSlotPolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\ServiceCategoryPolicy;
 use App\Policies\ServicePolicy;
@@ -37,6 +41,8 @@ class AuthServiceProvider extends ServiceProvider
         ServiceCategory::class => ServiceCategoryPolicy::class,
         Municipality::class => MunicipalityPolicy::class,
         Office::class => OfficePolicy::class,
+        OfficeTimeSlot::class => OfficeTimeSlotPolicy::class,
+        OfficeTimeSlotBlock::class => OfficeTimeSlotBlockPolicy::class,
     ];
 
     public function boot(): void

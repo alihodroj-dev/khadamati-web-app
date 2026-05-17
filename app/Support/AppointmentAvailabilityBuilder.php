@@ -3,7 +3,10 @@
 namespace App\Support;
 
 use App\Models\Office;
+use App\Models\OfficeTimeSlot;
+use App\Models\OfficeTimeSlotBlock;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class AppointmentAvailabilityBuilder
 {
@@ -14,26 +17,38 @@ class AppointmentAvailabilityBuilder
     public const SLOT_DURATION_MINUTES = 30;
 
     /**
-     * @param  list<string>  $unavailableTimes  Times in H:i format
+     * @param  list<string>  $unavailableTimes  Times in H:i format (booked)
      * @return array{
      *     date: string,
      *     slot_duration_minutes: int,
      *     working_hours: array{start: string, end: string},
      *     available_times: list<string>,
-     *     unavailable_times: list<string>
+     *     unavailable_times: list<string>,
+     *     source: string
      * }
      */
-    public function build(string $date, ?Office $office, array $unavailableTimes): array
-    {
-        $workingHours = $this->resolveWorkingHours($date, $office);
-        $allSlots = $this->generateSlots(
-            $date,
-            $workingHours['start'],
-            $workingHours['end'],
-            self::SLOT_DURATION_MINUTES
-        );
+    public function build(
+        string $date,
+        ?Office $office,
+        array $unavailableTimes,
+        ?int $staffId = null,
+    ): array {
+        [$slotConfigs, $source] = $this->resolveScheduleConfigs($date, $office, $staffId);
 
-        $unavailableSet = array_flip($unavailableTimes);
+        $slotDuration = $slotConfigs[0]['duration'] ?? self::SLOT_DURATION_MINUTES;
+        $allSlots = $this->generateSlotsFromConfigs($date, $slotConfigs);
+
+        $workingHours = $this->deriveWorkingHoursFromConfigs($slotConfigs);
+
+        $blockedTimes = $office !== null
+            ? $this->resolveBlockedTimes($date, $office, $staffId, $slotDuration)
+            : [];
+
+        $unavailableSet = array_flip(array_unique(array_merge(
+            $unavailableTimes,
+            $blockedTimes
+        )));
+
         $unavailable = [];
         $available = [];
 
@@ -47,11 +62,28 @@ class AppointmentAvailabilityBuilder
 
         return [
             'date' => $date,
-            'slot_duration_minutes' => self::SLOT_DURATION_MINUTES,
+            'slot_duration_minutes' => $slotDuration,
             'working_hours' => $workingHours,
             'available_times' => $available,
             'unavailable_times' => $unavailable,
+            'source' => $source,
         ];
+    }
+
+    /**
+     * @param  list<string>  $additionalUnavailable
+     */
+    public function isSlotAvailable(
+        string $date,
+        string $time,
+        ?Office $office,
+        ?int $staffId,
+        array $additionalUnavailable = [],
+    ): bool {
+        $normalizedTime = Carbon::parse($time)->format('H:i');
+        $payload = $this->build($date, $office, $additionalUnavailable, $staffId);
+
+        return in_array($normalizedTime, $payload['available_times'], true);
     }
 
     /**
@@ -59,18 +91,9 @@ class AppointmentAvailabilityBuilder
      */
     public function resolveWorkingHours(string $date, ?Office $office): array
     {
-        if ($office !== null) {
-            $officeHours = $this->parseOfficeHoursForDate($date, $office->working_hours ?? []);
+        [$configs] = $this->resolveScheduleConfigs($date, $office, null);
 
-            if ($officeHours !== null) {
-                return $officeHours;
-            }
-        }
-
-        return [
-            'start' => self::DEFAULT_START,
-            'end' => self::DEFAULT_END,
-        ];
+        return $this->deriveWorkingHoursFromConfigs($configs);
     }
 
     /**
@@ -111,16 +134,181 @@ class AppointmentAvailabilityBuilder
     }
 
     /**
+     * @return array{0: list<array{start: string, end: string, duration: int}>, 1: string}
+     */
+    private function resolveScheduleConfigs(string $date, ?Office $office, ?int $staffId): array
+    {
+        if ($office !== null) {
+            $slotConfigs = $this->resolveOfficeTimeSlotConfigs($date, $office, $staffId);
+
+            if ($slotConfigs !== []) {
+                return [$slotConfigs, 'time_slots'];
+            }
+
+            $officeHours = $this->parseOfficeHoursForDate($date, $office->working_hours ?? []);
+
+            if ($officeHours !== null) {
+                return [[
+                    [
+                        'start' => $officeHours['start'],
+                        'end' => $officeHours['end'],
+                        'duration' => self::SLOT_DURATION_MINUTES,
+                    ],
+                ], 'working_hours'];
+            }
+        }
+
+        return [[
+            [
+                'start' => self::DEFAULT_START,
+                'end' => self::DEFAULT_END,
+                'duration' => self::SLOT_DURATION_MINUTES,
+            ],
+        ], 'default'];
+    }
+
+    /**
+     * @return list<array{start: string, end: string, duration: int}>
+     */
+    private function resolveOfficeTimeSlotConfigs(string $date, Office $office, ?int $staffId): array
+    {
+        if ($office->id === null) {
+            return [];
+        }
+
+        $dayOfWeek = Carbon::parse($date)->dayOfWeek;
+
+        $query = OfficeTimeSlot::query()
+            ->where('office_id', $office->id)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true);
+
+        if ($staffId !== null) {
+            $query->where(function ($builder) use ($staffId) {
+                $builder
+                    ->whereNull('staff_id')
+                    ->orWhere('staff_id', $staffId);
+            });
+        } else {
+            $query->whereNull('staff_id');
+        }
+
+        return $query
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn (OfficeTimeSlot $slot) => [
+                'start' => Carbon::parse($slot->start_time)->format('H:i'),
+                'end' => Carbon::parse($slot->end_time)->format('H:i'),
+                'duration' => (int) $slot->slot_duration_minutes,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<array{start: string, end: string, duration: int}>  $configs
+     * @return list<string>
+     */
+    private function generateSlotsFromConfigs(string $date, array $configs): array
+    {
+        $slots = [];
+
+        foreach ($configs as $config) {
+            $slots = array_merge(
+                $slots,
+                $this->generateSlots($date, $config['start'], $config['end'], $config['duration'])
+            );
+        }
+
+        $slots = array_values(array_unique($slots));
+        sort($slots);
+
+        return $slots;
+    }
+
+    /**
+     * @param  list<array{start: string, end: string, duration: int}>  $configs
+     * @return array{start: string, end: string}
+     */
+    private function deriveWorkingHoursFromConfigs(array $configs): array
+    {
+        if ($configs === []) {
+            return [
+                'start' => self::DEFAULT_START,
+                'end' => self::DEFAULT_END,
+            ];
+        }
+
+        $starts = array_column($configs, 'start');
+        $ends = array_column($configs, 'end');
+
+        return [
+            'start' => min($starts),
+            'end' => max($ends),
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolveBlockedTimes(
+        string $date,
+        Office $office,
+        ?int $staffId,
+        int $slotDurationMinutes,
+    ): array {
+        if ($office->id === null) {
+            return [];
+        }
+
+        $query = OfficeTimeSlotBlock::query()
+            ->where('office_id', $office->id)
+            ->whereDate('date', $date);
+
+        if ($staffId !== null) {
+            $query->where(function ($builder) use ($staffId) {
+                $builder
+                    ->whereNull('staff_id')
+                    ->orWhere('staff_id', $staffId);
+            });
+        } else {
+            $query->whereNull('staff_id');
+        }
+
+        $blocked = [];
+
+        /** @var Collection<int, OfficeTimeSlotBlock> $blocks */
+        $blocks = $query->get();
+
+        foreach ($blocks as $block) {
+            $blocked = array_merge(
+                $blocked,
+                $this->generateSlots(
+                    $date,
+                    Carbon::parse($block->start_time)->format('H:i'),
+                    Carbon::parse($block->end_time)->format('H:i'),
+                    $slotDurationMinutes
+                )
+            );
+        }
+
+        return array_values(array_unique($blocked));
+    }
+
+    /**
      * @return array{start: string, end: string}|null
      */
     private function parseHoursRange(mixed $value): ?array
     {
         if (is_array($value)) {
-            $start = $value['start'] ?? null;
-            $end = $value['end'] ?? null;
+            $start = $value['start'] ?? ($value[0] ?? null);
+            $end = $value['end'] ?? ($value[1] ?? null);
 
             if (is_string($start) && is_string($end) && $this->isValidTime($start) && $this->isValidTime($end)) {
-                return ['start' => $start, 'end' => $end];
+                return [
+                    'start' => $this->normalizeTime($start),
+                    'end' => $this->normalizeTime($end),
+                ];
             }
 
             return null;

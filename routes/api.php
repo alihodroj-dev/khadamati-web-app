@@ -22,6 +22,8 @@ use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\StaffOfficeController;
 use App\Http\Controllers\Api\StaffRequestController;
 use App\Http\Controllers\Api\StaffServiceController;
+use App\Http\Controllers\Api\StaffTimeSlotBlockController;
+use App\Http\Controllers\Api\StaffTimeSlotController;
 use App\Http\Controllers\Api\TrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -141,6 +143,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/staff/office', [StaffOfficeController::class, 'show']);
         Route::patch('/staff/office', [StaffOfficeController::class, 'update']);
         Route::get('/staff/feedback', [StaffFeedbackController::class, 'index']);
+
+        Route::get('/staff/time-slots', [StaffTimeSlotController::class, 'index']);
+        Route::post('/staff/time-slots', [StaffTimeSlotController::class, 'store']);
+        Route::patch('/staff/time-slots/{officeTimeSlot}', [StaffTimeSlotController::class, 'update']);
+        Route::delete('/staff/time-slots/{officeTimeSlot}', [StaffTimeSlotController::class, 'destroy']);
+
+        Route::get('/staff/time-slot-blocks', [StaffTimeSlotBlockController::class, 'index']);
+        Route::post('/staff/time-slot-blocks', [StaffTimeSlotBlockController::class, 'store']);
+        Route::delete('/staff/time-slot-blocks/{officeTimeSlotBlock}', [StaffTimeSlotBlockController::class, 'destroy']);
     });
 
     // Staff & Admin: request management

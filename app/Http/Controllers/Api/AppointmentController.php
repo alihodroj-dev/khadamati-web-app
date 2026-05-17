@@ -59,27 +59,19 @@ class AppointmentController extends Controller
         ]);
 
         $office = $this->resolveOfficeForAvailability($request, $validated);
+        $staffId = ! empty($validated['staff_id']) ? (int) $validated['staff_id'] : null;
 
-        $query = Appointment::query()
-            ->whereDate('appointment_date', $validated['date'])
-            ->whereNotIn('status', ['cancelled']);
-
-        if (! empty($validated['staff_id'])) {
-            $query->where('staff_id', $validated['staff_id']);
-        }
-
-        $bookedTimes = $query
-            ->orderBy('appointment_time')
-            ->pluck('appointment_time')
-            ->map(fn ($time) => Carbon::parse($time)->format('H:i'))
-            ->unique()
-            ->values()
-            ->all();
+        $bookedTimes = $this->bookedTimesForDate(
+            $validated['date'],
+            $staffId,
+            $office?->id
+        );
 
         $payload = $availabilityBuilder->build(
             $validated['date'],
             $office,
-            $bookedTimes
+            $bookedTimes,
+            $staffId
         );
 
         return $this->successResponse(
@@ -153,25 +145,31 @@ class AppointmentController extends Controller
         }
 
         $staffId = $validated['staff_id'] ?? $serviceRequest->assigned_staff_id;
+        $office = $serviceRequest->office;
 
-        if ($staffId) {
-            $slotTaken = Appointment::query()
-                ->whereDate('appointment_date', $validated['appointment_date'])
-                ->whereTime('appointment_time', $validated['appointment_time'])
-                ->where('staff_id', $staffId)
-                ->whereNotIn('status', ['cancelled'])
-                ->exists();
+        $bookedTimes = $this->bookedTimesForDate(
+            $validated['appointment_date'],
+            $staffId ? (int) $staffId : null,
+            $office?->id
+        );
 
-            if ($slotTaken) {
-                return $this->errorResponse(
-                    'The selected appointment slot is unavailable.',
-                    [
-                        'appointment_time' => ['This time slot is already booked.'],
-                    ],
-                    422
-                );
-            }
-        } else {
+        if (! app(AppointmentAvailabilityBuilder::class)->isSlotAvailable(
+            $validated['appointment_date'],
+            $validated['appointment_time'],
+            $office,
+            $staffId ? (int) $staffId : null,
+            $bookedTimes
+        )) {
+            return $this->errorResponse(
+                'The selected appointment slot is unavailable.',
+                [
+                    'appointment_time' => ['This time is outside available office slots or is already booked.'],
+                ],
+                422
+            );
+        }
+
+        if (! $staffId) {
             $existingForRequest = Appointment::query()
                 ->where('service_request_id', $serviceRequest->id)
                 ->where('user_id', auth()->id())
@@ -254,6 +252,41 @@ class AppointmentController extends Controller
             ],
         ]);
 
+        if (isset($validated['appointment_date']) || isset($validated['appointment_time'])) {
+            $appointment->loadMissing('serviceRequest.office');
+
+            $date = $validated['appointment_date']
+                ?? $appointment->appointment_date->format('Y-m-d');
+            $time = $validated['appointment_time']
+                ?? Carbon::parse($appointment->appointment_time)->format('H:i');
+            $staffId = $validated['staff_id'] ?? $appointment->staff_id;
+            $office = $appointment->serviceRequest?->office;
+
+            $bookedTimes = $this->bookedTimesForDate(
+                $date,
+                $staffId ? (int) $staffId : null,
+                $office?->id,
+                $appointment->id
+            );
+
+            if (($validated['status'] ?? $appointment->status) !== 'cancelled'
+                && ! app(AppointmentAvailabilityBuilder::class)->isSlotAvailable(
+                    $date,
+                    $time,
+                    $office,
+                    $staffId ? (int) $staffId : null,
+                    $bookedTimes
+                )) {
+                return $this->errorResponse(
+                    'The selected appointment slot is unavailable.',
+                    [
+                        'appointment_time' => ['This time is outside available office slots or is already booked.'],
+                    ],
+                    422
+                );
+            }
+        }
+
         $appointment->update($validated);
 
         $appointment->load($this->appointmentRelations());
@@ -286,6 +319,40 @@ class AppointmentController extends Controller
             null,
             'Appointment deleted successfully.'
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function bookedTimesForDate(
+        string $date,
+        ?int $staffId,
+        ?int $officeId,
+        ?int $excludeAppointmentId = null,
+    ): array {
+        $query = Appointment::query()
+            ->whereDate('appointment_date', $date)
+            ->whereNotIn('status', ['cancelled']);
+
+        if ($staffId !== null) {
+            $query->where('staff_id', $staffId);
+        } elseif ($officeId !== null) {
+            $query->whereHas('serviceRequest', function ($serviceRequestQuery) use ($officeId) {
+                $serviceRequestQuery->where('office_id', $officeId);
+            });
+        }
+
+        if ($excludeAppointmentId !== null) {
+            $query->where('id', '!=', $excludeAppointmentId);
+        }
+
+        return $query
+            ->orderBy('appointment_time')
+            ->pluck('appointment_time')
+            ->map(fn ($time) => Carbon::parse($time)->format('H:i'))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

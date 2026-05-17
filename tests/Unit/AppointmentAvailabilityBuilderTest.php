@@ -35,6 +35,7 @@ class AppointmentAvailabilityBuilderTest extends TestCase
 
         $result = $builder->build('2026-05-17', $office, []);
 
+        $this->assertSame('working_hours', $result['source']);
         $this->assertSame(['start' => '10:00', 'end' => '14:00'], $result['working_hours']);
         $this->assertSame(['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'], $result['available_times']);
     }
