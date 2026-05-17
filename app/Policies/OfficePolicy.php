@@ -16,4 +16,9 @@ class OfficePolicy
     {
         return $user->isAdmin();
     }
+
+    public function delete(User $user, Office $office): bool
+    {
+        return $user->isAdmin();
+    }
 }

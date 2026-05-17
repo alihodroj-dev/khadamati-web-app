@@ -235,6 +235,30 @@ class AdminController extends Controller
         return $this->successResponse(null, 'Service category deleted successfully.');
     }
 
+    public function offices()
+    {
+        $offices = Office::query()
+            ->with('municipality')
+            ->withCount('serviceRequests')
+            ->latest()
+            ->get();
+
+        return $this->successResponse(
+            OfficeResource::collection($offices),
+            'Offices retrieved successfully.'
+        );
+    }
+
+    public function showOffice(Office $office)
+    {
+        $office->load('municipality')->loadCount('serviceRequests');
+
+        return $this->successResponse(
+            new OfficeResource($office),
+            'Office retrieved successfully.'
+        );
+    }
+
     public function createOffice(Request $request)
     {
         $this->authorize('create', Office::class);
@@ -260,6 +284,19 @@ class AdminController extends Controller
             new OfficeResource($office),
             'Office updated successfully.'
         );
+    }
+
+    public function deleteOffice(Office $office)
+    {
+        $this->authorize('delete', $office);
+
+        if ($office->serviceRequests()->exists()) {
+            return $this->errorResponse('Office has service requests attached.', null, 422);
+        }
+
+        $office->delete();
+
+        return $this->successResponse(null, 'Office deleted successfully.');
     }
 
     private function validateService(Request $request, bool $partial = false): array

@@ -32,4 +32,15 @@ class AdminFormInputTest extends TestCase
         $this->assertTrue(AdminFormInput::boolean(null, true));
         $this->assertFalse(AdminFormInput::boolean(null, false));
     }
+
+    #[Test]
+    public function it_parses_working_hours_json(): void
+    {
+        $this->assertSame(
+            ['monday' => ['09:00', '17:00']],
+            AdminFormInput::parseWorkingHours('{"monday":["09:00","17:00"]}')
+        );
+        $this->assertNull(AdminFormInput::parseWorkingHours(null));
+        $this->assertNull(AdminFormInput::parseWorkingHours('not-json'));
+    }
 }

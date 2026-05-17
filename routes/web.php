@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\OfficeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\AppointmentController;
@@ -85,6 +86,31 @@ Route::middleware('auth')->group(function () {
             
             Route::get('/{id}', [ServiceController::class, 'show'])
                 ->name('admin.services.show');
+
+        });
+
+        Route::prefix('offices')->group(function () {
+
+            Route::get('/', [OfficeController::class, 'index'])
+                ->name('admin.offices.index');
+
+            Route::get('/create', [OfficeController::class, 'create'])
+                ->name('admin.offices.create');
+
+            Route::post('/', [OfficeController::class, 'store'])
+                ->name('admin.offices.store');
+
+            Route::get('/{id}/edit', [OfficeController::class, 'edit'])
+                ->name('admin.offices.edit');
+
+            Route::put('/{id}', [OfficeController::class, 'update'])
+                ->name('admin.offices.update');
+
+            Route::delete('/{id}', [OfficeController::class, 'destroy'])
+                ->name('admin.offices.destroy');
+
+            Route::get('/{id}', [OfficeController::class, 'show'])
+                ->name('admin.offices.show');
 
         });
 

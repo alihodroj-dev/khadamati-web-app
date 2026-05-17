@@ -169,7 +169,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/admin/municipalities/{municipality}', [MunicipalityController::class, 'update']);
         Route::delete('/admin/municipalities/{municipality}', [MunicipalityController::class, 'destroy']);
 
+        Route::get('/admin/offices', [AdminController::class, 'offices']);
         Route::post('/admin/offices', [AdminController::class, 'createOffice']);
+        Route::get('/admin/offices/{office}', [AdminController::class, 'showOffice']);
         Route::patch('/admin/offices/{office}', [AdminController::class, 'updateOffice']);
+        Route::delete('/admin/offices/{office}', [AdminController::class, 'deleteOffice']);
     });
 });
