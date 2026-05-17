@@ -21,8 +21,8 @@
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow">
-        <p class="text-sm text-gray-500">In Progress</p>
-        <h2 class="text-2xl font-bold mt-1 text-blue-600">{{ $inProgressRequests }}</h2>
+        <p class="text-sm text-gray-500">Under Review</p>
+        <h2 class="text-2xl font-bold mt-1 text-blue-600">{{ $underReviewRequests }}</h2>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow">
@@ -94,7 +94,7 @@
                     <td class="py-2">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold
                             @if($req->status === 'pending') bg-yellow-100 text-yellow-800
-                            @elseif($req->status === 'in_progress') bg-blue-100 text-blue-800
+                            @elseif($req->status === 'under_review') bg-blue-100 text-blue-800
                             @elseif($req->status === 'completed') bg-green-100 text-green-800
                             @elseif($req->status === 'rejected') bg-red-100 text-red-800
                             @else bg-gray-100 text-gray-600

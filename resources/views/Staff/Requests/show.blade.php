@@ -49,7 +49,8 @@
                 @csrf
 
                 <select name="status" class="w-full border rounded px-3 py-2 mb-3">
-                    <option value="in_progress" {{ $request->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                    <option value="under_review" {{ $request->status === 'under_review' ? 'selected' : '' }}>Under Review</option>
+                    <option value="requires_action" {{ $request->status === 'requires_action' ? 'selected' : '' }}>Requires Action</option>
                     <option value="completed" {{ $request->status === 'completed' ? 'selected' : '' }}>Completed</option>
                     <option value="rejected" {{ $request->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>

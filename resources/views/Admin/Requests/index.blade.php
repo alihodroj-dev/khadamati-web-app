@@ -26,7 +26,7 @@
         <option value="under_review">Under Review</option>
         <option value="approved">Approved</option>
         <option value="rejected">Rejected</option>
-        <option value="in_progress">In Progress</option>
+        <option value="requires_action">Requires Action</option>
         <option value="completed">Completed</option>
 
     </select>
@@ -74,7 +74,7 @@
                         @elseif($req->status === 'under_review') bg-blue-100 text-blue-800
                         @elseif($req->status === 'approved') bg-green-100 text-green-800
                         @elseif($req->status === 'rejected') bg-red-100 text-red-800
-                        @elseif($req->status === 'in_progress') bg-indigo-100 text-indigo-800
+                        @elseif($req->status === 'requires_action') bg-indigo-100 text-indigo-800
                         @else bg-gray-100 text-gray-700
                         @endif">
 
@@ -86,7 +86,7 @@
 
                 {{-- Staff --}}
                 <td class="px-4 py-4 text-sm text-gray-700">
-                    {{ $req->staff->name ?? 'Not assigned' }}
+                    {{ $req->assignedStaff->name ?? 'Not assigned' }}
                 </td>
 
                 {{-- Actions (3) --}}

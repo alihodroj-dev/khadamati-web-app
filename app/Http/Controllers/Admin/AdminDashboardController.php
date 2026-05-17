@@ -20,7 +20,7 @@ class AdminDashboardController extends Controller
             'totalRequests'     => ServiceRequest::count(),
             'pendingRequests'   => ServiceRequest::where('status', 'pending')->count(),
             'completedRequests' => ServiceRequest::where('status', 'completed')->count(),
-            'inProgressRequests'=> ServiceRequest::where('status', 'in_progress')->count(),
+            'underReviewRequests' => ServiceRequest::where('status', 'under_review')->count(),
 
             // Users
             'totalUsers'  => User::count(),

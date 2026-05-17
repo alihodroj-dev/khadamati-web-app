@@ -11,7 +11,7 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with(['request.service', 'user'])
+        $payments = Payment::with(['serviceRequest.service', 'user'])
             ->latest()
             ->paginate(10);
 
@@ -20,7 +20,7 @@ class PaymentController extends Controller
 
     public function show($id)
     {
-        $payment = Payment::with(['request.service', 'user'])
+        $payment = Payment::with(['serviceRequest.service', 'user'])
             ->findOrFail($id);
 
         return view('admin.payments.show', compact('payment'));

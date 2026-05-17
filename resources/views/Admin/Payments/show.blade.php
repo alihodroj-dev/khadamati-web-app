@@ -15,7 +15,7 @@
     {{-- INFO --}}
     <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-2">
 
-        <p><strong>Reference:</strong> {{ $payment->request->reference_number }}</p>
+        <p><strong>Reference:</strong> {{ $payment->serviceRequest->reference_number ?? '-' }}</p>
         <p><strong>User:</strong> {{ $payment->user->name }}</p>
         <p><strong>Amount:</strong> {{ $payment->amount }} {{ $payment->currency }}</p>
         <p><strong>Method:</strong> {{ $payment->payment_method }}</p>

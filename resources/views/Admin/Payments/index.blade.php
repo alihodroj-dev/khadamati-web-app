@@ -34,7 +34,7 @@
             <tr class="border-t">
 
                 <td class="px-4 py-3 font-semibold">
-                    {{ $payment->request->reference_number ?? '-' }}
+                    {{ $payment->serviceRequest->reference_number ?? '-' }}
                 </td>
 
                 <td class="px-4 py-3">

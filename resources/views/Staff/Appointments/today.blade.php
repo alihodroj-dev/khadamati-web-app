@@ -65,7 +65,7 @@
                 <div>
                     <span class="px-3 py-1 rounded-full text-xs font-semibold
                         @if($app->status === 'scheduled') bg-blue-100 text-blue-700
-                        @elseif($app->status === 'in_progress') bg-indigo-100 text-indigo-700
+                        @elseif($app->status === 'confirmed') bg-indigo-100 text-indigo-700
                         @elseif($app->status === 'completed') bg-green-100 text-green-700
                         @elseif($app->status === 'cancelled') bg-red-100 text-red-700
                         @else bg-gray-100 text-gray-600

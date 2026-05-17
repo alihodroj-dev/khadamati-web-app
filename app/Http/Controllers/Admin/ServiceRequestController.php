@@ -16,7 +16,7 @@ class ServiceRequestController extends Controller
      */
     public function index(HttpRequest $request)
     {
-        $query = ServiceRequest::with(['user', 'service', 'staff']);
+        $query = ServiceRequest::with(['user', 'service', 'assignedStaff']);
 
         // FILTER: status
         if ($request->status) {
@@ -33,7 +33,7 @@ class ServiceRequestController extends Controller
      */
     public function show($id)
     {
-        $request = ServiceRequest::with(['user', 'service', 'staff'])
+        $request = ServiceRequest::with(['user', 'service', 'assignedStaff'])
             ->findOrFail($id);
         $staff = User::where('role', 'staff')->get();
 
@@ -54,7 +54,7 @@ class ServiceRequestController extends Controller
         $status = $httpRequest->status;
 
         // prevent invalid transitions
-        $allowed = ['approved', 'rejected', 'completed', 'in_progress'];
+        $allowed = ['under_review', 'requires_action', 'approved', 'rejected', 'completed', 'cancelled'];
 
         if (!in_array($status, $allowed)) {
             return back()->with('error', 'Invalid status');

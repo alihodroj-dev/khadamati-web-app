@@ -35,7 +35,7 @@
                     {{ ucfirst(str_replace('_', ' ', $request->status)) }}
                 </p>
 
-                <p><span class="font-semibold">Assigned Staff:</span> {{ $request->staff->name ?? 'Not assigned' }}</p>
+                <p><span class="font-semibold">Assigned Staff:</span> {{ $request->assignedStaff->name ?? 'Not assigned' }}</p>
 
                 <p><span class="font-semibold">Submitted At:</span> {{ $request->submitted_at ?? $request->created_at }}</p>
 
@@ -133,7 +133,8 @@
 
                     <option value="approved">Approve</option>
                     <option value="rejected">Reject</option>
-                    <option value="in_progress">In Progress</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="requires_action">Requires Action</option>
                     <option value="completed">Completed</option>
 
                 </select>

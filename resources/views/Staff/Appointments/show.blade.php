@@ -33,7 +33,7 @@
             <select name="status" class="w-full border rounded px-3 py-2 mb-3">
                 <option value="completed" {{ $appointment->status === 'completed' ? 'selected' : '' }}>Completed</option>
                 <option value="cancelled" {{ $appointment->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                <option value="in_progress" {{ $appointment->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                <option value="confirmed" {{ $appointment->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
             </select>
 
             <textarea name="notes" class="w-full border rounded px-3 py-2 mb-3">{{ $appointment->notes }}</textarea>
