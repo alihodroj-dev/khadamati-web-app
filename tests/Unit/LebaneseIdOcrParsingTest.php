@@ -33,9 +33,9 @@ TEXT;
         $fields = $service->parseExtractedFields($rawText);
 
         $this->assertSame('Ali', $fields['first_name']);
-        $this->assertSame('Hdrj', $fields['last_name']);
-        $this->assertSame('Slah', $fields['father_name']);
-        $this->assertSame('Fatma Alyan', $fields['mother_name']);
+        $this->assertSame('Hodroj', $fields['last_name']);
+        $this->assertSame('Salah', $fields['father_name']);
+        $this->assertSame('Fatima Alyan', $fields['mother_name']);
         $this->assertSame('2004-11-27', $fields['date_of_birth']);
         $this->assertSame('00073028821', $fields['national_id']);
     }
