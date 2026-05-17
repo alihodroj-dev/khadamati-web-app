@@ -90,7 +90,10 @@ class ServiceController extends Controller
         ]);
 
         $query = Feedback::query()
-            ->with('user')
+            ->with([
+                'user',
+                'responses' => fn ($responseQuery) => $responseQuery->public()->with('responder'),
+            ])
             ->whereHas('serviceRequest', function ($serviceRequestQuery) use ($service) {
                 $serviceRequestQuery
                     ->where('service_id', $service->id)

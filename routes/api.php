@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\FeedbackResponseController;
+use App\Http\Controllers\Api\StaffFeedbackController;
 use App\Http\Controllers\Api\IdentityPreviewController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OfficeController;
@@ -138,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:staff')->group(function () {
         Route::get('/staff/office', [StaffOfficeController::class, 'show']);
         Route::patch('/staff/office', [StaffOfficeController::class, 'update']);
+        Route::get('/staff/feedback', [StaffFeedbackController::class, 'index']);
     });
 
     // Staff & Admin: request management
@@ -157,6 +160,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/staff/services/{service}', [StaffServiceController::class, 'show']);
         Route::patch('/staff/services/{service}', [StaffServiceController::class, 'update']);
         Route::delete('/staff/services/{service}', [StaffServiceController::class, 'destroy']);
+
+        Route::post('/staff/feedback/{feedback}/responses', [FeedbackResponseController::class, 'store']);
+        Route::patch('/staff/feedback-responses/{feedbackResponse}', [FeedbackResponseController::class, 'update']);
+        Route::delete('/staff/feedback-responses/{feedbackResponse}', [FeedbackResponseController::class, 'destroy']);
     });
 
     // Admin only: assign requests to staff

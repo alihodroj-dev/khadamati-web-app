@@ -15,6 +15,7 @@ class PublicServiceFeedbackResource extends JsonResource
             'comment' => $this->comment,
             'created_at' => $this->created_at?->toISOString(),
             'citizen_name' => CitizenDisplayName::fromUser($this->user),
+            'responses' => PublicFeedbackResponseResource::collection($this->whenLoaded('responses')),
         ];
     }
 }

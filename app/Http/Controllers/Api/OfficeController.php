@@ -138,7 +138,11 @@ class OfficeController extends Controller
         ]);
 
         $query = Feedback::query()
-            ->with(['user', 'serviceRequest.service'])
+            ->with([
+                'user',
+                'serviceRequest.service',
+                'responses' => fn ($responseQuery) => $responseQuery->public()->with('responder'),
+            ])
             ->whereHas('serviceRequest', function ($serviceRequestQuery) use ($office) {
                 $serviceRequestQuery
                     ->where('office_id', $office->id)

@@ -17,6 +17,7 @@ class FeedbackResource extends JsonResource
             'comment' => $this->comment,
             'service_request' => new ServiceRequestResource($this->whenLoaded('serviceRequest')),
             'user' => new UserResource($this->whenLoaded('user')),
+            'responses' => FeedbackResponseResource::collection($this->whenLoaded('responses')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

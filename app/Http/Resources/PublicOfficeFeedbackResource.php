@@ -16,6 +16,7 @@ class PublicOfficeFeedbackResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'citizen_name' => CitizenDisplayName::fromUser($this->user),
             'service_name' => $this->serviceRequest?->service?->name,
+            'responses' => PublicFeedbackResponseResource::collection($this->whenLoaded('responses')),
         ];
     }
 }

@@ -18,11 +18,11 @@ class FeedbackController extends Controller
     {
         $this->authorize('viewAny', Feedback::class);
 
-        $query = Feedback::query()
-            ->with(['user', 'serviceRequest.service'])
-            ->latest();
-
         $user = $request->user();
+
+        $query = Feedback::query()
+            ->with($this->feedbackEagerLoads($user))
+            ->latest();
 
         if ($user->isAdmin()) {
             // Admins see all feedback.
@@ -71,7 +71,7 @@ class FeedbackController extends Controller
             'comment' => $validated['comment'] ?? null,
         ]);
 
-        $feedback->load(['user', 'serviceRequest.service']);
+        $feedback->load($this->feedbackEagerLoads($request->user()));
 
         return $this->successResponse(
             new FeedbackResource($feedback),
@@ -84,7 +84,7 @@ class FeedbackController extends Controller
     {
         $this->authorize('view', $feedback);
 
-        $feedback->load(['user', 'serviceRequest.service']);
+        $feedback->load($this->feedbackEagerLoads(request()->user()));
 
         return $this->successResponse(
             new FeedbackResource($feedback),
@@ -103,7 +103,7 @@ class FeedbackController extends Controller
 
         $feedback->update($validated);
 
-        $feedback->load(['user', 'serviceRequest.service']);
+        $feedback->load($this->feedbackEagerLoads($request->user()));
 
         return $this->successResponse(
             new FeedbackResource($feedback),
@@ -118,5 +118,23 @@ class FeedbackController extends Controller
         $feedback->delete();
 
         return $this->successResponse(null, 'Feedback deleted successfully.');
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    private function feedbackEagerLoads($user): array
+    {
+        return [
+            'user',
+            'serviceRequest.service',
+            'responses' => function ($query) use ($user) {
+                if (! $user->isAdmin() && ! $user->isStaff()) {
+                    $query->public();
+                }
+
+                $query->with('responder');
+            },
+        ];
     }
 }

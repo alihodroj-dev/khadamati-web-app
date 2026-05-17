@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Feedback;
 use App\Models\User;
+use App\Support\ServiceRequestStatus;
 use App\Support\StaffOfficeScope;
 
 class FeedbackPolicy
@@ -22,10 +23,7 @@ class FeedbackPolicy
         if ($user->isStaff()) {
             $feedback->loadMissing('serviceRequest');
 
-            return StaffOfficeScope::canAccessOffice(
-                $user,
-                $feedback->serviceRequest?->office_id
-            );
+            return $this->staffCanAccessCompletedFeedback($user, $feedback);
         }
 
         return $feedback->user_id === $user->id;
@@ -44,5 +42,26 @@ class FeedbackPolicy
     public function delete(User $user, Feedback $feedback): bool
     {
         return $user->isAdmin();
+    }
+
+    public function respond(User $user, Feedback $feedback): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $user->isStaff()) {
+            return false;
+        }
+
+        return $this->staffCanAccessCompletedFeedback($user, $feedback);
+    }
+
+    private function staffCanAccessCompletedFeedback(User $user, Feedback $feedback): bool
+    {
+        return StaffOfficeScope::canAccessOffice(
+            $user,
+            $feedback->serviceRequest?->office_id
+        ) && $feedback->serviceRequest?->status === ServiceRequestStatus::COMPLETED;
     }
 }

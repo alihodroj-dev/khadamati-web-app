@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Support\ServiceRequestStatus;
 use Illuminate\Database\Eloquent\Builder;
 
 class StaffOfficeScope
@@ -88,7 +89,9 @@ class StaffOfficeScope
 
         if (self::appliesTo($user)) {
             return $query->whereHas('serviceRequest', function (Builder $serviceRequestQuery) use ($user) {
-                $serviceRequestQuery->where('office_id', $user->office_id);
+                $serviceRequestQuery
+                    ->where('office_id', $user->office_id)
+                    ->where('status', ServiceRequestStatus::COMPLETED);
             });
         }
 
