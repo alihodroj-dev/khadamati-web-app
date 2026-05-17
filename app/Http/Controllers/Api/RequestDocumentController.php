@@ -7,6 +7,7 @@ use App\Http\Resources\RequestDocumentResource;
 use App\Models\RequestDocument;
 use Illuminate\Support\Collection;
 use App\Models\ServiceRequest;
+use App\Notifications\DocumentUploadedNotification;
 use App\Support\RequiredDocumentDefinition;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -67,6 +68,17 @@ class RequestDocumentController extends Controller
             $requiredDefinitions
         );
 
+        $this->notifyAssignedStaffOfCitizenUpload(
+            $serviceRequest,
+            $document,
+            'Document uploaded',
+            sprintf(
+                'A required document (%s) was uploaded for request %s.',
+                $document->document_type,
+                $serviceRequest->reference_number
+            )
+        );
+
         return $this->successResponse(
             [
                 'document' => new RequestDocumentResource($document),
@@ -120,6 +132,20 @@ class RequestDocumentController extends Controller
                 $requiredDefinitions
             );
         }
+
+        $count = count($documents);
+
+        $this->notifyAssignedStaffOfCitizenUpload(
+            $serviceRequest,
+            $documents[0] ?? null,
+            'Documents uploaded',
+            sprintf(
+                '%d required document%s uploaded for request %s.',
+                $count,
+                $count === 1 ? '' : 's',
+                $serviceRequest->reference_number
+            )
+        );
 
         return $this->successResponse(
             [
@@ -335,6 +361,23 @@ class RequestDocumentController extends Controller
             'file_size' => $file->getSize(),
             'status' => 'pending',
         ]);
+    }
+
+    private function notifyAssignedStaffOfCitizenUpload(
+        ServiceRequest $serviceRequest,
+        ?RequestDocument $document,
+        string $title,
+        string $body
+    ): void {
+        $serviceRequest->loadMissing('assignedStaff');
+
+        if ($serviceRequest->assignedStaff === null) {
+            return;
+        }
+
+        $serviceRequest->assignedStaff->notify(
+            new DocumentUploadedNotification($serviceRequest, $document, $title, $body)
+        );
     }
 
     /**

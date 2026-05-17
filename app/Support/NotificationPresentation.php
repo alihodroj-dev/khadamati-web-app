@@ -29,6 +29,7 @@ class NotificationPresentation
             'request_update' => 'request',
             'payment_update' => 'payment',
             'appointment_update' => 'appointment',
+            'document_upload' => 'document',
             default => 'bell',
         };
     }
@@ -40,7 +41,10 @@ class NotificationPresentation
     private function deepLinkFor(string $type, array $data): ?array
     {
         return match ($type) {
-            'request_update' => $this->link('service_request', $data['service_request_id'] ?? null),
+            'request_update', 'document_upload' => $this->link(
+                'service_request',
+                $data['service_request_id'] ?? null
+            ),
             'payment_update' => $this->link('payment', $data['payment_id'] ?? null),
             'appointment_update' => $this->link('appointment', $data['appointment_id'] ?? null),
             default => null,

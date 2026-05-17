@@ -24,6 +24,17 @@ class NotificationPresentationTest extends TestCase
         ], $presentation['deep_link']);
     }
 
+    public function test_maps_document_upload_to_service_request_deep_link(): void
+    {
+        $presentation = (new NotificationPresentation)->present([
+            'type' => 'document_upload',
+            'service_request_id' => 55,
+        ]);
+
+        $this->assertSame('document', $presentation['icon']);
+        $this->assertSame(['type' => 'service_request', 'id' => 55], $presentation['deep_link']);
+    }
+
     public function test_maps_payment_and_appointment_updates(): void
     {
         $payment = (new NotificationPresentation)->present([

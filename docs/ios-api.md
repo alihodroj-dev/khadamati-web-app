@@ -1414,6 +1414,7 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 | `request_update` | `request` | `service_request` |
 | `payment_update` | `payment` | `payment` |
 | `appointment_update` | `appointment` | `appointment` |
+| `document_upload` | `document` | `service_request` |
 
 Use `deep_link` for in-app navigation (detail screens). Database notifications only — push delivery is not implemented yet.
 

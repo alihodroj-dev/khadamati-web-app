@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\RequestDocument;
+use App\Notifications\DocumentUploadedNotification;
 use Illuminate\Http\Request as HttpRequest;
 use App\Models\ServiceRequest;
 
@@ -86,7 +87,7 @@ class StaffRequestController extends Controller
             'public'
         );
 
-        RequestDocument::create([
+        $document = RequestDocument::create([
             'service_request_id' => $request->id,
             'uploaded_by' => auth()->id(),
             'source' => RequestDocument::SOURCE_STAFF,
@@ -99,6 +100,19 @@ class StaffRequestController extends Controller
             'status' => 'approved',
             'rejection_reason' => null,
         ]);
+
+        $request->loadMissing('user');
+
+        $request->user?->notify(new DocumentUploadedNotification(
+            $request,
+            $document,
+            'Official document available',
+            sprintf(
+                'An official document (%s) was added to your request %s.',
+                $document->document_type,
+                $request->reference_number
+            )
+        ));
 
         return back()->with('success', 'Document uploaded successfully');
     }
