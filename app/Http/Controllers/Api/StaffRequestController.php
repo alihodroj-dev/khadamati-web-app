@@ -10,9 +10,13 @@ use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Notifications\RequestUpdatedNotification;
+use App\Support\ServiceRequestAssignment;
+use App\Support\ServiceRequestStatus;
+use App\Support\ServiceRequestStatusUpdater;
 use App\Support\StaffOfficeScope;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class StaffRequestController extends Controller
 {
@@ -22,16 +26,18 @@ class StaffRequestController extends Controller
     {
         $this->authorize('viewAny', ServiceRequest::class);
 
+        $validated = $request->validate([
+            'status' => ['nullable', ServiceRequestStatus::validationRule(ServiceRequestStatus::all())],
+            'assignment' => ['nullable', 'in:assigned,unassigned'],
+        ]);
+
         $user = $request->user();
         $query = ServiceRequest::query()
-            ->with(['user', 'service.category', 'assignedStaff', 'documents'])
+            ->with(['user', 'service.category', 'assignedStaff', 'office', 'documents'])
             ->latest();
 
         StaffOfficeScope::applyServiceRequestScope($query, $user);
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        $this->applyListFilters($query, $validated);
 
         $requests = $query->get();
 
@@ -49,6 +55,7 @@ class StaffRequestController extends Controller
             'user',
             'service.category',
             'assignedStaff',
+            'office',
             'documents',
             'appointment',
             'payment',
@@ -67,33 +74,20 @@ class StaffRequestController extends Controller
         $validated = $request->validate([
             'status' => [
                 'required',
-                'in:under_review,requires_action,approved,rejected,completed',
+                ServiceRequestStatus::validationRule(ServiceRequestStatus::staffUpdatable()),
             ],
             'staff_notes' => ['nullable', 'string'],
-            'rejection_reason' => ['required_if:status,rejected', 'nullable', 'string'],
+            'rejection_reason' => ['required_if:status,'.ServiceRequestStatus::REJECTED, 'nullable', 'string'],
         ]);
 
-        $updateData = ['status' => $validated['status']];
+        ServiceRequestStatusUpdater::apply(
+            $serviceRequest,
+            $validated['status'],
+            $validated['staff_notes'] ?? null,
+            $validated['rejection_reason'] ?? null
+        );
 
-        if (isset($validated['staff_notes'])) {
-            $updateData['staff_notes'] = $validated['staff_notes'];
-        }
-
-        if ($validated['status'] === 'rejected') {
-            $updateData['rejection_reason'] = $validated['rejection_reason'];
-        }
-
-        if (in_array($validated['status'], ['approved', 'under_review'])) {
-            $updateData['reviewed_at'] = now();
-        }
-
-        if ($validated['status'] === 'completed') {
-            $updateData['reviewed_at'] = now();
-            $updateData['completed_at'] = now();
-        }
-
-        $serviceRequest->update($updateData);
-        $serviceRequest->load(['user', 'service', 'assignedStaff', 'documents']);
+        $serviceRequest->load(['user', 'service', 'assignedStaff', 'office', 'documents', 'payment']);
 
         $serviceRequest->user?->notify(new RequestUpdatedNotification(
             $serviceRequest,
@@ -117,26 +111,17 @@ class StaffRequestController extends Controller
 
         $staffUser = User::findOrFail($validated['staff_id']);
 
-        if (! $staffUser->isStaff()) {
-            return $this->errorResponse('The selected user is not a staff member.', null, 422);
-        }
-
-        if ($serviceRequest->office_id !== null
-            && (int) $staffUser->office_id !== (int) $serviceRequest->office_id) {
+        try {
+            ServiceRequestAssignment::assign($serviceRequest, $staffUser);
+        } catch (ValidationException $exception) {
             return $this->errorResponse(
-                'Staff member must belong to the same office as the service request.',
-                null,
+                collect($exception->errors())->flatten()->first() ?? 'Invalid assignment.',
+                $exception->errors(),
                 422
             );
         }
 
-        $serviceRequest->update([
-            'assigned_staff_id' => $validated['staff_id'],
-            'status' => $serviceRequest->status === 'pending' ? 'under_review' : $serviceRequest->status,
-            'reviewed_at' => now(),
-        ]);
-
-        $serviceRequest->load(['user', 'service', 'assignedStaff']);
+        $serviceRequest->load(['user', 'service', 'assignedStaff', 'office']);
 
         $staffUser->notify(new RequestUpdatedNotification(
             $serviceRequest,
@@ -223,10 +208,11 @@ class StaffRequestController extends Controller
             [
                 'requests' => [
                     'total' => (clone $requestQuery)->count(),
-                    'pending' => (clone $requestQuery)->where('status', 'pending')->count(),
-                    'under_review' => (clone $requestQuery)->where('status', 'under_review')->count(),
-                    'requires_action' => (clone $requestQuery)->where('status', 'requires_action')->count(),
-                    'completed' => (clone $requestQuery)->where('status', 'completed')->count(),
+                    'pending' => (clone $requestQuery)->where('status', ServiceRequestStatus::PENDING)->count(),
+                    'under_review' => (clone $requestQuery)->where('status', ServiceRequestStatus::UNDER_REVIEW)->count(),
+                    'requires_action' => (clone $requestQuery)->where('status', ServiceRequestStatus::REQUIRES_ACTION)->count(),
+                    'completed' => (clone $requestQuery)->where('status', ServiceRequestStatus::COMPLETED)->count(),
+                    'unassigned' => (clone $requestQuery)->whereNull('assigned_staff_id')->count(),
                 ],
                 'appointments' => [
                     'total' => (clone $appointmentQuery)->count(),
@@ -241,5 +227,25 @@ class StaffRequestController extends Controller
             ],
             'Staff dashboard retrieved successfully.'
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyListFilters($query, array $filters): void
+    {
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['assignment'])) {
+            if ($filters['assignment'] === 'assigned') {
+                $query->whereNotNull('assigned_staff_id');
+            }
+
+            if ($filters['assignment'] === 'unassigned') {
+                $query->whereNull('assigned_staff_id');
+            }
+        }
     }
 }

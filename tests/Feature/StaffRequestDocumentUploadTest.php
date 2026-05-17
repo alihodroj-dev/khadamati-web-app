@@ -39,7 +39,7 @@ class StaffRequestDocumentUploadTest extends TestCase
 
         $this->assertSame('approved', $document->status);
         $this->assertSame(RequestDocument::SOURCE_STAFF, $document->source);
-        $this->assertSame(RequestDocument::PURPOSE_OFFICIAL_RESPONSE, $document->purpose);
+        $this->assertSame(RequestDocument::PURPOSE_CERTIFICATE, $document->purpose);
         $this->assertSame('certificate', $document->document_type);
     }
 

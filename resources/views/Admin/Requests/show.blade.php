@@ -2,6 +2,10 @@
 
 @section('content')
 
+@php
+    use App\Support\ServiceRequestStatus;
+@endphp
+
 <div class="mb-6">
 
     <h1 class="text-2xl font-bold text-gray-900">
@@ -100,10 +104,10 @@
 
                     <option value="">Select Staff</option>
 
-                    @foreach($staff)
+                    @foreach($staff as $member)
 
-                        <option value="{{ $staff->id }}">
-                            {{ $staff->name }}
+                        <option value="{{ $member->id }}" @selected($request->assigned_staff_id === $member->id)>
+                            {{ $member->name }}
                         </option>
 
                     @endforeach
@@ -131,11 +135,11 @@
                 <select name="status"
                         class="w-full border rounded-lg px-3 py-2 mb-3 text-sm">
 
-                    <option value="approved">Approve</option>
-                    <option value="rejected">Reject</option>
-                    <option value="under_review">Under Review</option>
-                    <option value="requires_action">Requires Action</option>
-                    <option value="completed">Completed</option>
+                    @foreach(ServiceRequestStatus::adminUpdatable() as $status)
+                        <option value="{{ $status }}" @selected($request->status === $status)>
+                            {{ ucfirst(str_replace('_', ' ', $status)) }}
+                        </option>
+                    @endforeach
 
                 </select>
 

@@ -246,6 +246,9 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/requests/{id}/status', [StaffRequestController::class, 'updateStatus'])
             ->name('staff.requests.updateStatus');
+
+        Route::post('/requests/{id}/assign', [StaffRequestController::class, 'assignStaff'])
+            ->name('staff.requests.assignStaff');
         
         Route::post('/requests/{id}/upload', [StaffRequestController::class, 'uploadDocument'])
             ->name('staff.requests.uploadDocument');

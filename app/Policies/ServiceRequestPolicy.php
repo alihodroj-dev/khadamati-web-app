@@ -38,6 +38,11 @@ class ServiceRequestPolicy
 
     public function assign(User $user, ServiceRequest $serviceRequest): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isStaff()
+            && StaffOfficeScope::canAccessOffice($user, $serviceRequest->office_id);
     }
 }

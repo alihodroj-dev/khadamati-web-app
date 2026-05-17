@@ -3,45 +3,59 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
-use App\Models\Payment;
 use App\Models\RequestDocument;
-use App\Notifications\DocumentUploadedNotification;
-use Illuminate\Http\Request as HttpRequest;
 use App\Models\ServiceRequest;
+use App\Models\User;
+use App\Notifications\DocumentUploadedNotification;
+use App\Support\RequestDocumentPurposeResolver;
+use App\Support\ServiceRequestAssignment;
+use App\Support\ServiceRequestStatus;
+use App\Support\ServiceRequestStatusUpdater;
 use App\Support\StaffOfficeScope;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StaffRequestController extends Controller
 {
-    /**
-     * Show only assigned requests
-     */
-    public function index()
+    public function index(HttpRequest $httpRequest)
     {
-        $requests = StaffOfficeScope::applyServiceRequestScope(
-            ServiceRequest::with(['service', 'user', 'payment'])->latest(),
+        $query = StaffOfficeScope::applyServiceRequestScope(
+            ServiceRequest::with(['service', 'user', 'payment', 'assignedStaff'])->latest(),
             auth()->user()
-        )->paginate(10);
+        );
+
+        if ($httpRequest->filled('status')) {
+            $query->where('status', $httpRequest->status);
+        }
+
+        if ($httpRequest->assignment === 'assigned') {
+            $query->whereNotNull('assigned_staff_id');
+        } elseif ($httpRequest->assignment === 'unassigned') {
+            $query->whereNull('assigned_staff_id');
+        }
+
+        $requests = $query->paginate(10)->withQueryString();
 
         return view('staff.requests.index', compact('requests'));
     }
 
-    /**
-     * Show single request
-     */
     public function show($id)
     {
         $request = StaffOfficeScope::applyServiceRequestScope(
-            ServiceRequest::with(['service', 'user', 'documents']),
+            ServiceRequest::with(['service', 'user', 'documents', 'assignedStaff', 'office']),
             auth()->user()
         )->findOrFail($id);
 
-        return view('staff.requests.show', compact('request'));
+        $officeStaff = User::query()
+            ->where('role', User::ROLE_STAFF)
+            ->where('office_id', auth()->user()->office_id)
+            ->orderBy('name')
+            ->get();
+
+        return view('staff.requests.show', compact('request', 'officeStaff'));
     }
 
-    /**
-     * Update status + staff notes
-     */
     public function updateStatus(HttpRequest $httpRequest, $id)
     {
         $request = StaffOfficeScope::applyServiceRequestScope(
@@ -49,28 +63,44 @@ class StaffRequestController extends Controller
             auth()->user()
         )->findOrFail($id);
 
-        $request->status = $httpRequest->status;
-        $request->staff_notes = $httpRequest->staff_notes;
+        $httpRequest->validate([
+            'status' => ['required', ServiceRequestStatus::validationRule(ServiceRequestStatus::staffUpdatable())],
+            'staff_notes' => ['nullable', 'string'],
+            'rejection_reason' => ['required_if:status,'.ServiceRequestStatus::REJECTED, 'nullable', 'string'],
+        ]);
 
-        if ($httpRequest->status === 'completed') {
-            $request->completed_at = now();
-
-            Payment::firstOrCreate(
-                ['service_request_id' => $request->id],
-                [
-                    'user_id'               => $request->user_id,
-                    'amount'                => $request->service->base_fee,
-                    'currency'              => 'LBP',
-                    'payment_method'        => null,
-                    'status'                => 'pending',
-                    'transaction_reference' => uniqid('PAY-'),
-                ]
-            );
-        }
-
-        $request->save();
+        ServiceRequestStatusUpdater::apply(
+            $request,
+            $httpRequest->status,
+            $httpRequest->staff_notes,
+            $httpRequest->rejection_reason
+        );
 
         return back()->with('success', 'Request updated successfully');
+    }
+
+    public function assignStaff(HttpRequest $httpRequest, $id)
+    {
+        $request = StaffOfficeScope::applyServiceRequestScope(
+            ServiceRequest::query(),
+            auth()->user()
+        )->findOrFail($id);
+
+        $httpRequest->validate([
+            'staff_id' => ['required', 'exists:users,id'],
+        ]);
+
+        $staffUser = User::findOrFail($httpRequest->staff_id);
+
+        try {
+            ServiceRequestAssignment::assign($request, $staffUser);
+        } catch (ValidationException $exception) {
+            return back()
+                ->withInput()
+                ->with('error', collect($exception->errors())->flatten()->first());
+        }
+
+        return back()->with('success', 'Staff assigned successfully');
     }
 
     public function uploadDocument(HttpRequest $httpRequest, $id)
@@ -82,13 +112,14 @@ class StaffRequestController extends Controller
 
         $httpRequest->validate([
             'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'document_type' => 'required|string',
+            'document_type' => ['required', 'string', 'in:response,certificate,receipt,approval,rejection,other'],
         ]);
 
         $file = $httpRequest->file('document');
+        $documentType = $httpRequest->document_type;
 
-        $path = $httpRequest->file('document')->store(
-            'requests/' . $request->id . '/documents',
+        $path = $file->store(
+            'requests/'.$request->id.'/documents',
             'public'
         );
 
@@ -96,8 +127,8 @@ class StaffRequestController extends Controller
             'service_request_id' => $request->id,
             'uploaded_by' => auth()->id(),
             'source' => RequestDocument::SOURCE_STAFF,
-            'purpose' => RequestDocument::PURPOSE_OFFICIAL_RESPONSE,
-            'document_type' => $httpRequest->document_type,
+            'purpose' => RequestDocumentPurposeResolver::fromStaffDocumentType($documentType),
+            'document_type' => $documentType,
             'file_name' => $file->getClientOriginalName(),
             'file_path' => $path,
             'mime_type' => $file->getClientMimeType(),

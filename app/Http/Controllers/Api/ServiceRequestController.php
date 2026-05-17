@@ -9,6 +9,7 @@ use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Support\ServiceRequestCertificateBuilder;
+use App\Support\ServiceRequestStatus;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,22 +18,6 @@ use Illuminate\Validation\Rule;
 class ServiceRequestController extends Controller
 {
     use ApiResponse;
-
-    private const CANCELLABLE_STATUSES = [
-        'pending',
-        'under_review',
-        'requires_action',
-    ];
-
-    private const STATUSES = [
-        'pending',
-        'under_review',
-        'requires_action',
-        'approved',
-        'rejected',
-        'completed',
-        'cancelled',
-    ];
 
     public function store(Request $request)
     {
@@ -74,7 +59,7 @@ class ServiceRequestController extends Controller
             'office_id' => $officeId,
             'reference_number' => $this->generateReferenceNumber(),
             'tracking_token' => ServiceRequest::generateTrackingToken(),
-            'status' => 'pending',
+            'status' => ServiceRequestStatus::PENDING,
             'citizen_notes' => $validated['citizen_notes'] ?? null,
             'submitted_data' => $validated['submitted_data'] ?? null,
             'submitted_at' => now(),
@@ -94,7 +79,7 @@ class ServiceRequestController extends Controller
     public function myRequests(Request $request)
     {
         $validated = $request->validate([
-            'status' => ['nullable', 'string', Rule::in(self::STATUSES)],
+            'status' => ['nullable', 'string', Rule::in(ServiceRequestStatus::all())],
             'service_id' => ['nullable', 'integer', 'exists:services,id'],
             'category_id' => ['nullable', 'integer', 'exists:service_categories,id'],
             'from_date' => ['nullable', 'date', 'date_format:Y-m-d'],
@@ -219,7 +204,7 @@ class ServiceRequestController extends Controller
             );
         }
 
-        if (! in_array($serviceRequest->status, self::CANCELLABLE_STATUSES, true)) {
+        if (! in_array($serviceRequest->status, ServiceRequestStatus::cancellable(), true)) {
             return $this->errorResponse(
                 'This service request cannot be cancelled.',
                 null,
@@ -227,7 +212,7 @@ class ServiceRequestController extends Controller
             );
         }
 
-        $serviceRequest->update(['status' => 'cancelled']);
+        $serviceRequest->update(['status' => ServiceRequestStatus::CANCELLED]);
         $serviceRequest->load(['service.category', 'office']);
 
         return $this->successResponse(

@@ -140,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/staff/requests', [StaffRequestController::class, 'index']);
         Route::get('/staff/requests/{serviceRequest}', [StaffRequestController::class, 'show']);
         Route::patch('/staff/requests/{serviceRequest}/status', [StaffRequestController::class, 'updateStatus']);
+        Route::post('/staff/requests/{serviceRequest}/assign', [StaffRequestController::class, 'assign']);
         Route::get('/staff/appointments', [StaffRequestController::class, 'appointments']);
         Route::patch('/staff/appointments/{appointment}', [StaffRequestController::class, 'updateAppointment']);
 
