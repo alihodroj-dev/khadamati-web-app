@@ -66,6 +66,14 @@
                     <i class="ti ti-building-community text-lg" aria-hidden="true"></i>
                     Offices
                 </a>
+
+                <a href="{{ route('admin.municipalities.index') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                    {{ request()->routeIs('admin.municipalities.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                    style="{{ request()->routeIs('admin.municipalities.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                    <i class="ti ti-building text-lg" aria-hidden="true"></i>
+                    Municipalities
+                </a>
+                
             </div>
 
             {{-- OPERATIONS --}}
