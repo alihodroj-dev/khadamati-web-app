@@ -2,191 +2,142 @@
 
 Citizen-facing REST API for the Khadamati mobile app.
 
-**Base URL:** `{APP_URL}/api` (e.g. `https://api.example.com/api`)
+**Base URL:** `{APP_URL}/api`
 
-**Content-Type:** `application/json` unless noted (multipart for file uploads).
+**Headers:** `Content-Type: application/json` (use `multipart/form-data` for file uploads).
+
+**Auth (protected routes):** `Authorization: Bearer {sanctum_token}`
 
 ---
 
-## Authentication
+## Response envelope
 
-Protected routes require a Sanctum bearer token:
-
-```http
-Authorization: Bearer {token}
-```
-
-### Response envelope
-
-All JSON endpoints use this shape:
-
-**Success**
 ```json
 {
   "success": true,
   "message": "Human-readable message",
   "errors": null,
-  "data": { }
+  "data": {}
 }
 ```
 
-**Error**
-```json
-{
-  "success": false,
-  "message": "Error summary",
-  "errors": {
-    "field": ["Validation message"]
-  },
-  "data": null
-}
-```
+Errors: `success: false`, `errors` may contain field validation messages. Common status codes: `200`, `201`, `401`, `403`, `404`, `422`.
 
-Common HTTP status codes: `200`, `201`, `401`, `403`, `404`, `422`.
+---
+
+## Citizen route index
+
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/identity/preview` | No |
+| `POST` | `/register/complete` | No |
+| `POST` | `/auth/google` | No |
+| `POST` | `/auth/apple` | No |
+| `POST` | `/login` | No |
+| `POST` | `/login/verify-otp` | No |
+| `POST` | `/login/resend-otp` | No |
+| `GET` | `/service-categories` | No |
+| `GET` | `/service-categories/{id}` | No |
+| `GET` | `/services` | No |
+| `GET` | `/services/{id}` | No |
+| `GET` | `/services/{id}/feedback` | No |
+| `GET` | `/offices` | No |
+| `GET` | `/offices/{id}` | No |
+| `GET` | `/offices/{id}/feedback` | No |
+| `GET` | `/track/{trackingToken}` | No |
+| `GET` | `/me` | Yes |
+| `POST` | `/logout` | Yes |
+| `GET` | `/profile` | Yes |
+| `PATCH` | `/profile` | Yes |
+| `PATCH` | `/profile/password` | Yes |
+| `PATCH` | `/profile/notification-preferences` | Yes |
+| `POST` | `/device-tokens` | Yes |
+| `DELETE` | `/device-tokens/{id}` | Yes |
+| `POST` | `/service-requests` | Yes |
+| `GET` | `/my-requests` | Yes |
+| `GET` | `/my-requests/{id}` | Yes |
+| `PATCH` | `/my-requests/{id}/cancel` | Yes |
+| `GET` | `/my-requests/{id}/certificate` | Yes |
+| `GET` | `/my-requests/{id}/documents` | Yes |
+| `POST` | `/my-requests/{id}/documents` | Yes |
+| `POST` | `/my-requests/{id}/documents/bulk` | Yes |
+| `GET` | `/my-requests/{id}/documents/{docId}/download` | Yes |
+| `DELETE` | `/my-requests/{id}/documents/{docId}` | Yes |
+| `GET` | `/appointments/availability` | Yes |
+| `GET` | `/appointments` | Yes |
+| `POST` | `/appointments` | Yes |
+| `GET` | `/appointments/{id}` | Yes |
+| `PATCH` | `/appointments/{id}` | Yes |
+| `DELETE` | `/appointments/{id}` | Yes |
+| `GET` | `/payments` | Yes |
+| `POST` | `/payments` | Yes |
+| `GET` | `/payments/{id}` | Yes |
+| `POST` | `/payments/{id}/process` | Yes |
+| `GET` | `/payments/{id}/receipt` | Yes |
+| `GET` | `/feedback` | Yes |
+| `POST` | `/feedback` | Yes |
+| `GET` | `/feedback/{id}` | Yes |
+| `PATCH` | `/feedback/{id}` | Yes |
+| `DELETE` | `/feedback/{id}` | Yes |
+| `GET` | `/notifications` | Yes |
+| `PATCH` | `/notifications/{id}/read` | Yes |
+| `PATCH` | `/notifications/read-all` | Yes |
+
+Staff/admin routes under `/staff/*`, `/admin/*`, `/dashboard/*` are **not** for the citizen app.
 
 ---
 
 ## Auth
 
-Citizen authentication for the iOS app. Use only the routes below — not the internal/deprecated endpoints at the end of this section.
+### Flows
 
-### iOS auth routes
+| Scenario | Flow |
+|----------|------|
+| New citizen | `POST /identity/preview` → `POST /register/complete` → token |
+| Google (returning) | `POST /auth/google` → token |
+| Apple (returning) | `POST /auth/apple` → token |
+| Email (returning) | `POST /login` → `POST /login/verify-otp` → token |
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| `POST` | `/identity/preview` | No | Upload ID images, get OCR-prefilled form |
-| `POST` | `/register/complete` | No | Finish registration after preview |
-| `POST` | `/auth/google` | No | Sign in with native Google (returns token) |
-| `POST` | `/auth/apple` | No | Sign in with native Apple (returns token) |
-| `POST` | `/login` | No | Email/password step 1 (OTP challenge) |
-| `POST` | `/login/verify-otp` | No | Email/password step 2 (token) |
-| `POST` | `/login/resend-otp` | No | Resend login OTP |
-| `GET` | `/me` | Yes | Current user |
-| `POST` | `/logout` | Yes | Revoke current token |
+Social sign-in returns a token immediately (no OTP). Email sign-in always requires OTP.
 
-### Flow overview
-
-**New citizen (registration)**
-
-```
-POST /identity/preview  →  editable fields + verification_session_token
-POST /register/complete →  user + token
-```
-
-Choose one auth method in `register/complete`:
-
-- `auth_provider: "google"` — include `provider_token` (Google ID token)
-- `auth_provider: "apple"` — include `provider_token` (Apple identity token)
-- `auth_provider: "email"` — include `password` + `password_confirmation`
-
-**Returning citizen (sign-in)**
-
-| Method | Steps |
-|--------|--------|
-| Google | `POST /auth/google` → token |
-| Apple | `POST /auth/apple` → token |
-| Email | `POST /login` → `POST /login/verify-otp` → token (optional `POST /login/resend-otp`) |
-
-Social sign-in does **not** use OTP. Email/password sign-in always requires OTP before a token is issued.
+Registration `auth_provider`: `google` | `apple` | `email` (with `provider_token` or `password` + `password_confirmation`).
 
 ---
 
-### ID preview (registration step 1)
+### Identity preview
 
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/identity/preview` |
-| **Auth** | No |
+`POST /identity/preview` — `multipart/form-data`
 
-**Request** (`multipart/form-data`)
+| Field | Rules |
+|-------|--------|
+| `id_front` | required, jpg/jpeg/png/pdf, max 5120 KB |
+| `id_back` | required, jpg/jpeg/png/pdf, max 5120 KB |
 
-| Field | Type | Rules |
-|-------|------|-------|
-| `id_front` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
-| `id_back` | file | required, jpg/jpeg/png/pdf, max 5120 KB |
-
-**Response** `200`
+**Response `200`**
 
 ```json
 {
-  "success": true,
-  "message": "Identity preview generated successfully.",
   "data": {
     "verification_session_token": "64-char-token",
     "fields": [
-      {
-        "key": "first_name",
-        "label": "First Name",
-        "type": "text",
-        "value": "Ali",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "last_name",
-        "label": "Last Name",
-        "type": "text",
-        "value": "Hodroj",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "father_name",
-        "label": "Father Name",
-        "type": "text",
-        "value": "",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "mother_name",
-        "label": "Mother Name",
-        "type": "text",
-        "value": "",
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "date_of_birth",
-        "label": "Date of Birth",
-        "type": "date",
-        "value": null,
-        "editable": true,
-        "required": true
-      },
-      {
-        "key": "national_id",
-        "label": "National ID",
-        "type": "text",
-        "value": "",
-        "editable": true,
-        "required": true
-      }
+      { "key": "first_name", "label": "First Name", "type": "text", "value": "Ali", "editable": true, "required": true }
     ]
   }
 }
 ```
 
-**Notes:** OCR runs on the front ID image only. Parsed values are best-effort; let the user edit all fields. Session expires after 24 hours. Pass `verification_session_token` to `/register/complete`.
+Fields: `first_name`, `last_name`, `father_name`, `mother_name`, `date_of_birth`, `national_id`. OCR uses the front image only; user may edit all fields. Session expires in 24 hours.
 
 ---
 
-### Registration completion (registration step 2)
+### Registration completion
 
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/register/complete` |
-| **Auth** | No |
-
-**Request** (`application/json`)
+`POST /register/complete` — JSON
 
 ```json
 {
-  "verification_session_token": "session-token-from-preview",
-  "auth_provider": "google",
-  "provider_token": "google-native-id-token",
+  "verification_session_token": "from-preview",
+  "auth_provider": "email",
   "email": "user@example.com",
   "first_name": "Ali",
   "last_name": "Hodroj",
@@ -194,135 +145,57 @@ Social sign-in does **not** use OTP. Email/password sign-in always requires OTP 
   "mother_name": "Mother",
   "date_of_birth": "2001-05-10",
   "national_id": "123456789",
-  "phone": "+96170000001"
+  "phone": "+96170000001",
+  "password": "password123",
+  "password_confirmation": "password123"
 }
 ```
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| `verification_session_token` | Yes | From `/identity/preview` |
-| `auth_provider` | Yes | `google`, `apple`, or `email` |
-| `provider_token` | If google/apple | Native ID token from the mobile SDK |
-| `email` | Yes | Must match provider token email when applicable |
-| `first_name`, `last_name`, `father_name`, `mother_name` | Yes | |
-| `date_of_birth` | Yes | `Y-m-d` |
-| `national_id` | Yes | Unique |
-| `phone` | No | |
-| `password` | If `email` | Min 8 characters |
-| `password_confirmation` | If `email` | Must match `password` |
+For Google/Apple: `auth_provider` + `provider_token` instead of password.
 
-**Response** `201`
-
-```json
-{
-  "success": true,
-  "message": "Registered successfully",
-  "data": {
-    "user": {
-      "id": 1,
-      "name": "Ali Hodroj",
-      "first_name": "Ali",
-      "last_name": "Hodroj",
-      "email": "user@example.com",
-      "role": "citizen"
-    },
-    "token": "1|plainTextToken..."
-  }
-}
-```
-
-**Notes:** ID images are moved to permanent user storage. The preview session is marked `consumed` and cannot be reused. `name` on the user is stored as `first_name` + `last_name`.
-
-**Email registration example** — set `auth_provider` to `"email"` and include `password` / `password_confirmation` instead of `provider_token`.
+**Response `201`:** `data.user` (`UserResource`), `data.token`. Preview session is consumed once.
 
 ---
 
-### Google sign-in (native)
+### Google sign-in
 
-For **returning** users who registered with Google. Returns a Sanctum token immediately (no OTP).
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/auth/google` |
-| **Auth** | No |
-
-**Request**
+`POST /auth/google`
 
 ```json
-{
-  "id_token": "google-native-id-token"
-}
+{ "id_token": "google-native-id-token" }
 ```
 
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "message": "Logged in successfully",
-  "data": {
-    "user": { "id": 1, "email": "user@gmail.com", "role": "citizen" },
-    "token": "2|plainTextToken..."
-  }
-}
-```
-
-**Notes:** Server verifies the Google ID token (issuer, audience, expiry, verified email). Links an existing account or creates one for first-time Google users without going through ID preview. For **new** citizens with ID verification, use registration (`/identity/preview` → `/register/complete` with `auth_provider: "google"`).
+**Response `200`:** `data.user`, `data.token`. Server verifies issuer, audience, expiry, and verified email.
 
 ---
 
-### Apple sign-in (native)
+### Apple sign-in
 
-For **returning** users who registered with Apple. Returns a Sanctum token immediately (no OTP).
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/auth/apple` |
-| **Auth** | No |
-
-**Request**
+`POST /auth/apple`
 
 ```json
 {
-  "identity_token": "apple-native-identity-token",
-  "full_name": "Optional Name From First Apple Login"
+  "identity_token": "apple-identity-token",
+  "full_name": "Optional — first Apple login only"
 }
 ```
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| `identity_token` | Yes | From `ASAuthorizationAppleIDCredential` |
-| `full_name` | No | Only needed when Apple omits name on later sign-ins |
-
-**Response** `200` — same shape as Google (`data.user` + `data.token`).
-
-**Notes:** Server verifies the Apple identity token against your app bundle ID. Supports private relay emails (`@privaterelay.appleid.com`). For **new** citizens with ID verification, use `/identity/preview` → `/register/complete` with `auth_provider: "apple"`.
+**Response `200`:** same shape as Google. Supports private relay emails.
 
 ---
 
-### Email sign-in (OTP)
+### Email OTP login
 
-Password users must complete OTP before receiving a token.
-
-#### Step 1 — `POST /login`
-
-**Request**
+**Step 1 —** `POST /login`
 
 ```json
-{
-  "email": "jane@example.com",
-  "password": "password123"
-}
+{ "email": "jane@example.com", "password": "password123" }
 ```
 
-**Response** `200` — no token
+**Response `200` (no token):**
 
 ```json
 {
-  "success": true,
-  "message": "Verification code sent.",
   "data": {
     "requires_otp": true,
     "challenge_token": "64-char-token",
@@ -331,484 +204,67 @@ Password users must complete OTP before receiving a token.
 }
 ```
 
-In `local` environment, the message hints to check Laravel logs for the OTP code.
+In `local`, OTP is written to Laravel logs.
 
-#### Step 2 — `POST /login/verify-otp`
-
-**Request**
+**Step 2 —** `POST /login/verify-otp`
 
 ```json
-{
-  "challenge_token": "64-char-token",
-  "otp": "123456"
-}
+{ "challenge_token": "...", "otp": "123456" }
 ```
 
-**Response** `200`
+**Response `200`:** `data.user`, `data.token`.
 
-```json
-{
-  "success": true,
-  "message": "Logged in successfully",
-  "data": {
-    "user": { "id": 1, "email": "jane@example.com", "role": "citizen" },
-    "token": "2|plainTextToken..."
-  }
-}
-```
-
-#### Resend — `POST /login/resend-otp`
-
-**Request**
-
-```json
-{
-  "challenge_token": "64-char-token"
-}
-```
-
-**Response** `200` — new `expires_at`; same `challenge_token`. OTP is logged server-side until email/SMS delivery is added.
+**Resend —** `POST /login/resend-otp` with `{ "challenge_token": "..." }` — same challenge token, new `expires_at`.
 
 ---
 
-### Current user
+### Session
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/me` |
-| **Auth** | Yes |
-
-**Response** `200` — `data.user` is a `UserResource`.
-
----
-
-### Logout
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/logout` |
-| **Auth** | Yes |
-
-**Response** `200` — `data` is `null`. Revokes the current bearer token only.
-
----
-
-### Internal / deprecated (not for iOS)
-
-These endpoints are **not** part of the citizen app. Do not call them from iOS.
-
-| Method | Path | Status |
+| Method | Path | Notes |
 |--------|------|--------|
-| `POST` | `/register` | Deprecated — legacy single-step registration (admin/testing) |
-| `POST` | `/verify-id` | Removed — replaced by `/identity/preview` + `/register/complete` |
+| `GET` | `/me` | `data.user` — `UserResource` |
+| `POST` | `/logout` | Revokes current token only |
 
 ---
 
 ## Profile
 
-### Get profile
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/profile` |
-| **Auth** | Yes |
-
-**Response** `200` — `data` is a `UserResource` (id, name, email, phone, national_id, role, notification flags, etc.).
+| Method | Path | Body (partial OK) |
+|--------|------|-------------------|
+| `GET` | `/profile` | — |
+| `PATCH` | `/profile` | `name`, `phone`, `national_id` (not email/password/role) |
+| `PATCH` | `/profile/password` | `current_password`, `password`, `password_confirmation` |
+| `PATCH` | `/profile/notification-preferences` | `push_notifications_enabled`, `email_notifications_enabled`, `sms_notifications_enabled` |
 
 ---
 
-### Update profile
+## Device tokens
 
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/profile` |
-| **Auth** | Yes |
-
-**Request** (partial)
+`POST /device-tokens`
 
 ```json
-{
-  "name": "Jane Citizen",
-  "phone": "+96170000003",
-  "national_id": "CTZ-000001"
-}
+{ "token": "apns-device-token", "platform": "ios" }
 ```
 
-**Response** `200` — updated `UserResource`.
+`platform`: `ios` | `android` | `web`. Upsert by token — `201` on create, `200` on update. Push delivery not implemented yet.
 
-**Notes:** Cannot change `email`, `password`, or `role` here.
-
----
-
-### Change password
-
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/profile/password` |
-| **Auth** | Yes |
-
-**Request**
-
-```json
-{
-  "current_password": "oldpassword",
-  "password": "newpassword123",
-  "password_confirmation": "newpassword123"
-}
-```
-
-**Response** `200` — `data` is `null`. Other sessions are logged out.
+`DELETE /device-tokens/{deviceToken}` — own tokens only.
 
 ---
 
-### Notification preferences
+## Categories & services
 
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/profile/notification-preferences` |
-| **Auth** | Yes (citizens only) |
+### Categories
 
-**Request**
+`GET /service-categories` → `data.categories[]`
 
-```json
-{
-  "push_notifications_enabled": true,
-  "email_notifications_enabled": true,
-  "sms_notifications_enabled": false
-}
-```
+`GET /service-categories/{id}` → `data.category` (404 if inactive)
 
-**Response** `200` — updated `UserResource`.
+### Services
 
----
+`GET /services` — query: `office_id`, `category_id`, `search` → `data.services[]` (includes `category`, `office` when set)
 
-### Device tokens (push)
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/device-tokens` |
-| **Auth** | Yes |
-
-**Request**
-
-```json
-{
-  "token": "apns-device-token",
-  "platform": "ios"
-}
-```
-
-**Response** `201` or `200` (idempotent upsert).
-
-**Notes:** `platform`: `ios`, `android`, `web`. No push sending yet.
-
----
-
-### Remove device token
-
-| | |
-|---|---|
-| **Method** | `DELETE` |
-| **Path** | `/device-tokens/{deviceToken}` |
-| **Auth** | Yes |
-
-**Response** `200` — own tokens only.
-
----
-
-## Categories
-
-### List categories
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/service-categories` |
-| **Auth** | No |
-
-**Response** `200`
-
-```json
-{
-  "data": {
-    "categories": [
-      { "id": 1, "name": "Civil Records", "description": "...", "is_active": true }
-    ]
-  }
-}
-```
-
----
-
-### Show category
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/service-categories/{serviceCategory}` |
-| **Auth** | No |
-
-**Response** `200` — `data.category`.
-
----
-
-## Services
-
-### List services
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/services` |
-| **Auth** | No |
-
-**Query (optional)**
-
-| Param | Description |
-|-------|-------------|
-| `office_id` | Filter by office (omit to include global + all office services) |
-| `category_id` | Filter by category |
-| `search` | Name or description |
-
-**Response** `200` — `data.services[]` with `category` and `office` when present.
-
----
-
-### Show service
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/services/{service}` |
-| **Auth** | No |
-
-**Response** `200` — `data.service` including `required_documents[]` (each item has `key`, `label`, `required`, `accepted_types`, `max_size_mb`).
-
----
-
-### Public service feedback
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/services/{service}/feedback` |
-| **Auth** | No |
-
-**Query:** `rating` (1–5, optional)
-
-**Response** `200`
-
-```json
-{
-  "data": {
-    "feedback": [
-      {
-        "rating": 5,
-        "comment": "Fast service.",
-        "created_at": "2026-05-10T14:30:00.000000Z",
-        "citizen_name": "Jane"
-      }
-    ]
-  }
-}
-```
-
-**Notes:** Only feedback for **completed** requests. First name only — no email or full user details.
-
----
-
-## Offices
-
-### List offices
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/offices` |
-| **Auth** | No |
-
-**Query (all optional)**
-
-| Param | Description |
-|-------|-------------|
-| `service_id` | Offices offering this active service (office-specific service → that office; global service → all active offices) |
-| `category_id` | Offices with at least one active service in this category |
-| `search` | Match `name`, `address`, or `email` |
-| `near_lat`, `near_lng` | Both required together — sort nearest first (Haversine); include `distance_km` on each office with coordinates |
-
-Filters combine with AND. Default sort is `name` ascending; with `near_lat`/`near_lng`, sort by distance (offices without coordinates last).
-
-**Response** `200`
-
-```json
-{
-  "data": {
-    "offices": [
-      {
-        "id": 1,
-        "name": "Beirut Main Office",
-        "address": "Hamra Street",
-        "latitude": 33.8938,
-        "longitude": 35.5018,
-        "distance_km": 0.72,
-        "working_hours": { "mon": "08:00-16:00" },
-        "services_count": 12,
-        "average_rating": 4.6,
-        "ratings_count": 38,
-        "is_active": true
-      }
-    ]
-  }
-}
-```
-
-`distance_km` is present only when `near_lat` and `near_lng` are sent and the office has coordinates.
-
-Discovery stats (list and show):
-
-| Field | Meaning |
-|-------|---------|
-| `services_count` | Distinct services with at least one **completed** request at this office |
-| `ratings_count` | Feedback count from **completed** requests at this office |
-| `average_rating` | Mean feedback rating (1 decimal); `null` when `ratings_count` is 0 |
-
----
-
-### Show office
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/offices/{office}` |
-| **Auth** | No |
-
-**Response** `200` — `data.office`.
-
----
-
-### Public office feedback
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/offices/{office}/feedback` |
-| **Auth** | No |
-
-**Query:** `rating` (1–5, optional)
-
-**Response** `200`
-
-```json
-{
-  "data": {
-    "feedback": [
-      {
-        "rating": 5,
-        "comment": "Very helpful staff.",
-        "created_at": "2026-05-10T14:30:00.000000Z",
-        "citizen_name": "Jane",
-        "service_name": "Passport Renewal"
-      }
-    ]
-  }
-}
-```
-
-**Notes:** Only feedback linked to **completed** requests where `service_requests.office_id` matches the office. Public-safe fields only — first name (or `Citizen`), no email, phone, national ID, or user object.
-
----
-
-## Requests
-
-### Create request
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/service-requests` |
-| **Auth** | Yes |
-
-**Request**
-
-```json
-{
-  "service_id": 1,
-  "office_id": 2,
-  "citizen_notes": "Optional notes",
-  "submitted_data": { "field": "value" }
-}
-```
-
-**Response** `201` — `data.service_request` (`ServiceRequestResource`).
-
-**Notes:**
-- `office_id` optional for global services; required to match service if service is office-specific.
-- Includes `tracking_token`, `tracking_api_url`, `tracking_web_url`, `reference_number`, `office`.
-- Encode `tracking_api_url` in QR codes for in-app/API lookups; `tracking_web_url` opens the public browser page.
-
-**Statuses:** `pending`, `under_review`, `requires_action`, `approved`, `rejected`, `completed`, `cancelled`.
-
----
-
-### List my requests
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/my-requests` |
-| **Auth** | Yes |
-
-**Query (optional):** `status`, `service_id`, `category_id`, `from_date`, `to_date` (`Y-m-d`), `search` (reference or service name)
-
-**Response** `200` — `data.service_requests[]`.
-
----
-
-### Show request
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/my-requests/{serviceRequest}` |
-| **Auth** | Yes |
-
-**Response** `200` — `data.service_request` with `service`, `office`, `documents`, `requirement_documents`, `official_documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`, `timeline`.
-
-`timeline` is computed from `submitted_at`, `reviewed_at`, `completed_at`, and `status` (no extra table):
-
-```json
-"timeline": [
-  {
-    "key": "submitted",
-    "label": "Request Submitted",
-    "status": "completed",
-    "occurred_at": "2026-05-10T09:00:00.000000Z"
-  },
-  {
-    "key": "reviewed",
-    "label": "Under Review",
-    "status": "completed",
-    "occurred_at": "2026-05-11T10:00:00.000000Z"
-  },
-  {
-    "key": "completed",
-    "label": "Completed",
-    "status": "pending",
-    "occurred_at": null
-  }
-]
-```
-
-Step `status` is `completed` or `pending`. `staff_notes` is omitted for citizens; only admins and assigned staff receive it.
-
-`required_documents` and `missing_documents` are arrays of objects (legacy string values in the database are normalized automatically):
+`GET /services/{id}` → `data.service` with normalized `required_documents[]`:
 
 ```json
 {
@@ -820,35 +276,83 @@ Step `status` is `completed` or `pending`. `staff_notes` is omitted for citizens
 }
 ```
 
----
+Legacy string entries in the database are normalized automatically.
 
-### Cancel request
+### Public service feedback
 
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/my-requests/{serviceRequest}/cancel` |
-| **Auth** | Yes |
-
-**Response** `200` — updated `ServiceRequestResource`.
-
-**Notes:** Allowed only for `pending`, `under_review`, `requires_action`.
+`GET /services/{id}/feedback` — query: `rating` (1–5). `data.feedback[]` from **completed** requests only (`rating`, `comment`, `created_at`, `citizen_name` first name only).
 
 ---
+
+## Offices
+
+`GET /offices` — all filters optional, combined with AND:
+
+| Query | Description |
+|-------|-------------|
+| `service_id` | Offices for that active service (office-specific service → one office; global service → all active offices) |
+| `category_id` | Offices with at least one active service in category |
+| `search` | `name`, `address`, or `email` |
+| `near_lat`, `near_lng` | **Both required** — sort nearest first; `distance_km` on offices with coordinates |
+
+Default sort: `name`. With coordinates: distance ascending (offices without coords last).
+
+**Response** `data.offices[]` includes `working_hours`, `services_count`, `average_rating`, `ratings_count` (stats from **completed** requests/feedback at that office).
+
+`GET /offices/{id}` → `data.office`
+
+### Public office feedback
+
+`GET /offices/{id}/feedback` — query: `rating`. `data.feedback[]` adds `service_name`. Completed requests at that office only; no PII beyond first name.
+
+---
+
+## Service requests
+
+### Create
+
+`POST /service-requests`
+
+```json
+{
+  "service_id": 1,
+  "office_id": 2,
+  "citizen_notes": "Optional",
+  "submitted_data": {}
+}
+```
+
+`office_id` required when the service is office-specific; must match that office.
+
+**Response `201`:** `data.service_request` with `reference_number`, `tracking_token`, `tracking_api_url`, `tracking_web_url`, `office`, `status`.
+
+**Statuses:** `pending`, `under_review`, `requires_action`, `approved`, `rejected`, `completed`, `cancelled`.
+
+### List / show
+
+`GET /my-requests` — query: `status`, `service_id`, `category_id`, `from_date`, `to_date`, `search`
+
+`GET /my-requests/{id}` includes `service`, `office`, `documents`, `requirement_documents`, `official_documents`, `appointment`, `payment`, `feedback`, `required_documents`, `missing_documents`, `timeline`.
+
+**Timeline** (computed, no extra table):
+
+```json
+"timeline": [
+  { "key": "submitted", "label": "Request Submitted", "status": "completed", "occurred_at": "2026-05-10T09:00:00.000000Z" },
+  { "key": "reviewed", "label": "Under Review", "status": "pending", "occurred_at": null },
+  { "key": "completed", "label": "Completed", "status": "pending", "occurred_at": null }
+]
+```
+
+`staff_notes` is omitted for citizens.
+
+### Cancel
+
+`PATCH /my-requests/{id}/cancel` — only `pending`, `under_review`, `requires_action`.
 
 ### Certificate (placeholder)
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/my-requests/{serviceRequest}/certificate` |
-| **Auth** | Yes |
-
-Lightweight JSON record for completed requests. **No PDF** — use for iOS completion screens until real document generation exists.
-
-**Rules:** Citizen must own the request. Request `status` must be `completed`.
-
-**Response** `200`
+`GET /my-requests/{id}/certificate` — owner only, `status` must be `completed`. JSON only (no PDF).
 
 ```json
 {
@@ -866,118 +370,71 @@ Lightweight JSON record for completed requests. **No PDF** — use for iOS compl
 }
 ```
 
-`issued_at` uses `completed_at` when present. `certificate_number` is `CERT-` + `reference_number`.
+`certificate_number` = `CERT-` + `reference_number`. `issued_at` uses `completed_at` when set.
 
 ---
 
 ## Documents
 
-Each `RequestDocumentResource` includes:
+Each document: `source` (`citizen` | `staff` | `system`), `purpose` (`requirement` | `official_response` | `certificate` | `receipt` | `other`), `status`.
 
-| Field | Values | Meaning |
-|-------|--------|---------|
-| `source` | `citizen`, `staff`, `system` | Who provided the file |
-| `purpose` | `requirement`, `official_response`, `certificate`, `receipt`, `other` | Why the file exists |
+| List key | Use |
+|----------|-----|
+| `requirement_documents` | Citizen upload checklist |
+| `official_documents` | Staff/system outputs |
+| `documents` | Full list |
+| `missing_documents` | Requirements not yet uploaded (by key) |
 
-Citizen uploads use `source: citizen`, `purpose: requirement`, `status: pending` (until reviewed). Staff official uploads use `source: staff`, `purpose: official_response`, `status: approved`. The staff `document_type` field (e.g. `certificate`, `receipt`) is descriptive only. Future system-generated files use `source: system`.
+Citizen uploads: `source=citizen`, `purpose=requirement`, `status=pending`. Staff official uploads: `source=staff`, `purpose=official_response`, `status=approved`.
 
-Use `requirement_documents` for the upload checklist UI and `official_documents` for completed outputs (certificates, receipts, staff responses). `documents` remains the full list.
+Uploading notifies **assigned staff** (database notification, type `document_upload`). Staff official uploads notify the **citizen**.
 
-On `GET /my-requests/{id}`, `data.service_request` also exposes `requirement_documents` and `official_documents` when documents are loaded. `missing_documents` only considers citizen requirement uploads.
+### Endpoints
 
----
+| Method | Path | Notes |
+|--------|------|--------|
+| `GET` | `.../documents` | `data.documents`, `data.requirement_documents`, `data.official_documents` |
+| `POST` | `.../documents` | multipart: `document_type` (key or legacy label), `document` (file) |
+| `POST` | `.../documents/bulk` | `documents[0][document_type]`, `documents[0][file]`, … |
+| `GET` | `.../documents/{id}/download` | binary file (not JSON) |
+| `DELETE` | `.../documents/{id}` | citizen requirement uploads only; not if `approved` |
 
-### List documents
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/my-requests/{serviceRequest}/documents` |
-| **Auth** | Yes |
-
-**Response** `200` — `data.documents[]`, `data.requirement_documents[]`, `data.official_documents[]`.
-
----
-
-### Upload document
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/my-requests/{serviceRequest}/documents` |
-| **Auth** | Yes |
-
-**Request** (`multipart/form-data`)
-
-| Field | Notes |
-|-------|--------|
-| `document_type` | Required document `key` (e.g. `national_id_copy`) or legacy `label` (e.g. `National ID copy`) |
-| `document` | File matching `accepted_types` and `max_size_mb` from the requirement |
-
-**Response** `201` — `data.document` with `source: citizen`, `purpose: requirement`. Stored `document_type` is the canonical **key** when it matches a requirement.
-
-**Notes:** Not allowed when request is `completed`, `cancelled`, or `rejected`.
+Blocked when request is `completed`, `cancelled`, or `rejected`. Files: jpg, jpeg, png, pdf; max 5 MB per file (per requirement `max_size_mb` when stricter).
 
 ---
 
-### Bulk upload documents
+## Tracking
 
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/my-requests/{serviceRequest}/documents/bulk` |
-| **Auth** | Yes |
+On each `ServiceRequestResource`:
 
-**Request** (`multipart/form-data`)
+| Field | Example |
+|-------|---------|
+| `tracking_token` | opaque string |
+| `tracking_api_url` | `{APP_URL}/api/track/{token}` — QR / in-app polling |
+| `tracking_web_url` | `{APP_URL}/track/{token}` — browser page |
 
-| Field | Notes |
-|-------|--------|
-| `documents[0][document_type]` | Key or legacy label |
-| `documents[0][file]` | File (jpg, jpeg, png, pdf; max 5 MB per file) |
-| `documents[1][document_type]` | … |
-| `documents[1][file]` | … |
+### Public API
 
-At least one entry is required. Same ownership and status rules as single upload. Each item is validated before any file is stored.
-
-**Response** `201`
+`GET /track/{trackingToken}` — no auth
 
 ```json
 {
-  "success": true,
-  "message": "Documents uploaded successfully",
   "data": {
-    "documents": []
+    "reference_number": "KHR-20260516-ABCDEF",
+    "status": "under_review",
+    "service_name": "Birth Certificate Request",
+    "submitted_at": "2026-05-16T10:00:00.000000Z",
+    "reviewed_at": null,
+    "completed_at": null
   }
 }
 ```
 
-`data.documents[]` uses `RequestDocumentResource` (same shape as single upload).
+No citizen name, documents, payments, or staff notes.
 
----
+### Public web page
 
-### Download document
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/my-requests/{serviceRequest}/documents/{document}/download` |
-| **Auth** | Yes |
-
-**Response:** File download (not JSON). Use for certificates and staff-uploaded files.
-
----
-
-### Delete document
-
-| | |
-|---|---|
-| **Method** | `DELETE` |
-| **Path** | `/my-requests/{serviceRequest}/documents/{document}` |
-| **Auth** | Yes |
-
-**Response** `200` — `data` is `null`.
-
-**Notes:** Only citizen requirement uploads can be deleted. Cannot delete `approved` requirement documents. Staff/system official documents cannot be deleted by citizens.
+`GET /track/{trackingToken}` (no `/api` prefix) — minimal HTML status page for QR links opened in Safari.
 
 ---
 
@@ -985,188 +442,49 @@ At least one entry is required. Same ownership and status rules as single upload
 
 ### Availability
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/appointments/availability` |
-| **Auth** | Yes |
+`GET /appointments/availability?date=2026-05-17` — `date` required (`Y-m-d`)
 
-**Query**
+Optional: `staff_id`, `service_request_id` (uses request office `working_hours`; must own request)
 
-| Param | Required | Notes |
-|-------|----------|--------|
-| `date` | Yes | `Y-m-d` |
-| `staff_id` | No | Exclude slots already booked for this staff member |
-| `service_request_id` | No | Use the request’s office `working_hours` when set (must own the request) |
-
-Default schedule when office hours are missing: **09:00–15:00**, **30-minute** slots.
-
-**Response** `200`
+Default hours: **09:00–15:00**, **30-minute** slots.
 
 ```json
 {
   "data": {
     "date": "2026-05-17",
     "slot_duration_minutes": 30,
-    "working_hours": {
-      "start": "09:00",
-      "end": "15:00"
-    },
-    "available_times": ["09:00", "09:30", "10:30"],
+    "working_hours": { "start": "09:00", "end": "15:00" },
+    "available_times": ["09:00", "09:30"],
     "unavailable_times": ["10:00"]
   }
 }
 ```
 
-`unavailable_times` includes booked slots (for the given `staff_id` when provided). `available_times` is every slot in `working_hours` that is not booked.
+### CRUD
 
----
+| Method | Path | Notes |
+|--------|------|--------|
+| `GET` | `/appointments` | Own appointments; includes `office`, `service` summaries |
+| `POST` | `/appointments` | `service_request_id`, `appointment_date`, `appointment_time` (`H:i`), optional `staff_id`, `notes` |
+| `GET` | `/appointments/{id}` | |
+| `PATCH` | `/appointments/{id}` | Citizens: only `scheduled` appointments |
+| `DELETE` | `/appointments/{id}` | Citizens: `scheduled` only |
 
-### List appointments
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/appointments` |
-| **Auth** | Yes |
-
-**Response** `200` — citizen sees own appointments only. Each item is an `AppointmentResource`:
-
-```json
-{
-  "id": 1,
-  "status": "scheduled",
-  "appointment_date": "2026-05-20",
-  "appointment_time": "09:00",
-  "notes": null,
-  "service_request": {
-    "id": 12,
-    "reference_number": "KHR-20260516-ABCDEF",
-    "tracking_token": "abc123token",
-    "status": "under_review"
-  },
-  "office": {
-    "id": 1,
-    "name": "Beirut Main Office",
-    "address": "Hamra Street",
-    "latitude": 33.8938,
-    "longitude": 35.5018
-  },
-  "service": {
-    "id": 5,
-    "name": "Passport Renewal"
-  },
-  "citizen": { "id": 1, "name": "Jane Citizen", "email": "jane@example.com" },
-  "staff": { "id": 3, "name": "Staff User", "email": "staff@example.com" },
-  "created_at": "2026-05-16T10:00:00.000000Z",
-  "updated_at": "2026-05-16T10:00:00.000000Z"
-}
-```
-
-**Date formats:** `appointment_date` is `Y-m-d`; `appointment_time` is `H:i`; `created_at` / `updated_at` are ISO 8601.
-
----
-
-### Book appointment
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/appointments` |
-| **Auth** | Yes |
-
-**Request**
-
-```json
-{
-  "service_request_id": 12,
-  "appointment_date": "2026-05-20",
-  "appointment_time": "09:00",
-  "staff_id": 3,
-  "notes": "Optional"
-}
-```
-
-**Response** `201` — `AppointmentResource`.
-
-**Notes:** Duplicate slot prevention. `appointment_time` format `H:i`. Date must be today or later.
-
----
-
-### Show appointment
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/appointments/{appointment}` |
-| **Auth** | Yes |
-
-**Response** `200` — `AppointmentResource` (same shape as list).
-
----
-
-### Update appointment
-
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/appointments/{appointment}` |
-| **Auth** | Yes |
-
-**Request** (partial)
-
-```json
-{
-  "appointment_date": "2026-05-21",
-  "appointment_time": "10:00",
-  "status": "cancelled",
-  "notes": "Reschedule"
-}
-```
-
-**Response** `200`.
-
-**Notes:** Citizens may update only `scheduled` appointments.
-
----
-
-### Delete appointment
-
-| | |
-|---|---|
-| **Method** | `DELETE` |
-| **Path** | `/appointments/{appointment}` |
-| **Auth** | Yes |
-
-**Response** `200` — scheduled appointments only.
+`appointment_date`: `Y-m-d`. Duplicate slot prevention.
 
 ---
 
 ## Payments
 
-### List payments
+**iOS:** use `card` or `crypto` only. See [Deprecated](#deprecated--not-for-ios).
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/payments` |
-| **Auth** | Yes |
+### List
 
-**Query (optional):** `status`, `payment_method` (`card`, `cash`, `crypto`), `from_date`, `to_date`
+`GET /payments` — query: `status`, `payment_method`, `from_date`, `to_date` → `data` is array of `PaymentResource`.
 
-**Response** `200` — `PaymentResource` collection in `data`.
+### Create
 
----
-
-### Create payment
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/payments` |
-| **Auth** | Yes |
-
-**Request**
+`POST /payments`
 
 ```json
 {
@@ -1178,14 +496,12 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 }
 ```
 
-**Response** `201` — `PaymentResource` with `next_action` when status is `pending`.
+`amount` optional (defaults to service `base_fee`). `422` if fee ≤ 0 or pending/paid payment already exists for the request.
 
-**Card** (`payment_method: "card"`) — mock checkout; confirm in sandbox via process endpoint:
+**Card** — pending + mock confirmation:
 
 ```json
 {
-  "id": 42,
-  "payment_method": "card",
   "status": "pending",
   "next_action": {
     "type": "mock_card_confirmation",
@@ -1194,21 +510,13 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 }
 ```
 
-**Crypto** (`payment_method: "crypto"`) — mock on-chain transfer instructions:
+**Crypto** — pending + transfer instructions (`payment_details` also populated):
 
 ```json
 {
-  "id": 43,
-  "payment_method": "crypto",
   "status": "pending",
   "next_action": {
     "type": "crypto_transfer",
-    "network": "testnet",
-    "wallet_address": "0xabcdef...",
-    "expires_at": "2026-05-18T12:00:00.000000Z"
-  },
-  "payment_details": {
-    "provider": "mock",
     "network": "testnet",
     "wallet_address": "0xabcdef...",
     "expires_at": "2026-05-18T12:00:00.000000Z"
@@ -1216,66 +524,21 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 }
 ```
 
-**Cash** — no `next_action` (`null`). Staff may mark paid via admin flows.
+`next_action` is `null` when status is not `pending`. No real payment gateway — sandbox only.
 
-**Notes:**
-- `amount` optional — defaults to service `base_fee`.
-- `422` if fee is 0 or payment already exists (`pending`/`paid`).
-- No real card or crypto gateway is integrated; all flows are mocked.
+### Process (mock)
 
----
-
-### Show payment
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/payments/{payment}` |
-| **Auth** | Yes |
-
-**Response** `200`.
-
----
-
-### Process payment (mock)
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/payments/{payment}/process` |
-| **Auth** | Yes |
-
-**Request**
+`POST /payments/{id}/process` — own pending payments only
 
 ```json
-{
-  "mock_status": "paid",
-  "mock_message": "Sandbox success"
-}
+{ "mock_status": "paid", "mock_message": "Sandbox success" }
 ```
 
-**Response** `200` — updated `PaymentResource`. `next_action` is `null` after processing (no longer `pending`).
+`mock_status`: `paid` | `failed` (default `paid`). Simulates card confirmation or crypto settlement.
 
-```json
-{
-  "mock_status": "paid",
-  "mock_message": "Sandbox success"
-}
-```
+### Receipt
 
-**Notes:** Sandbox/mock only — simulates card confirmation or crypto settlement. Own pending payments only. Default `mock_status` is `paid`.
-
----
-
-### Payment receipt
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/payments/{payment}/receipt` |
-| **Auth** | Yes |
-
-**Response** `200` — JSON receipt (**paid** payments only; `422` otherwise). No PDF.
+`GET /payments/{id}/receipt` — **paid** only (`422` otherwise). JSON receipt (no PDF).
 
 ```json
 {
@@ -1300,108 +563,42 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 }
 ```
 
-`issued_at` matches `paid_at`. `citizen_national_id` is included only for the authenticated payment owner when set on their profile (omitted for admins and other users).
+`citizen_national_id` only for the payment owner when set on their profile.
 
 ---
 
 ## Feedback
 
-### List my feedback
+### Citizen (authenticated)
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/feedback` |
-| **Auth** | Yes |
+| Method | Path | Notes |
+|--------|------|--------|
+| `GET` | `/feedback` | Own feedback |
+| `POST` | `/feedback` | `service_request_id`, `rating` (1–5), `comment` — request must be `completed`; one per request |
+| `GET` | `/feedback/{id}` | |
+| `PATCH` | `/feedback/{id}` | Owner only |
+| `DELETE` | `/feedback/{id}` | Owner only |
 
-**Response** `200` — own feedback only.
+### Public (see [Categories & services](#categories--services), [Offices](#offices))
 
----
-
-### Submit feedback
-
-| | |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/feedback` |
-| **Auth** | Yes |
-
-**Request**
-
-```json
-{
-  "service_request_id": 12,
-  "rating": 5,
-  "comment": "Excellent service"
-}
-```
-
-**Response** `201`.
-
-**Notes:** Request must be `completed`. One feedback per request.
-
----
-
-### Show feedback
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/feedback/{feedback}` |
-| **Auth** | Yes |
-
-**Response** `200`.
-
----
-
-### Update feedback
-
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/feedback/{feedback}` |
-| **Auth** | Yes |
-
-**Request**
-
-```json
-{
-  "rating": 4,
-  "comment": "Updated comment"
-}
-```
-
-**Response** `200` — owner only.
+`GET /services/{id}/feedback`, `GET /offices/{id}/feedback`
 
 ---
 
 ## Notifications
 
-### List notifications
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/notifications` |
-| **Auth** | Yes |
-
-**Query:** `unread_only=true` (optional)
-
-**Response** `200` — `data[]` items use `NotificationResource`:
+Database notifications only (push not wired). `GET /notifications` — query `unread_only=true`
 
 ```json
 {
   "data": [
     {
-      "id": "9d4e8b2a-1c3f-4b2a-9f0e-123456789abc",
+      "id": "uuid",
       "type": "request_update",
       "title": "Request updated",
       "body": "Your request is under review.",
       "icon": "request",
-      "deep_link": {
-        "type": "service_request",
-        "id": 123
-      },
+      "deep_link": { "type": "service_request", "id": 123 },
       "read_at": null,
       "created_at": "2026-05-16T10:00:00.000000Z"
     }
@@ -1412,107 +609,44 @@ Default schedule when office hours are missing: **09:00–15:00**, **30-minute**
 | `type` | `icon` | `deep_link.type` |
 |--------|--------|------------------|
 | `request_update` | `request` | `service_request` |
+| `document_upload` | `document` | `service_request` |
 | `payment_update` | `payment` | `payment` |
 | `appointment_update` | `appointment` | `appointment` |
-| `document_upload` | `document` | `service_request` |
+| other | `bell` | `null` |
 
-Use `deep_link` for in-app navigation (detail screens). Database notifications only — push delivery is not implemented yet.
+| Method | Path |
+|--------|------|
+| `PATCH` | `/notifications/{id}/read` |
+| `PATCH` | `/notifications/read-all` |
 
----
-
-### Mark one read
-
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/notifications/{notification}/read` |
-| **Auth** | Yes |
-
-**Response** `200`.
+Raw `data` blob from Laravel notifications is **not** exposed — use `title`, `body`, `type`, `deep_link`.
 
 ---
 
-### Mark all read
+## Deprecated / not for iOS
 
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **Path** | `/notifications/read-all` |
-| **Auth** | Yes |
+Do **not** call these from the citizen app.
 
-**Response** `200` — `data` is `null`.
-
----
-
-## Tracking
-
-Each `ServiceRequestResource` includes:
-
-| Field | Description |
-|-------|-------------|
-| `tracking_token` | Opaque token |
-| `tracking_api_url` | `{APP_URL}/api/track/{tracking_token}` — use for QR codes and API polling |
-| `tracking_web_url` | `{APP_URL}/track/{tracking_token}` — public browser page |
-
-Example:
-
-```json
-{
-  "tracking_token": "abc123token",
-  "tracking_api_url": "https://example.com/api/track/abc123token",
-  "tracking_web_url": "https://example.com/track/abc123token"
-}
-```
-
-### Public track by token (API)
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/api/track/{trackingToken}` |
-| **Auth** | No |
-
-**Response** `200` — limited public data only.
-
-```json
-{
-  "success": true,
-  "data": {
-    "reference_number": "KHR-20260516-ABCDEF",
-    "status": "under_review",
-    "service_name": "Birth Certificate Request",
-    "submitted_at": "2026-05-16T10:00:00.000000Z",
-    "reviewed_at": null,
-    "completed_at": null
-  }
-}
-```
-
-**Notes:** No citizen name, documents, payments, or staff notes.
-
-### Public track page (web)
-
-| | |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/track/{trackingToken}` |
-| **Auth** | No |
-
-Minimal HTML status page (reference, service name, status, timestamps). Same token as the API route; intended for QR codes opened in a mobile browser.
+| Method | Path | Status |
+|--------|------|--------|
+| `POST` | `/register` | **Deprecated** — legacy single-step registration (name, email, password, optional `id_document`). Returns token immediately. Replaced by `/identity/preview` + `/register/complete`. |
+| `POST` | `/verify-id` | **Removed** — returns 404. Use identity preview flow. |
+| `POST` | `/payments` with `payment_method: "cash"` | **Not for iOS** — cash is for staff/admin desk flows. Citizens use `card` or `crypto`. |
+| `PATCH` | `/payments/{id}/mark-paid` | Staff/admin — mark cash paid at desk |
+| `PATCH` | `/payments/{id}/refund` | Staff/admin |
+| `*` | `/staff/*`, `/admin/*`, `/dashboard/*` | Staff/admin web & API tools |
 
 ---
 
 ## Quick reference
 
-| Area | Auth required |
-|------|----------------|
-| Auth (preview, register/complete, social login, login/OTP), categories, services, offices, service/office feedback, track | No |
-| Everything else | Yes |
+| Needs auth | Endpoints |
+|------------|-----------|
+| No | Auth preview/register/social/login-OTP, categories, services, offices, service/office feedback, `GET /track/{token}` |
+| Yes | Profile, device tokens, requests, documents, appointments, payments (`card`/`crypto`), feedback, notifications |
 
-**iOS auth (public):** `POST /identity/preview`, `POST /register/complete`, `POST /auth/google`, `POST /auth/apple`, `POST /login`, `POST /login/verify-otp`, `POST /login/resend-otp`
+**Multipart:** `POST /identity/preview`, `POST /my-requests/{id}/documents`, `POST .../documents/bulk`
 
-**iOS auth (authenticated):** `GET /me`, `POST /logout`
+**File download:** `GET /my-requests/{id}/documents/{docId}/download`
 
-**Multipart endpoints:** `POST /identity/preview`, `POST /my-requests/{id}/documents`
-
-**File download:** `GET /my-requests/{id}/documents/{id}/download`
+**Mock payments:** `POST /payments` → `POST /payments/{id}/process` with `mock_status: "paid"`
