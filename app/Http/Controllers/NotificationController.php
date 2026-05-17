@@ -2,30 +2,63 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\WebNotificationHelper;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class NotificationController extends Controller
 {
-    public function index()
-    {
-        // TODO: replace with real notifications when friend sets up the table
-        // $notifications = auth()->user()->notifications()->latest()->take(10)->get();
-        $notifications = collect([]);
+    public function __construct(
+        private readonly WebNotificationHelper $webNotificationHelper,
+    ) {}
 
-        return view('notifications.index', compact('notifications'));
+    public function index(Request $request): View
+    {
+        $notifications = $request->user()
+            ->notifications()
+            ->latest()
+            ->paginate(20);
+
+        $formatted = $notifications->getCollection()->map(
+            fn ($notification) => $this->webNotificationHelper->format($notification, $request->user())
+        );
+
+        $notifications->setCollection($formatted);
+
+        return view('notifications.index', [
+            'notifications' => $notifications,
+            'unreadCount' => $request->user()->unreadNotifications()->count(),
+        ]);
     }
 
-    public function markAsRead($id)
+    public function markAsRead(Request $request, string $id): RedirectResponse
     {
-        // TODO: auth()->user()->notifications()->findOrFail($id)->markAsRead();
-        return redirect()->route('notifications.index')
-        ->with('success', 'All notifications marked as read');
+        $notification = $request->user()
+            ->notifications()
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $notification->markAsRead();
+
+        $formatted = $this->webNotificationHelper->format($notification, $request->user());
+
+        if ($formatted['url'] !== null) {
+            return redirect($formatted['url'])
+                ->with('success', 'Notification marked as read.');
+        }
+
+        return redirect()
+            ->route('notifications.index')
+            ->with('success', 'Notification marked as read.');
     }
 
-    public function markAllRead()
+    public function markAllRead(Request $request): RedirectResponse
     {
-        // TODO: auth()->user()->unreadNotifications->markAsRead();
-        return redirect()->back()
-        ->with('success', 'Notification marked as read');
+        $request->user()->unreadNotifications->markAsRead();
+
+        return redirect()
+            ->back()
+            ->with('success', 'All notifications marked as read.');
     }
 }
