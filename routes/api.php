@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminReportController;
 use App\Http\Controllers\Api\MunicipalityController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
@@ -183,6 +184,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/admin/municipalities', [MunicipalityController::class, 'store']);
         Route::patch('/admin/municipalities/{municipality}', [MunicipalityController::class, 'update']);
         Route::delete('/admin/municipalities/{municipality}', [MunicipalityController::class, 'destroy']);
+
+        Route::get('/admin/reports/overview', [AdminReportController::class, 'overview']);
 
         Route::get('/admin/offices', [AdminController::class, 'offices']);
         Route::post('/admin/offices', [AdminController::class, 'createOffice']);

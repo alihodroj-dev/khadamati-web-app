@@ -3,32 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ServiceRequest;
-use App\Models\Payment;
-use App\Models\User;
-use App\Models\Service;
+use App\Models\Municipality;
+use App\Models\Office;
+use App\Services\AdminReportService;
+use App\Support\ReportFilters;
+use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $filters = ReportFilters::fromRequest($request);
+        $report = AdminReportService::overview($filters);
+
         return view('admin.reports.index', [
-            // Requests
-            'totalRequests' => ServiceRequest::count(),
-            'pendingRequests' => ServiceRequest::where('status', 'pending')->count(),
-            'completedRequests' => ServiceRequest::where('status', 'completed')->count(),
-
-            // Users
-            'totalUsers' => User::count(),
-            'staffCount' => User::where('role', 'staff')->count(),
-
-            // Services
-            'totalServices' => Service::count(),
-
-            // Payments
-            'totalRevenue' => Payment::where('status', 'paid')->sum('amount'),
-            'paidPayments' => Payment::where('status', 'paid')->count(),
-            'pendingPayments' => Payment::where('status', 'pending')->count(),
+            'report' => $report,
+            'filters' => $filters,
+            'offices' => Office::query()->with('municipality')->orderBy('name')->get(),
+            'municipalities' => Municipality::query()->orderBy('name')->get(),
         ]);
     }
 }
