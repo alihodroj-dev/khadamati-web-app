@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Http\Controllers\Citizen;
+
+use App\Http\Controllers\Controller;
+use App\Models\ServiceRequest;
+use App\Models\Appointment;
+use App\Models\OfficeTimeSlot;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+
+class CitizenAppointmentController extends Controller
+{
+    public function index()
+    {
+        $appointments = Appointment::where('user_id', auth()->id())
+            ->with(['serviceRequest.service', 'staff'])
+            ->orderBy('appointment_date', 'desc')
+            ->orderBy('appointment_time', 'desc')
+            ->paginate(10);
+
+        return view('citizen.appointments.index', compact('appointments'));
+    }
+
+    public function create($requestId)
+    {
+        $serviceRequest = ServiceRequest::where('user_id', auth()->id())
+            ->with('service')
+            ->findOrFail($requestId);
+
+        if (!$serviceRequest->service->requires_appointment) {
+            return redirect()->route('citizen.requests.show', $serviceRequest->id)
+                ->with('error', 'This service does not require an appointment.');
+        }
+
+        return view('citizen.appointments.create', compact('serviceRequest'));
+    }
+
+    public function getAvailableSlots(Request $request, $officeId)
+    {
+        $date = Carbon::parse($request->date);
+        
+        $slots = OfficeTimeSlot::where('office_id', $officeId)
+            ->where('day_of_week', $date->dayOfWeek)
+            ->where('is_active', true)
+            ->with('staff')
+            ->get();
+
+        $availableSlots = [];
+
+        foreach ($slots as $slot) {
+            // Check if staff already has appointment at this time
+            $existingAppointment = Appointment::where('staff_id', $slot->staff_id)
+                ->whereDate('appointment_date', $date)
+                ->whereTime('appointment_time', $slot->start_time)
+                ->exists();
+
+            if (!$existingAppointment) {
+                $availableSlots[] = [
+                    'staff_id' => $slot->staff_id,
+                    'staff_name' => $slot->staff->name,
+                    'start_time' => $slot->start_time,
+                    'end_time' => $slot->end_time,
+                ];
+            }
+        }
+
+        return response()->json($availableSlots);
+    }
+
+    public function store(Request $request, $requestId)
+    {
+        $serviceRequest = ServiceRequest::where('user_id', auth()->id())->findOrFail($requestId);
+
+        $request->validate([
+            'staff_id' => ['required', 'exists:users,id'],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
+            'appointment_time' => ['required', 'date_format:H:i'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        // Check if slot is still available
+        $existing = Appointment::where('staff_id', $request->staff_id)
+            ->whereDate('appointment_date', $request->appointment_date)
+            ->whereTime('appointment_time', $request->appointment_time)
+            ->exists();
+
+        if ($existing) {
+            return back()->withErrors(['appointment_time' => 'This time slot is no longer available.']);
+        }
+
+        $appointment = Appointment::create([
+            'service_request_id' => $serviceRequest->id,
+            'user_id' => auth()->id(),
+            'staff_id' => $request->staff_id,
+            'appointment_date' => $request->appointment_date,
+            'appointment_time' => $request->appointment_time,
+            'status' => 'scheduled',
+            'notes' => $request->notes,
+        ]);
+
+        return redirect()->route('citizen.appointments.show', $appointment->id)
+            ->with('success', 'Appointment booked successfully!');
+    }
+
+    public function show($id)
+    {
+        $appointment = Appointment::where('user_id', auth()->id())
+            ->with(['serviceRequest.service', 'staff'])
+            ->findOrFail($id);
+
+        return view('citizen.appointments.show', compact('appointment'));
+    }
+
+    public function cancel($id)
+    {
+        $appointment = Appointment::where('user_id', auth()->id())
+            ->whereIn('status', ['scheduled', 'confirmed'])
+            ->findOrFail($id);
+
+        $appointment->update(['status' => 'cancelled']);
+
+        return redirect()->route('citizen.appointments.index')
+            ->with('success', 'Appointment cancelled successfully.');
+    }
+}

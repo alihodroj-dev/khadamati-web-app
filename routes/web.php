@@ -300,4 +300,121 @@ Route::middleware('auth')->group(function () {
 
             });
     });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Citizen Web Routes
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('guest')->prefix('citizen')->name('citizen.auth.')->group(function () {
+        
+        // Login
+        Route::get('/login', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'showLoginForm'])
+            ->name('login');
+        Route::post('/login', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'login']);
+        
+        // OTP Verification
+        Route::get('/otp', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'showOtpForm'])
+            ->name('otp.form');
+        Route::post('/otp/verify', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'verifyOtp'])
+            ->name('otp.verify');
+        Route::post('/otp/resend', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'resendOtp'])
+            ->name('otp.resend');
+        
+        // Registration
+        Route::get('/register', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'showRegisterForm'])
+            ->name('register');
+        Route::get('/verify-id', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'showIdentityVerificationForm'])
+            ->name('verify-id');
+        Route::post('/verify-id', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'processIdentityVerification'])
+            ->name('verify-id.process');
+        Route::post('/register/complete', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'completeRegistration'])
+            ->name('register.complete');
+        
+        // Social Login
+        Route::get('/auth/google', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'redirectToGoogle'])
+            ->name('google');
+        Route::get('/auth/google/callback', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'handleGoogleCallback'])
+            ->name('google.callback');
+    });
+
+    Route::middleware(['auth', 'citizen'])->prefix('citizen')->name('citizen.')->group(function () {
+        
+        // Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\Citizen\CitizenDashboardController::class, 'index'])
+            ->name('dashboard');
+        
+        // Logout
+        Route::post('/logout', [App\Http\Controllers\Citizen\CitizenAuthController::class, 'logout'])
+            ->name('logout');
+        
+        // Services
+        Route::get('/services', [App\Http\Controllers\Citizen\CitizenServiceController::class, 'index'])
+            ->name('services.index');
+        Route::get('/services/{id}', [App\Http\Controllers\Citizen\CitizenServiceController::class, 'show'])
+            ->name('services.show');
+        Route::get('/services/{id}/request', [App\Http\Controllers\Citizen\CitizenServiceController::class, 'createRequest'])
+            ->name('services.request.create');
+        Route::post('/services/{id}/request', [App\Http\Controllers\Citizen\CitizenServiceController::class, 'storeRequest'])
+            ->name('services.request.store');
+        
+        // Requests
+        Route::get('/requests', [App\Http\Controllers\Citizen\CitizenRequestController::class, 'index'])
+            ->name('requests.index');
+        Route::get('/requests/{id}', [App\Http\Controllers\Citizen\CitizenRequestController::class, 'show'])
+            ->name('requests.show');
+        Route::post('/requests/{id}/cancel', [App\Http\Controllers\Citizen\CitizenRequestController::class, 'cancel'])
+            ->name('requests.cancel');
+        Route::get('/requests/{requestId}/documents/{documentId}/download', [App\Http\Controllers\Citizen\CitizenRequestController::class, 'downloadDocument'])
+            ->name('requests.download-document');
+        
+        // Payments
+        Route::get('/payments', [App\Http\Controllers\Citizen\CitizenPaymentController::class, 'index'])
+            ->name('payments.index');
+        Route::get('/payments/{id}', [App\Http\Controllers\Citizen\CitizenPaymentController::class, 'show'])
+            ->name('payments.show');
+        Route::get('/payments/checkout/{requestId}', [App\Http\Controllers\Citizen\CitizenPaymentController::class, 'checkout'])
+            ->name('payments.checkout');
+        Route::post('/payments/{paymentId}/process', [App\Http\Controllers\Citizen\CitizenPaymentController::class, 'process'])
+            ->name('payments.process');
+        
+        // Appointments
+        Route::get('/appointments', [App\Http\Controllers\Citizen\CitizenAppointmentController::class, 'index'])
+            ->name('appointments.index');
+        Route::get('/appointments/create/{requestId}', [App\Http\Controllers\Citizen\CitizenAppointmentController::class, 'create'])
+            ->name('appointments.create');
+        Route::post('/appointments/{requestId}', [App\Http\Controllers\Citizen\CitizenAppointmentController::class, 'store'])
+            ->name('appointments.store');
+        Route::get('/appointments/{id}', [App\Http\Controllers\Citizen\CitizenAppointmentController::class, 'show'])
+            ->name('appointments.show');
+        Route::post('/appointments/{id}/cancel', [App\Http\Controllers\Citizen\CitizenAppointmentController::class, 'cancel'])
+            ->name('appointments.cancel');
+        Route::get('/appointments/availability/{officeId}', [App\Http\Controllers\Citizen\CitizenAppointmentController::class, 'getAvailableSlots'])
+            ->name('appointments.availability');
+        
+        // Feedback
+        Route::get('/feedback/create/{requestId}', [App\Http\Controllers\Citizen\CitizenFeedbackController::class, 'create'])
+            ->name('feedback.create');
+        Route::post('/feedback/{requestId}', [App\Http\Controllers\Citizen\CitizenFeedbackController::class, 'store'])
+            ->name('feedback.store');
+        Route::get('/feedback/{id}', [App\Http\Controllers\Citizen\CitizenFeedbackController::class, 'show'])
+            ->name('feedback.show');
+        Route::get('/feedback/{id}/edit', [App\Http\Controllers\Citizen\CitizenFeedbackController::class, 'edit'])
+            ->name('feedback.edit');
+        Route::put('/feedback/{id}', [App\Http\Controllers\Citizen\CitizenFeedbackController::class, 'update'])
+            ->name('feedback.update');
+        
+        // Profile
+        Route::get('/profile', [App\Http\Controllers\Citizen\CitizenProfileController::class, 'show'])
+            ->name('profile.show');
+        Route::get('/profile/edit', [App\Http\Controllers\Citizen\CitizenProfileController::class, 'edit'])
+            ->name('profile.edit');
+        Route::put('/profile', [App\Http\Controllers\Citizen\CitizenProfileController::class, 'update'])
+            ->name('profile.update');
+        Route::post('/profile/password', [App\Http\Controllers\Citizen\CitizenProfileController::class, 'updatePassword'])
+            ->name('profile.password');
+    });
 });
+

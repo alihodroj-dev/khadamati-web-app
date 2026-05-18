@@ -143,4 +143,12 @@ class User extends Authenticatable
     {
         return StaffOfficeScope::canAccessOffice($this, $officeId);
     }
+
+    public function routeNotificationForFcm()
+    {
+        // Get device tokens where user has push notifications enabled
+        return $this->deviceTokens()
+            ->pluck('token')
+            ->toArray();
+    }
 }
