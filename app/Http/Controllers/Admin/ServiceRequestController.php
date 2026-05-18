@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Notifications\RequestUpdatedNotification;
 use App\Support\ServiceRequestAssignment;
 use App\Support\ServiceRequestStatus;
 use App\Support\ServiceRequestStatusUpdater;
@@ -65,6 +66,13 @@ class ServiceRequestController extends Controller
             $httpRequest->rejection_reason
         );
 
+        $request->loadMissing('user', 'service');
+        $request->user?->notify(new RequestUpdatedNotification(
+            $request,
+            'Request status updated',
+            'Your request status has been updated to '.$request->status.'.'
+        ));
+
         return back()->with('success', 'Status updated');
     }
 
@@ -84,6 +92,18 @@ class ServiceRequestController extends Controller
                 ->withInput()
                 ->with('error', collect($exception->errors())->flatten()->first());
         }
+
+        $request->loadMissing('user', 'service');
+        $staffUser->notify(new RequestUpdatedNotification(
+            $request,
+            'Request assigned to you',
+            'A service request has been assigned to you.'
+        ));
+        $request->user?->notify(new RequestUpdatedNotification(
+            $request,
+            'Request under review',
+            'Your request has been assigned to a staff member for review.'
+        ));
 
         return back()->with('success', 'Staff assigned successfully');
     }

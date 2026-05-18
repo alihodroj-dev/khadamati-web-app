@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Notifications\AppointmentUpdatedNotification;
 use App\Notifications\RequestUpdatedNotification;
 use App\Support\ServiceRequestAssignment;
 use App\Support\ServiceRequestStatus;
@@ -184,6 +185,12 @@ class StaffRequestController extends Controller
 
         $appointment->update($validated);
         $appointment->load(['user', 'staff', 'serviceRequest']);
+
+        $appointment->user?->notify(new AppointmentUpdatedNotification(
+            $appointment,
+            'Appointment updated',
+            'Your appointment status has been updated to '.$appointment->status.'.'
+        ));
 
         return $this->successResponse(
             new AppointmentResource($appointment),

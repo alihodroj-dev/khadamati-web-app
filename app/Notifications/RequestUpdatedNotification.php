@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\FcmChannel;
 use App\Models\ServiceRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -18,9 +19,27 @@ class RequestUpdatedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        // DEFERRED(roadmap): Optional broadcast channel for live staff navbar updates.
-        // See docs/admin-office-roadmap.md#live-real-time-notifications
-        return ['database'];
+        $channels = ['database'];
+
+        if (filled($notifiable->fcm_token)) {
+            $channels[] = FcmChannel::class;
+        }
+
+        return $channels;
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->body,
+            'data' => [
+                'type' => 'request_update',
+                'service_request_id' => (string) $this->serviceRequest->id,
+                'reference_number' => (string) $this->serviceRequest->reference_number,
+                'status' => (string) $this->serviceRequest->status,
+            ],
+        ];
     }
 
     public function toDatabase(object $notifiable): array

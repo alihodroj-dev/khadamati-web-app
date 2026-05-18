@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\FcmChannel;
 use App\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -18,7 +19,27 @@ class PaymentUpdatedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (filled($notifiable->fcm_token)) {
+            $channels[] = FcmChannel::class;
+        }
+
+        return $channels;
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->body,
+            'data' => [
+                'type' => 'payment_update',
+                'payment_id' => (string) $this->payment->id,
+                'service_request_id' => (string) $this->payment->service_request_id,
+                'status' => (string) $this->payment->status,
+            ],
+        ];
     }
 
     public function toDatabase(object $notifiable): array

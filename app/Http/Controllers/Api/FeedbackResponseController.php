@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\FeedbackResponseResource;
 use App\Models\Feedback;
 use App\Models\FeedbackResponse;
+use App\Notifications\FeedbackResponseNotification;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,11 @@ class FeedbackResponseController extends Controller
         ]);
 
         $response->load('responder');
+
+        if ($response->isPublic()) {
+            $feedback->loadMissing('user');
+            $feedback->user?->notify(new FeedbackResponseNotification($response));
+        }
 
         return $this->successResponse(
             new FeedbackResponseResource($response),

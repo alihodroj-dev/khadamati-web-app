@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\FcmChannel;
 use App\Models\RequestDocument;
 use App\Models\ServiceRequest;
 use Illuminate\Bus\Queueable;
@@ -20,9 +21,27 @@ class DocumentUploadedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        // DEFERRED(roadmap): Optional broadcast channel when citizens upload documents.
-        // See docs/admin-office-roadmap.md#live-real-time-notifications
-        return ['database'];
+        $channels = ['database'];
+
+        if (filled($notifiable->fcm_token)) {
+            $channels[] = FcmChannel::class;
+        }
+
+        return $channels;
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->body,
+            'data' => [
+                'type' => 'document_upload',
+                'service_request_id' => (string) $this->serviceRequest->id,
+                'reference_number' => (string) $this->serviceRequest->reference_number,
+                'document_type' => (string) ($this->document?->document_type ?? ''),
+            ],
+        ];
     }
 
     public function toDatabase(object $notifiable): array
