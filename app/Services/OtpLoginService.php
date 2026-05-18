@@ -247,7 +247,6 @@ class OtpLoginService
             'user_id' => $user->id,
             'email' => $user->email,
             'channel' => OtpChallenge::CHANNEL_EMAIL,
-            'otp' => $otp,
         ]);
     }
 
