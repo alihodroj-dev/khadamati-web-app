@@ -1,0 +1,143 @@
+{
+  "info": {
+    "name": "Khadamati — OTP Login Flow",
+    "_postman_id": "khadamati-otp-flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "challenge_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 — Request OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res.data && res.data.challenge_token) {",
+              "    pm.collectionVariables.set('challenge_token', res.data.challenge_token);",
+              "    console.log('challenge_token saved:', res.data.challenge_token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"hodroj.ali.2004@gmail.com\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/request-otp",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "request-otp"]
+        }
+      }
+    },
+    {
+      "name": "2 — Verify OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res.data && res.data.token) {",
+              "    pm.collectionVariables.set('auth_token', res.data.token);",
+              "    console.log('auth_token saved:', res.data.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"challenge_token\": \"{{challenge_token}}\",\n  \"otp\": \"ENTER_OTP_HERE\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/verify-otp",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "verify-otp"]
+        }
+      }
+    },
+    {
+      "name": "3 — Resend OTP",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res.data && res.data.challenge_token) {",
+              "    pm.collectionVariables.set('challenge_token', res.data.challenge_token);",
+              "    console.log('new challenge_token saved:', res.data.challenge_token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"challenge_token\": \"{{challenge_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/resend-otp",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "resend-otp"]
+        }
+      }
+    },
+    {
+      "name": "4 — Get Profile (authenticated)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/profile",
+          "host": ["{{base_url}}"],
+          "path": ["profile"]
+        }
+      }
+    }
+  ]
+}
