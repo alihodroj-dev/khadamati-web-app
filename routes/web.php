@@ -219,6 +219,30 @@ Route::middleware('auth')->group(function () {
 
         });
 
+        Route::prefix('municipalities')->group(function () {
+
+            Route::get('/', [App\Http\Controllers\Admin\MunicipalityController::class, 'index'])
+                ->name('admin.municipalities.index');
+
+            Route::get('/create', [App\Http\Controllers\Admin\MunicipalityController::class, 'create'])
+                ->name('admin.municipalities.create');
+
+            Route::post('/', [App\Http\Controllers\Admin\MunicipalityController::class, 'store'])
+                ->name('admin.municipalities.store');
+
+            Route::get('/{municipality}/edit', [App\Http\Controllers\Admin\MunicipalityController::class, 'edit'])
+                ->name('admin.municipalities.edit');
+
+            Route::put('/{municipality}', [App\Http\Controllers\Admin\MunicipalityController::class, 'update'])
+                ->name('admin.municipalities.update');
+
+            Route::delete('/{municipality}', [App\Http\Controllers\Admin\MunicipalityController::class, 'destroy'])
+                ->name('admin.municipalities.destroy');
+
+            Route::get('/{municipality}', [App\Http\Controllers\Admin\MunicipalityController::class, 'show'])
+                ->name('admin.municipalities.show');
+        });
+
         Route::prefix('reports')->group(function () {
 
             Route::get('/', [ReportController::class, 'index'])

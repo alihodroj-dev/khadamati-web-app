@@ -114,8 +114,18 @@ class UserController extends Controller
                 Rule::in([User::ROLE_CITIZEN, User::ROLE_STAFF, User::ROLE_ADMIN]),
             ],
             'is_active' => ['required', Rule::in(['0', '1', 0, 1, true, false])],
-            ...UserOfficeAssignment::officeIdRules($request, $user),
+            'office_id' => ['nullable', 'exists:offices,id'],
         ]);
+
+        if ($validated['role'] === User::ROLE_STAFF && empty($validated['office_id'])) {
+            throw ValidationException::withMessages([
+                'office_id' => 'Staff users must be assigned to an office.',
+            ]);
+        }
+
+        if ($validated['role'] === User::ROLE_ADMIN && !empty($validated['office_id'])) {
+            $validated['office_id'] = null;
+        }
 
         $data = [
             'name' => $validated['name'],
@@ -123,10 +133,7 @@ class UserController extends Controller
             'phone' => $validated['phone'] ?? null,
             'national_id' => $validated['national_id'] ?? null,
             'role' => $validated['role'],
-            'office_id' => UserOfficeAssignment::resolveOfficeId(
-                $validated['role'],
-                $validated['office_id'] ?? null
-            ),
+            'office_id' => $validated['role'] === User::ROLE_STAFF ? $validated['office_id'] : null,
             'is_active' => AdminFormInput::boolean($validated['is_active']),
         ];
 
