@@ -27,7 +27,9 @@
 
         {{-- DEFERRED(roadmap): Live notification updates via Echo/Reverb — docs/admin-office-roadmap.md#live-real-time-notifications --}}
         <div class="relative" x-data="{ open: false }">
+            <button
                     type="button"
+                    @click="open = !open"
                     class="relative flex items-center justify-center w-10 h-10 rounded-lg transition hover:bg-gray-50"
                     style="border: 1px solid #e5e7eb; background: white; cursor: pointer;"
                     aria-label="Notifications">

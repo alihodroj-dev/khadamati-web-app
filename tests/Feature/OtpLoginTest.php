@@ -160,6 +160,45 @@ class OtpLoginTest extends TestCase
         ]);
     }
 
+    public function test_request_otp_rejects_inactive_user(): void
+    {
+        User::factory()->create([
+            'email' => 'inactive@example.com',
+            'role' => User::ROLE_CITIZEN,
+            'is_active' => false,
+        ]);
+
+        $response = $this->postJson('/api/auth/request-otp', [
+            'email' => 'inactive@example.com',
+        ]);
+
+        $response->assertForbidden()
+            ->assertJsonPath('message', 'Your account is inactive.');
+    }
+
+    public function test_verify_otp_rejects_deactivated_user(): void
+    {
+        $user = User::factory()->create([
+            'is_active' => false,
+        ]);
+
+        $challenge = OtpChallenge::create([
+            'challenge_token' => 'inactive-user-token',
+            'user_id' => $user->id,
+            'otp_hash' => Hash::make('123456'),
+            'expires_at' => now()->addMinutes(10),
+            'channel' => OtpChallenge::CHANNEL_EMAIL,
+        ]);
+
+        $response = $this->postJson('/api/auth/verify-otp', [
+            'challenge_token' => $challenge->challenge_token,
+            'otp' => '123456',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('errors.challenge_token.0', 'This login challenge is no longer valid.');
+    }
+
     public function test_new_user_can_verify_otp_and_sign_in_with_incomplete_profile(): void
     {
         Log::spy();

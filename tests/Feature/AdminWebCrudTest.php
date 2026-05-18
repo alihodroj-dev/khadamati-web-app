@@ -205,6 +205,27 @@ class AdminWebCrudTest extends TestCase
     }
 
     #[Test]
+    public function staff_user_without_office_returns_validation_error_instead_of_crashing(): void
+    {
+        $this->actingAsAdmin();
+
+        $user = User::factory()->create([
+            'role' => User::ROLE_STAFF,
+            'office_id' => null,
+            'is_active' => true,
+        ]);
+
+        $this->from(route('admin.users.edit', $user))->put(route('admin.users.update', $user), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => User::ROLE_STAFF,
+            'office_id' => '',
+            'is_active' => '0',
+        ])->assertRedirect(route('admin.users.edit', $user))
+            ->assertSessionHasErrors('office_id');
+    }
+
+    #[Test]
     public function admin_can_create_update_and_delete_an_office(): void
     {
         $this->actingAsAdmin();
