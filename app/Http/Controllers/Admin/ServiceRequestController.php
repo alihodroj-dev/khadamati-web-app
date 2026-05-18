@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Notifications\RequestUpdatedNotification;
 use App\Support\ServiceRequestAssignment;
 use App\Support\ServiceRequestStatus;
 use App\Support\ServiceRequestStatusUpdater;
@@ -65,6 +66,14 @@ class ServiceRequestController extends Controller
             $httpRequest->rejection_reason
         );
 
+        // SEND NOTIFICATION TO CITIZEN
+        $citizen = $request->user;
+        $citizen->notify(new RequestUpdatedNotification(
+            $request,
+            'Request Status Updated',
+            'Your request #' . $request->reference_number . ' is now ' . ucfirst(str_replace('_', ' ', $httpRequest->status))
+        ));
+
         return back()->with('success', 'Status updated');
     }
 
@@ -79,6 +88,22 @@ class ServiceRequestController extends Controller
 
         try {
             ServiceRequestAssignment::assign($request, $staffUser);
+            
+            // NOTIFY STAFF
+            $staffUser->notify(new RequestUpdatedNotification(
+                $request,
+                'New Request Assigned',
+                'You have been assigned to request #' . $request->reference_number
+            ));
+            
+            //  NOTIFY CITIZEN
+            $citizen = $request->user;
+            $citizen->notify(new RequestUpdatedNotification(
+                $request,
+                'Staff Assigned',
+                'A staff member has been assigned to your request #' . $request->reference_number
+            ));
+            
         } catch (ValidationException $exception) {
             return back()
                 ->withInput()

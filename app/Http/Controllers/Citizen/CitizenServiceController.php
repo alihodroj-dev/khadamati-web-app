@@ -11,6 +11,8 @@ use App\Models\RequestDocument;
 use App\Services\ServiceRequestQrCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\RequestUpdatedNotification;
+use App\Models\User;
 
 class CitizenServiceController extends Controller
 {
@@ -102,6 +104,31 @@ class CitizenServiceController extends Controller
 
             // Generate QR code
             $this->qrCodeService->ensureStored($serviceRequest);
+
+            //  SEND NOTIFICATION TO ALL ADMINS
+            $admins = User::where('role', User::ROLE_ADMIN)->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new RequestUpdatedNotification(
+                    $serviceRequest,
+                    'New Service Request',
+                    'Citizen ' . auth()->user()->name . ' submitted a new request #' . $serviceRequest->reference_number
+                ));
+            }
+
+            //  SEND NOTIFICATION TO OFFICE STAFF (if office has staff)
+            if ($service->office_id) {
+                $staffMembers = User::where('role', User::ROLE_STAFF)
+                    ->where('office_id', $service->office_id)
+                    ->get();
+                
+                foreach ($staffMembers as $staff) {
+                    $staff->notify(new RequestUpdatedNotification(
+                        $serviceRequest,
+                        'New Request in Your Office',
+                        'A new request #' . $serviceRequest->reference_number . ' has been submitted to your office'
+                    ));
+                }
+            }
 
             DB::commit();
 

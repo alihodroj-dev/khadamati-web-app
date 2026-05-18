@@ -9,6 +9,7 @@ use App\Models\OfficeTimeSlot;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Notifications\AppointmentUpdatedNotification;
 
 class CitizenAppointmentController extends Controller
 {
@@ -126,6 +127,24 @@ class CitizenAppointmentController extends Controller
             'status' => 'scheduled',
             'notes' => $request->notes,
         ]);
+
+        //  NOTIFY CITIZEN
+        $citizen = auth()->user();
+        $citizen->notify(new AppointmentUpdatedNotification(
+            $appointment,
+            'Appointment Confirmed',
+            'Your appointment for ' . $serviceRequest->service->name . ' is scheduled on ' . Carbon::parse($request->appointment_date)->format('M d, Y') . ' at ' . $request->appointment_time
+        ));
+
+        // NOTIFY STAFF
+        $staff = User::find($request->staff_id);
+        if ($staff) {
+            $staff->notify(new AppointmentUpdatedNotification(
+                $appointment,
+                'New Appointment',
+                'You have a new appointment on ' . Carbon::parse($request->appointment_date)->format('M d, Y') . ' at ' . $request->appointment_time
+            ));
+        }
 
         return redirect()->route('citizen.appointments.show', $appointment->id)
             ->with('success', 'Appointment booked successfully!');

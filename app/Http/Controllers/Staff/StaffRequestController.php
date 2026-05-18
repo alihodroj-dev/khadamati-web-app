@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\RequestDocument;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Notifications\RequestUpdatedNotification;
 use App\Notifications\DocumentUploadedNotification;
 use App\Support\RequestDocumentPurposeResolver;
 use App\Support\ServiceRequestAssignment;
@@ -76,31 +77,15 @@ class StaffRequestController extends Controller
             $httpRequest->rejection_reason
         );
 
+        // NOTIFY CITIZEN
+        $citizen = $request->user;
+        $citizen->notify(new RequestUpdatedNotification(
+            $request,
+            'Request Status Updated',
+            'Your request #' . $request->reference_number . ' is now ' . ucfirst(str_replace('_', ' ', $httpRequest->status))
+        ));
+
         return back()->with('success', 'Request updated successfully');
-    }
-
-    public function assignStaff(HttpRequest $httpRequest, $id)
-    {
-        $request = StaffOfficeScope::applyServiceRequestScope(
-            ServiceRequest::query(),
-            auth()->user()
-        )->findOrFail($id);
-
-        $httpRequest->validate([
-            'staff_id' => ['required', 'exists:users,id'],
-        ]);
-
-        $staffUser = User::findOrFail($httpRequest->staff_id);
-
-        try {
-            ServiceRequestAssignment::assign($request, $staffUser);
-        } catch (ValidationException $exception) {
-            return back()
-                ->withInput()
-                ->with('error', collect($exception->errors())->flatten()->first());
-        }
-
-        return back()->with('success', 'Staff assigned successfully');
     }
 
     public function uploadDocument(HttpRequest $httpRequest, $id)

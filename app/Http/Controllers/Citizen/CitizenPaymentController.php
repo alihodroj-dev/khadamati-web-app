@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use App\Notifications\PaymentUpdatedNotification;
+use App\Models\User;
 
 class CitizenPaymentController extends Controller
 {
@@ -58,13 +60,7 @@ class CitizenPaymentController extends Controller
 
         $request->validate([
             'payment_method' => ['required', 'in:card,crypto'],
-            'card_number' => ['required_if:payment_method,card', 'nullable', 'string'],
-            'card_expiry' => ['required_if:payment_method,card', 'nullable', 'string'],
-            'card_cvc' => ['required_if:payment_method,card', 'nullable', 'string'],
         ]);
-
-        // Simulate payment processing
-        // In production, integrate with Stripe, Coinbase, etc.
 
         $payment->update([
             'status' => 'paid',
@@ -79,6 +75,16 @@ class CitizenPaymentController extends Controller
 
         // Update service request status if needed
         $payment->serviceRequest->update(['status' => 'under_review']);
+
+        //  NOTIFY ADMINS
+        $admins = User::where('role', User::ROLE_ADMIN)->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new PaymentUpdatedNotification(
+                $payment,
+                'New Payment Received',
+                'Payment of $' . $payment->amount . ' received for request #' . $payment->serviceRequest->reference_number
+            ));
+        }
 
         return redirect()->route('citizen.payments.show', $payment->id)
             ->with('success', 'Payment completed successfully!');

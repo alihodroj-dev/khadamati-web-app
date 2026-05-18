@@ -34,6 +34,9 @@ class AppointmentUpdatedNotification extends Notification
             'status' => $this->appointment->status,
             'appointment_date' => $this->appointment->appointment_date?->toDateString(),
             'appointment_time' => $this->appointment->appointment_time,
+            'url' => $notifiable->role === 'citizen' 
+                ? route('citizen.appointments.show', $this->appointment->id)
+                : route('staff.appointments.show', $this->appointment->id),
         ];
     }
 }

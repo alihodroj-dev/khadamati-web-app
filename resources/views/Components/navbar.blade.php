@@ -6,8 +6,9 @@
     $segments = collect(request()->segments())->skip(1);
     $breadcrumb = $segments->map(fn($s) => ucfirst(str_replace('-', ' ', $s)));
 
-    $navNotifications = $navNotifications ?? collect();
-    $navUnreadCount = $navUnreadCount ?? 0;
+    // Get notifications for dropdown
+    $navNotifications = auth()->user()->notifications()->latest()->take(5)->get();
+    $navUnreadCount = auth()->user()->unreadNotifications->count();
 @endphp
 
 <header class="bg-white flex items-center justify-between px-6"
@@ -25,25 +26,32 @@
 
     <div class="flex items-center gap-4">
 
-        {{-- DEFERRED(roadmap): Live notification updates via Echo/Reverb — docs/admin-office-roadmap.md#live-real-time-notifications --}}
+        {{-- NOTIFICATIONS DROPDOWN --}}
         <div class="relative" x-data="{ open: false }">
-                    type="button"
+            <button type="button"
+                    @click="open = !open"
                     class="relative flex items-center justify-center w-10 h-10 rounded-lg transition hover:bg-gray-50"
                     style="border: 1px solid #e5e7eb; background: white; cursor: pointer;"
                     aria-label="Notifications">
-                <i class="ti ti-bell" style="font-size: 20px; color: #6b7280;"></i>
+                
+                {{-- Bell icon changes color based on unread count --}}
+                <i class="ti ti-bell" style="font-size: 20px; color: {{ $navUnreadCount > 0 ? '#ef4444' : '#6b7280' }};"></i>
+                
+                {{-- Red badge with count --}}
                 @if($navUnreadCount > 0)
-                    <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
-                        {{ $navUnreadCount > 9 ? '9+' : $navUnreadCount }}
+                    <span class="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-md"
+                        style="box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                        {{ $navUnreadCount > 99 ? '99+' : $navUnreadCount }}
                     </span>
                 @endif
             </button>
 
+            <!-- Dropdown content (same as before) -->
             <div x-show="open"
                 @click.outside="open = false"
                 x-transition
                 class="absolute right-0 mt-2 bg-white rounded-xl shadow-lg z-50"
-                style="width: 320px; border: 0.5px solid #e5e7eb; top: 100%;">
+                style="width: 320px; border: 0.5px solid #e5e7eb; top: 100%; display: none;">
 
                 <div class="flex items-center justify-between px-4 py-3"
                     style="border-bottom: 0.5px solid #e5e7eb;">
@@ -63,7 +71,21 @@
 
                 <div class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
                     @forelse($navNotifications as $notification)
-                        <x-notification-item :notification="$notification" :compact="true" />
+                        <div class="px-4 py-3 hover:bg-gray-50 transition {{ $notification->read_at ? '' : 'bg-blue-50' }}">
+                            <div class="flex gap-2">
+                                <i class="ti ti-info-circle text-blue-500 text-sm mt-0.5"></i>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-medium {{ $notification->read_at ? 'text-gray-600' : 'text-gray-900' }}">
+                                        {{ $notification->data['title'] ?? 'Notification' }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $notification->data['body'] ?? '' }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                </div>
+                                @if(!$notification->read_at)
+                                    <div class="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
+                                @endif
+                            </div>
+                        </div>
                     @empty
                         <div class="py-12 text-center">
                             <i class="ti ti-bell-off" style="font-size: 32px; color: #d1d5db; display: block; margin-bottom: 8px;"></i>
@@ -74,13 +96,12 @@
 
                 <div class="px-4 py-3" style="border-top: 0.5px solid #e5e7eb;">
                     <a href="{{ route('notifications.index') }}"
-                       class="text-xs text-blue-600 hover:underline">
+                    class="text-xs text-blue-600 hover:underline">
                         View all notifications
                     </a>
                 </div>
 
             </div>
-
         </div>
 
         <div class="w-px h-7 bg-gray-200"></div>
