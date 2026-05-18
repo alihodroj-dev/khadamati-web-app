@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Mail\LoginOtpMail;
 use App\Models\OtpChallenge;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -13,7 +15,7 @@ class OtpLoginService
 {
     private const OTP_LENGTH = 6;
 
-    private const EXPIRY_MINUTES = 10;
+    public const EXPIRY_MINUTES = 5;
 
     private const MAX_ATTEMPTS = 5;
 
@@ -28,24 +30,42 @@ class OtpLoginService
     {
         $user = $this->resolveUserForOtp($email);
 
-        $this->invalidatePendingChallenges($user);
+        return $this->createAndSendOtpChallenge($user);
+    }
 
-        $otp = $this->generateOtp();
-        $challenge = OtpChallenge::create([
-            'challenge_token' => Str::random(64),
-            'user_id' => $user->id,
-            'otp_hash' => Hash::make($otp),
-            'expires_at' => now()->addMinutes(self::EXPIRY_MINUTES),
-            'channel' => OtpChallenge::CHANNEL_EMAIL,
-        ]);
+    /**
+     * @param  list<string>  $allowedRoles
+     * @return array{
+     *     requires_otp: true,
+     *     challenge_token: string,
+     *     expires_at: string
+     * }
+     */
+    public function requestOtpForExistingUser(string $email, array $allowedRoles): array
+    {
+        $user = User::query()
+            ->where('email', strtolower(trim($email)))
+            ->first();
 
-        $this->deliverOtp($user, $otp);
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'email' => ['We could not find an account with that email address.'],
+            ]);
+        }
 
-        return [
-            'requires_otp' => true,
-            'challenge_token' => $challenge->challenge_token,
-            'expires_at' => $challenge->expires_at->toISOString(),
-        ];
+        if (! $user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['Your account is inactive.'],
+            ]);
+        }
+
+        if (! in_array($user->role, $allowedRoles, true)) {
+            throw ValidationException::withMessages([
+                'email' => ['This account cannot use OTP sign-in.'],
+            ]);
+        }
+
+        return $this->createAndSendOtpChallenge($user);
     }
 
     /**
@@ -221,11 +241,42 @@ class OtpLoginService
 
     protected function deliverOtp(User $user, string $otp): void
     {
+        Mail::to($user->email)->send(new LoginOtpMail($otp, $user, self::EXPIRY_MINUTES));
+
         Log::info('Login OTP generated.', [
             'user_id' => $user->id,
             'email' => $user->email,
             'channel' => OtpChallenge::CHANNEL_EMAIL,
             'otp' => $otp,
         ]);
+    }
+
+    /**
+     * @return array{
+     *     requires_otp: true,
+     *     challenge_token: string,
+     *     expires_at: string
+     * }
+     */
+    protected function createAndSendOtpChallenge(User $user): array
+    {
+        $this->invalidatePendingChallenges($user);
+
+        $otp = $this->generateOtp();
+        $challenge = OtpChallenge::create([
+            'challenge_token' => Str::random(64),
+            'user_id' => $user->id,
+            'otp_hash' => Hash::make($otp),
+            'expires_at' => now()->addMinutes(self::EXPIRY_MINUTES),
+            'channel' => OtpChallenge::CHANNEL_EMAIL,
+        ]);
+
+        $this->deliverOtp($user, $otp);
+
+        return [
+            'requires_otp' => true,
+            'challenge_token' => $challenge->challenge_token,
+            'expires_at' => $challenge->expires_at->toISOString(),
+        ];
     }
 }

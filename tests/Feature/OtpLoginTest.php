@@ -132,7 +132,7 @@ class OtpLoginTest extends TestCase
         $challenge->refresh();
 
         $this->assertSame(0, $challenge->attempts);
-        $this->assertTrue($challenge->expires_at->greaterThan(now()->addMinutes(5)));
+        $this->assertTrue($challenge->expires_at->greaterThan(now()->addMinutes(4)));
 
         Log::shouldHaveReceived('info')->with('Login OTP generated.', \Mockery::type('array'));
     }

@@ -62,6 +62,14 @@
             <p style="font-size: 24px; font-weight: 600; color: #111827; margin: 0 0 6px;">Welcome back</p>
             <p style="font-size: 14px; color: #9ca3af; margin: 0 0 32px;">Sign in to your dashboard</p>
 
+            {{-- Status --}}
+            @if(session('status'))
+                <div style="background: #eff6ff; border: 0.5px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                    <i class="ti ti-mail-check" style="font-size: 16px;" aria-hidden="true"></i>
+                    <span>{{ session('status') }}</span>
+                </div>
+            @endif
+
             {{-- Errors --}}
             @if($errors->any())
                 <div style="background: #fef2f2; border: 0.5px solid #fecaca; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -95,18 +103,20 @@
                 {{-- Password --}}
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">
-                        Password
+                        Password <span style="color: #9ca3af; font-weight: 400;">(admin only)</span>
                     </label>
                     <div style="position: relative;">
                         <i class="ti ti-lock" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 16px;" aria-hidden="true"></i>
                         <input type="password"
                                name="password"
-                               required
-                               placeholder="••••••••"
+                               placeholder="Required for admin accounts"
                                style="width: 100%; padding: 10px 14px 10px 38px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #111827; outline: none; box-sizing: border-box;"
                                onfocus="this.style.borderColor='#1e3a5f'; this.style.boxShadow='0 0 0 3px rgba(30,58,95,0.08)'"
                                onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                     </div>
+                    <p style="font-size: 12px; color: #9ca3af; margin: 6px 0 0;">
+                        Staff and citizen accounts will receive a one-time email code.
+                    </p>
                 </div>
 
                 {{-- Remember me --}}
@@ -122,7 +132,7 @@
                         style="width: 100%; padding: 11px; background: #1e3a5f; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;"
                         onmouseover="this.style.background='#162d4a'"
                         onmouseout="this.style.background='#1e3a5f'">
-                    Sign in
+                    Continue
                 </button>
 
             </form>
