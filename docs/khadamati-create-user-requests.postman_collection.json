@@ -1,0 +1,409 @@
+{
+  "info": {
+    "_postman_id": "khadamati-create-user-requests",
+    "name": "Khadamati - Create User Requests For Web Testing",
+    "description": "Run in order. This collection creates a fresh citizen API user, discovers active services/offices, creates service requests as that citizen, and stores useful IDs so the web admin/staff panel can be tested immediately.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api", "type": "string" },
+    { "key": "web_base_url", "value": "http://127.0.0.1:8000", "type": "string" },
+    { "key": "citizen_token", "value": "", "type": "string" },
+    { "key": "citizen_id", "value": "", "type": "string" },
+    { "key": "citizen_email", "value": "", "type": "string" },
+    { "key": "citizen_password", "value": "password123", "type": "string" },
+    { "key": "category_id", "value": "", "type": "string" },
+    { "key": "service_id", "value": "", "type": "string" },
+    { "key": "office_id", "value": "", "type": "string" },
+    { "key": "service_request_id", "value": "", "type": "string" },
+    { "key": "service_request_ids", "value": "[]", "type": "string" },
+    { "key": "tracking_token", "value": "", "type": "string" },
+    { "key": "payment_id", "value": "", "type": "string" },
+    { "key": "create_request_body", "value": "{}", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Setup Citizen",
+      "item": [
+        {
+          "name": "1.1 Create Fresh Citizen And Save Token",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const stamp = Date.now();",
+                  "pm.collectionVariables.set('citizen_email', `postman.citizen.${stamp}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Citizen was created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Token returned', function () { pm.expect(json.data.token).to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('citizen_token', json.data.token);",
+                  "pm.collectionVariables.set('citizen_id', json.data.user.id);",
+                  "pm.collectionVariables.set('service_request_ids', '[]');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Citizen\",\n  \"email\": \"{{citizen_email}}\",\n  \"password\": \"{{citizen_password}}\",\n  \"phone\": \"+96170000001\",\n  \"national_id\": \"PM{{$timestamp}}\"\n}"
+            },
+            "url": "{{base_url}}/register",
+            "description": "Uses the legacy API registration endpoint only for local testing convenience because it returns a token immediately."
+          }
+        },
+        {
+          "name": "1.2 Confirm Citizen Session",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Discover Service And Office",
+      "item": [
+        {
+          "name": "2.1 List Services And Save First Active Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const services = json.data.services || [];",
+                  "pm.test('At least one active service exists', function () { pm.expect(services.length).to.be.above(0); });",
+                  "const service = services.find(s => s.is_active !== false) || services[0];",
+                  "pm.collectionVariables.set('service_id', String(service.id));",
+                  "pm.collectionVariables.set('category_id', service.service_category_id ? String(service.service_category_id) : '');",
+                  "if (service.office_id) { pm.collectionVariables.set('office_id', String(service.office_id)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/services"
+          }
+        },
+        {
+          "name": "2.2 List Offices And Save First Active Office",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const offices = json.data.offices || [];",
+                  "pm.test('At least one active office exists', function () { pm.expect(offices.length).to.be.above(0); });",
+                  "if (!pm.collectionVariables.get('office_id')) {",
+                  "  const office = offices.find(o => o.is_active !== false) || offices[0];",
+                  "  pm.collectionVariables.set('office_id', String(office.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/offices"
+          }
+        },
+        {
+          "name": "2.3 Show Selected Service",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/services/{{service_id}}"
+          }
+        },
+        {
+          "name": "2.4 Show Selected Office",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/offices/{{office_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Create Citizen Requests",
+      "item": [
+        {
+          "name": "3.1 Create Request - Pending",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const officeId = pm.collectionVariables.get('office_id');",
+                  "const body = {",
+                  "  service_id: Number(pm.collectionVariables.get('service_id')),",
+                  "  citizen_notes: 'Postman request 1 - pending review',",
+                  "  submitted_data: { source: 'postman', scenario: 'pending request' }",
+                  "};",
+                  "if (officeId) body.office_id = Number(officeId);",
+                  "pm.collectionVariables.set('create_request_body', JSON.stringify(body, null, 2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Request created', function () { pm.response.to.have.status(201); });",
+                  "const request = json.data.service_request;",
+                  "pm.collectionVariables.set('service_request_id', String(request.id));",
+                  "pm.collectionVariables.set('tracking_token', request.tracking_token || '');",
+                  "const ids = JSON.parse(pm.collectionVariables.get('service_request_ids') || '[]');",
+                  "ids.push(request.id);",
+                  "pm.collectionVariables.set('service_request_ids', JSON.stringify(ids));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{{create_request_body}}" },
+            "url": "{{base_url}}/service-requests"
+          }
+        },
+        {
+          "name": "3.2 Create Request - Document Scenario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const officeId = pm.collectionVariables.get('office_id');",
+                  "const body = {",
+                  "  service_id: Number(pm.collectionVariables.get('service_id')),",
+                  "  citizen_notes: 'Postman request 2 - should be useful for document/status testing',",
+                  "  submitted_data: { source: 'postman', scenario: 'document follow-up', applicant_type: 'individual' }",
+                  "};",
+                  "if (officeId) body.office_id = Number(officeId);",
+                  "pm.collectionVariables.set('create_request_body', JSON.stringify(body, null, 2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Second request created', function () { pm.response.to.have.status(201); });",
+                  "const request = json.data.service_request;",
+                  "pm.collectionVariables.set('service_request_id', String(request.id));",
+                  "pm.collectionVariables.set('tracking_token', request.tracking_token || '');",
+                  "const ids = JSON.parse(pm.collectionVariables.get('service_request_ids') || '[]');",
+                  "ids.push(request.id);",
+                  "pm.collectionVariables.set('service_request_ids', JSON.stringify(ids));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{{create_request_body}}" },
+            "url": "{{base_url}}/service-requests"
+          }
+        },
+        {
+          "name": "3.3 Create Request - Payment/Revenue Scenario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const officeId = pm.collectionVariables.get('office_id');",
+                  "const body = {",
+                  "  service_id: Number(pm.collectionVariables.get('service_id')),",
+                  "  citizen_notes: 'Postman request 3 - use this for revenue/payment testing',",
+                  "  submitted_data: { source: 'postman', scenario: 'payment revenue' }",
+                  "};",
+                  "if (officeId) body.office_id = Number(officeId);",
+                  "pm.collectionVariables.set('create_request_body', JSON.stringify(body, null, 2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Third request created', function () { pm.response.to.have.status(201); });",
+                  "const request = json.data.service_request;",
+                  "pm.collectionVariables.set('service_request_id', String(request.id));",
+                  "pm.collectionVariables.set('tracking_token', request.tracking_token || '');",
+                  "const ids = JSON.parse(pm.collectionVariables.get('service_request_ids') || '[]');",
+                  "ids.push(request.id);",
+                  "pm.collectionVariables.set('service_request_ids', JSON.stringify(ids));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{{create_request_body}}" },
+            "url": "{{base_url}}/service-requests"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Citizen Follow-Up Calls",
+      "item": [
+        {
+          "name": "4.1 List My Requests",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/my-requests"
+          }
+        },
+        {
+          "name": "4.2 Show Latest Request",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/my-requests/{{service_request_id}}"
+          }
+        },
+        {
+          "name": "4.3 Public API Tracking For Latest Request",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/track/{{tracking_token}}"
+          }
+        },
+        {
+          "name": "4.4 Public Web Tracking For Latest Request",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{web_base_url}}/track/{{tracking_token}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Optional Payment Data For Revenue Reports",
+      "item": [
+        {
+          "name": "5.1 Create Card Payment For Latest Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Payment created or validation returned', function () { pm.expect([201, 422]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 201 && json.data.id) { pm.collectionVariables.set('payment_id', String(json.data.id)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_request_id\": {{service_request_id}},\n  \"payment_method\": \"card\",\n  \"currency\": \"USD\"\n}"
+            },
+            "url": "{{base_url}}/payments"
+          }
+        },
+        {
+          "name": "5.2 Process Mock Payment As Paid",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mock_status\": \"paid\",\n  \"mock_message\": \"Postman revenue test payment\"\n}"
+            },
+            "url": "{{base_url}}/payments/{{payment_id}}/process"
+          }
+        },
+        {
+          "name": "5.3 Show Payment",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{citizen_token}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/payments/{{payment_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Web Testing Reminders",
+      "item": [
+        {
+          "name": "6.1 Open Admin Requests In Browser",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{web_base_url}}/admin/requests"
+          }
+        },
+        {
+          "name": "6.2 Open Admin Reports In Browser",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{web_base_url}}/admin/reports"
+          }
+        }
+      ]
+    }
+  ]
+}
