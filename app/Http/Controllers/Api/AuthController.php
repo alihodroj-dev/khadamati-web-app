@@ -310,10 +310,12 @@ class AuthController extends Controller
      */
     protected function authenticationPayload(User $user, string $token): array
     {
+        $user = UserProfileCompletion::sync($user);
+
         return [
             'user' => new UserResource($user),
             'token' => $token,
-            'profile_completed' => UserProfileCompletion::isCompleted($user),
+            'profile_completed' => (bool) $user->profile_completed,
         ];
     }
 }

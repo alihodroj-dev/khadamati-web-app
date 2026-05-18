@@ -72,6 +72,7 @@ class OtpLoginTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.user.email', 'citizen@example.com')
+            ->assertJsonPath('data.user.profile_completed', false)
             ->assertJsonPath('data.profile_completed', false)
             ->assertJsonStructure(['data' => ['user', 'token', 'profile_completed']]);
 
@@ -225,7 +226,10 @@ class OtpLoginTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.profile_completed', false)
+            ->assertJsonPath('data.user.profile_completed', false)
             ->assertJsonPath('data.user.email', 'brandnew@example.com');
+
+        $this->assertFalse($user->fresh()->profile_completed);
 
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
@@ -261,6 +265,9 @@ class OtpLoginTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonPath('data.profile_completed', true);
+            ->assertJsonPath('data.profile_completed', true)
+            ->assertJsonPath('data.user.profile_completed', true);
+
+        $this->assertTrue($user->fresh()->profile_completed);
     }
 }

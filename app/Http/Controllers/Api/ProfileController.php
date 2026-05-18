@@ -111,11 +111,10 @@ class ProfileController extends Controller
             );
         }
 
+        $user = UserProfileCompletion::sync($user);
+
         return $this->successResponse(
-            [
-                'user' => new UserResource($user),
-                'profile_completed' => UserProfileCompletion::isCompleted($user),
-            ],
+            new UserResource($user),
             'Profile completed successfully.'
         );
     }

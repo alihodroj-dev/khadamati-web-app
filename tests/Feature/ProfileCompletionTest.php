@@ -42,11 +42,12 @@ class ProfileCompletionTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.profile_completed', true)
-            ->assertJsonPath('data.user.first_name', 'Ali')
-            ->assertJsonPath('data.user.national_id', '00073028821');
+            ->assertJsonPath('data.first_name', 'Ali')
+            ->assertJsonPath('data.national_id', '00073028821');
 
         $user->refresh();
 
+        $this->assertTrue($user->profile_completed);
         $this->assertNotNull($user->id_front_path);
         $this->assertNotNull($user->id_back_path);
     }

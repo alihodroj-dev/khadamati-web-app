@@ -25,7 +25,7 @@ class ProfileCompletionService
      */
     public function complete(User $user, array $data): User
     {
-        if (UserProfileCompletion::isCompleted($user)) {
+        if (UserProfileCompletion::meetsRequirements($user)) {
             throw ValidationException::withMessages([
                 'profile' => ['Your profile is already complete.'],
             ]);
@@ -67,7 +67,7 @@ class ProfileCompletionService
                 'status' => IdentityVerificationSession::STATUS_CONSUMED,
             ]);
 
-            return $user->fresh();
+            return UserProfileCompletion::sync($user->fresh());
         });
     }
 

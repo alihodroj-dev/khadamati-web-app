@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\IdentityVerificationSession;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Support\UserProfileCompletion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -102,7 +103,7 @@ class RegistrationCompletionService
                 'status' => IdentityVerificationSession::STATUS_CONSUMED,
             ]);
 
-            return $user->fresh();
+            return UserProfileCompletion::sync($user->fresh());
         });
     }
 

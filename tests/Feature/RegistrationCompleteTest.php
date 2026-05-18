@@ -42,7 +42,10 @@ class RegistrationCompleteTest extends TestCase
             ->assertJsonPath('data.user.name', 'Ali Hodroj')
             ->assertJsonPath('data.user.national_id', '123456789')
             ->assertJsonPath('data.profile_completed', true)
+            ->assertJsonPath('data.user.profile_completed', true)
             ->assertJsonStructure(['data' => ['user', 'token', 'profile_completed']]);
+
+        $this->assertTrue(User::query()->where('email', 'ali@example.com')->value('profile_completed'));
 
         $user = User::query()->where('email', 'ali@example.com')->first();
 

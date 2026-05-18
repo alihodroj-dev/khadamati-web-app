@@ -54,9 +54,10 @@ class GoogleAuthTest extends TestCase
             ->assertJsonPath('data.user.email', 'citizen@example.com')
             ->assertJsonPath('data.user.role', User::ROLE_CITIZEN)
             ->assertJsonPath('data.profile_completed', false)
+            ->assertJsonPath('data.user.profile_completed', false)
             ->assertJsonStructure([
                 'data' => [
-                    'user' => ['id', 'name', 'email', 'role'],
+                    'user' => ['id', 'name', 'email', 'role', 'profile_completed'],
                     'token',
                     'profile_completed',
                 ],
