@@ -102,15 +102,15 @@ class OfficeController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'working_hours' => ['nullable', 'string'],
+            'working_hours' => ['nullable'],
             'is_active' => ['required', Rule::in(['0', '1', 0, 1, true, false])],
         ]);
 
         $workingHours = AdminFormInput::parseWorkingHours($validated['working_hours'] ?? null);
 
-        if (($validated['working_hours'] ?? '') !== '' && $workingHours === null) {
+        if (AdminFormInput::workingHoursInputHasValue($validated['working_hours'] ?? null) && $workingHours === null) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'working_hours' => ['Working hours must be valid JSON.'],
+                'working_hours' => ['Select valid opening and closing times for each open day.'],
             ]);
         }
 

@@ -43,4 +43,39 @@ class AdminFormInputTest extends TestCase
         $this->assertNull(AdminFormInput::parseWorkingHours(null));
         $this->assertNull(AdminFormInput::parseWorkingHours('not-json'));
     }
+
+    #[Test]
+    public function it_parses_working_hours_from_day_inputs(): void
+    {
+        $this->assertSame(
+            [
+                'monday' => ['09:00', '17:00'],
+                'wednesday' => ['10:30', '15:45'],
+            ],
+            AdminFormInput::parseWorkingHours([
+                'monday' => ['enabled' => '1', 'start' => '09:00', 'end' => '17:00'],
+                'tuesday' => ['start' => '', 'end' => ''],
+                'wednesday' => ['enabled' => '1', 'start' => '10:30', 'end' => '15:45'],
+            ])
+        );
+    }
+
+    #[Test]
+    public function it_rejects_invalid_working_hour_day_inputs(): void
+    {
+        $this->assertNull(AdminFormInput::parseWorkingHours([
+            'monday' => ['enabled' => '1', 'start' => '17:00', 'end' => '09:00'],
+        ]));
+    }
+
+    #[Test]
+    public function it_treats_empty_working_hour_day_inputs_as_blank(): void
+    {
+        $value = [
+            'monday' => ['start' => '', 'end' => ''],
+        ];
+
+        $this->assertFalse(AdminFormInput::workingHoursInputHasValue($value));
+        $this->assertNull(AdminFormInput::parseWorkingHours($value));
+    }
 }

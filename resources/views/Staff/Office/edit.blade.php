@@ -51,28 +51,7 @@
             Optional map coordinates (latitude −90 to 90, longitude −180 to 180). No map integration — values are stored only.
         </p>
 
-        @php
-            $workingHoursValue = old(
-                'working_hours',
-                $office->working_hours
-                    ? json_encode($office->working_hours, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-                    : ''
-            );
-        @endphp
-
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Working Hours (JSON)</label>
-            <textarea
-                name="working_hours"
-                rows="6"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500"
-                placeholder='{"monday":["09:00","17:00"]}'
-            >{{ $workingHoursValue }}</textarea>
-            <p class="mt-1 text-xs text-gray-500">Optional weekly schedule as a JSON object.</p>
-            @error('working_hours')
-                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-            @enderror
-        </div>
+        <x-working-hours-fields :working-hours="$office->working_hours" />
 
         @if($office->municipality)
             <p class="text-sm text-gray-500 mb-6">

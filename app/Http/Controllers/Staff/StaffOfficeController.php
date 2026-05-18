@@ -29,14 +29,14 @@ class StaffOfficeController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'working_hours' => ['nullable', 'string'],
+            'working_hours' => ['nullable'],
         ]);
 
         $workingHours = AdminFormInput::parseWorkingHours($validated['working_hours'] ?? null);
 
-        if (($validated['working_hours'] ?? '') !== '' && $workingHours === null) {
+        if (AdminFormInput::workingHoursInputHasValue($validated['working_hours'] ?? null) && $workingHours === null) {
             throw ValidationException::withMessages([
-                'working_hours' => ['Working hours must be valid JSON.'],
+                'working_hours' => ['Select valid opening and closing times for each open day.'],
             ]);
         }
 
