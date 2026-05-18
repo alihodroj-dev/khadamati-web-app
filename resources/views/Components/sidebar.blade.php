@@ -152,6 +152,54 @@
 
         @endif
 
+        @if($role === 'citizen')
+        <div class="mb-6">
+            <p class="px-2 mb-2 text-xs font-medium uppercase tracking-wider" style="color: rgba(255,255,255,0.4);">Citizen Portal</p>
+
+            <a href="{{ route('citizen.dashboard') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                {{ request()->routeIs('citizen.dashboard') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                style="{{ request()->routeIs('citizen.dashboard') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                <i class="ti ti-layout-dashboard text-lg" aria-hidden="true"></i>
+                Dashboard
+            </a>
+
+            <a href="{{ route('citizen.services.index') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                {{ request()->routeIs('citizen.services.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                style="{{ request()->routeIs('citizen.services.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                <i class="ti ti-briefcase text-lg" aria-hidden="true"></i>
+                Browse Services
+            </a>
+
+            <a href="{{ route('citizen.requests.index') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                {{ request()->routeIs('citizen.requests.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                style="{{ request()->routeIs('citizen.requests.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                <i class="ti ti-clipboard-list text-lg" aria-hidden="true"></i>
+                My Requests
+            </a>
+
+            <a href="{{ route('citizen.payments.index') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                {{ request()->routeIs('citizen.payments.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                style="{{ request()->routeIs('citizen.payments.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                <i class="ti ti-credit-card text-lg" aria-hidden="true"></i>
+                Payments
+            </a>
+
+            <a href="{{ route('citizen.appointments.index') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                {{ request()->routeIs('citizen.appointments.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                style="{{ request()->routeIs('citizen.appointments.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                <i class="ti ti-calendar text-lg" aria-hidden="true"></i>
+                Appointments
+            </a>
+
+            <a href="{{ route('citizen.profile.show') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                {{ request()->routeIs('citizen.profile.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                style="{{ request()->routeIs('citizen.profile.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                <i class="ti ti-user text-lg" aria-hidden="true"></i>
+                My Profile
+            </a>
+        </div>
+    @endif
+
     </nav>
 
     {{-- FOOTER --}}
