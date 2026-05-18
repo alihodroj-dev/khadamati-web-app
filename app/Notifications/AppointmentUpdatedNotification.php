@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\FcmChannel;
 use App\Models\Appointment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -18,9 +19,28 @@ class AppointmentUpdatedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        // DEFERRED(roadmap): Add mail/sms channels + scheduled reminders; database only for now.
-        // See docs/admin-office-roadmap.md#email--sms-appointment-reminders
-        return ['database'];
+        $channels = ['database'];
+
+        if (filled($notifiable->fcm_token)) {
+            $channels[] = FcmChannel::class;
+        }
+
+        return $channels;
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->body,
+            'data' => [
+                'type' => 'appointment_update',
+                'appointment_id' => (string) $this->appointment->id,
+                'service_request_id' => (string) $this->appointment->service_request_id,
+                'status' => (string) $this->appointment->status,
+                'appointment_date' => $this->appointment->getRawOriginal('appointment_date') ?? '',
+            ],
+        ];
     }
 
     public function toDatabase(object $notifiable): array

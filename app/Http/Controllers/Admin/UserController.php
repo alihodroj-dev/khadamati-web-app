@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Office;
 use App\Models\User;
+use App\Notifications\AccountStatusNotification;
 use App\Support\AdminFormInput;
 use App\Support\UserOfficeAssignment;
 use Illuminate\Http\Request;
@@ -59,7 +60,13 @@ class UserController extends Controller
             $validated['password'] = Hash::make($validated['password']);
         }
 
+        $wasActive = (bool) $user->is_active;
         $user->update($validated);
+        $isNowActive = (bool) $user->is_active;
+
+        if ($wasActive !== $isNowActive) {
+            $user->notify(new AccountStatusNotification($isNowActive));
+        }
 
         return redirect()
             ->route('admin.users.index')

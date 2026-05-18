@@ -7,6 +7,7 @@ use App\Models\RequestDocument;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Notifications\DocumentUploadedNotification;
+use App\Notifications\RequestUpdatedNotification;
 use App\Support\RequestDocumentPurposeResolver;
 use App\Support\ServiceRequestAssignment;
 use App\Support\ServiceRequestStatus;
@@ -76,6 +77,13 @@ class StaffRequestController extends Controller
             $httpRequest->rejection_reason
         );
 
+        $request->loadMissing('user', 'service');
+        $request->user?->notify(new RequestUpdatedNotification(
+            $request,
+            'Request status updated',
+            'Your request status has been updated to '.$request->status.'.'
+        ));
+
         return back()->with('success', 'Request updated successfully');
     }
 
@@ -99,6 +107,18 @@ class StaffRequestController extends Controller
                 ->withInput()
                 ->with('error', collect($exception->errors())->flatten()->first());
         }
+
+        $request->loadMissing('user', 'service');
+        $staffUser->notify(new RequestUpdatedNotification(
+            $request,
+            'Request assigned to you',
+            'A service request has been assigned to you.'
+        ));
+        $request->user?->notify(new RequestUpdatedNotification(
+            $request,
+            'Request under review',
+            'Your request has been assigned to a staff member for review.'
+        ));
 
         return back()->with('success', 'Staff assigned successfully');
     }
