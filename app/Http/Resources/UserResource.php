@@ -37,6 +37,7 @@ class UserResource extends JsonResource
             'office_id' => $this->office_id,
             'office' => new OfficeResource($this->whenLoaded('office')),
             'is_active' => (bool) $this->is_active,
+            'has_fcm_token' => filled($this->fcm_token),
             'push_notifications_enabled' => (bool) $this->push_notifications_enabled,
             'email_notifications_enabled' => (bool) $this->email_notifications_enabled,
             'sms_notifications_enabled' => (bool) $this->sms_notifications_enabled,

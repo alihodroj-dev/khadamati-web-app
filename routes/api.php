@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\FeedbackResponseController;
+use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\StaffFeedbackController;
 use App\Http\Controllers\Api\IdentityPreviewController;
 use App\Http\Controllers\Api\NotificationController;
@@ -76,6 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
     Route::delete('/device-tokens/{deviceToken}', [DeviceTokenController::class, 'destroy']);
+    Route::post('/fcm-token', [FcmTokenController::class, 'store']);
+    Route::patch('/fcm-token', [FcmTokenController::class, 'update']);
+    Route::delete('/fcm-token', [FcmTokenController::class, 'destroy']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);

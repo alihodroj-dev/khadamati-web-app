@@ -41,6 +41,7 @@ class User extends Authenticatable
         'id_front_path',
         'id_back_path',
         'is_active',
+        'fcm_token',
         'email_verified_at',
         'push_notifications_enabled',
         'email_notifications_enabled',
