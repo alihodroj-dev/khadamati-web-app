@@ -62,6 +62,14 @@
             <p style="font-size: 24px; font-weight: 600; color: #111827; margin: 0 0 6px;">Welcome back</p>
             <p style="font-size: 14px; color: #9ca3af; margin: 0 0 32px;">Sign in to your dashboard</p>
 
+            {{-- Success Message --}}
+            @if(session('success'))
+                <div style="background: #f0fdf4; border: 0.5px solid #bbf7d0; color: #166534; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                    <i class="ti ti-circle-check" style="font-size: 16px;" aria-hidden="true"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+
             {{-- Errors --}}
             @if($errors->any())
                 <div style="background: #fef2f2; border: 0.5px solid #fecaca; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -110,11 +118,14 @@
                 </div>
 
                 {{-- Remember me --}}
-                <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280; cursor: pointer;">
                         <input type="checkbox" name="remember" style="accent-color: #1e3a5f;">
                         Remember me
                     </label>
+                    <a href="{{ route('citizen.auth.register') }}" style="font-size: 13px; color: #1e3a5f; text-decoration: none;">
+                        Register as Citizen
+                    </a>
                 </div>
 
                 {{-- Submit --}}
@@ -130,6 +141,13 @@
         </div>
 
     </div>
+
+    <script>
+        function fillCredentials(email, password) {
+            document.querySelector('input[name="email"]').value = email;
+            document.querySelector('input[name="password"]').value = password;
+        }
+    </script>
 
 </body>
 </html>

@@ -178,11 +178,15 @@ class OtpLoginService
 
     protected function deliverOtp(User $user, string $otp): void
     {
+        // Log the OTP for development
         Log::info('Login OTP generated.', [
             'user_id' => $user->id,
             'email' => $user->email,
-            'channel' => OtpChallenge::CHANNEL_EMAIL,
             'otp' => $otp,
         ]);
+        
+        // For production, you would send an email here
+        // For now, we'll also store it in session for easy testing
+        session(['debug_otp' => $otp]);
     }
 }
