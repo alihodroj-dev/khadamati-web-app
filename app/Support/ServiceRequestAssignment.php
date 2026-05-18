@@ -16,8 +16,14 @@ class ServiceRequestAssignment
             ]);
         }
 
-        if ($serviceRequest->office_id !== null
-            && (int) $staffUser->office_id !== (int) $serviceRequest->office_id) {
+        // FIX: If request has no office, auto-assign the staff's office
+        if ($serviceRequest->office_id === null) {
+            $serviceRequest->office_id = $staffUser->office_id;
+            $serviceRequest->save();
+        }
+        
+        // Now check if offices match (after potentially updating)
+        if ((int) $staffUser->office_id !== (int) $serviceRequest->office_id) {
             throw ValidationException::withMessages([
                 'staff_id' => ['Staff member must belong to the same office as the service request.'],
             ]);

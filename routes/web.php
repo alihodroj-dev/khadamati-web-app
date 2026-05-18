@@ -135,8 +135,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('requests')->name('requests.')->group(function () {
             Route::get('/', [ServiceRequestController::class, 'index'])->name('index');
             Route::get('/{id}', [ServiceRequestController::class, 'show'])->name('show');
-            Route::post('/{id}/assign', [ServiceRequestController::class, 'assignStaff'])->name('assign');
-            Route::post('/{id}/status', [ServiceRequestController::class, 'updateStatus'])->name('status');
+            Route::post('/{id}/assign', [ServiceRequestController::class, 'assignStaff'])->name('assignStaff');
+            Route::post('/{id}/status', [ServiceRequestController::class, 'updateStatus'])->name('updateStatus');
             Route::delete('/{id}', [ServiceRequestController::class, 'destroy'])->name('destroy');
         });
 

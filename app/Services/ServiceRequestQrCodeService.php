@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\ServiceRequest;
 use App\Support\ServiceRequestTrackingUrls;
-use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
+use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Storage;
 
@@ -65,11 +68,15 @@ class ServiceRequestQrCodeService
 
     private function generatePng(string $content): string
     {
-        $writer = new PngWriter;
+        $writer = new \Endroid\QrCode\Writer\PngWriter();
 
-        $result = $writer->write(
-            QrCode::create($content)->setSize(280)->setMargin(10)
+        $qrCode = new \Endroid\QrCode\QrCode(
+            data: $content,
+            size: 280,
+            margin: 10
         );
+
+        $result = $writer->write($qrCode);
 
         return $result->getString();
     }

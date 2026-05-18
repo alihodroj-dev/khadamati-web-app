@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
+    protected static function booted()
+    {
+        static::creating(function ($service) {
+            if ($service->office_id === null && $service->office) {
+                $service->office_id = $service->office->id;
+            }
+        });
+    }
+
     protected $fillable = [
         'service_category_id',
         'office_id',
