@@ -133,15 +133,45 @@
             </div>
             @endif
             
-            <!-- Documents -->
-            @if($request->documents && $request->documents->count() > 0)
+            <!-- OFFICIAL DOCUMENTS (from staff) -->
+            @if($request->documents && $request->documents->where('source', 'staff')->count() > 0)
             <div class="bg-white rounded-xl p-6 shadow-sm" style="border: 0.5px solid #e5e7eb;">
                 <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <i class="ti ti-folder"></i>
-                    Documents
+                    <i class="ti ti-certificate text-blue-600"></i>
+                    Official Documents
                 </h2>
                 <div class="space-y-2">
-                    @foreach($request->documents as $document)
+                    @foreach($request->documents->where('source', 'staff') as $document)
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <i class="ti ti-file-certificate text-blue-600"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700">{{ $document->file_name }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ ucfirst(str_replace('_', ' ', $document->purpose ?? 'document')) }} • 
+                                        {{ $document->created_at->format('M d, Y') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('citizen.requests.download-document', ['requestId' => $request->id, 'documentId' => $document->id]) }}" 
+                               class="text-blue-600 hover:text-blue-800 text-sm">
+                                Download <i class="ti ti-download"></i>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+            
+            <!-- YOUR UPLOADED DOCUMENTS (from citizen) -->
+            @if($request->documents && $request->documents->where('source', 'citizen')->count() > 0)
+            <div class="bg-white rounded-xl p-6 shadow-sm" style="border: 0.5px solid #e5e7eb;">
+                <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="ti ti-upload"></i>
+                    Your Uploaded Documents
+                </h2>
+                <div class="space-y-2">
+                    @foreach($request->documents->where('source', 'citizen') as $document)
                         <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                             <div class="flex items-center gap-2">
                                 <i class="ti ti-file-text text-gray-500"></i>
@@ -177,7 +207,7 @@
             </div>
             @endif
             
-            <!-- Payment Info WITH PAY NOW BUTTON -->
+            <!-- Payment Info -->
             <div class="bg-white rounded-xl p-6 shadow-sm" style="border: 0.5px solid #e5e7eb;">
                 <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <i class="ti ti-credit-card"></i>
@@ -217,20 +247,46 @@
                 @endif
             </div>
             
-            <!-- BOOK APPOINTMENT CARD - NEW -->
-            @if($request->service->requires_appointment && !$request->appointment && !in_array($request->status, ['cancelled', 'rejected', 'completed']))
+            <!-- Your Feedback Card -->
+            @if($request->feedback)
+                <div class="bg-white rounded-xl p-5 shadow-sm" style="border: 0.5px solid #e5e7eb;">
+                    <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i class="ti ti-star text-yellow-500"></i>
+                        Your Feedback
+                    </h2>
+                    <div class="flex gap-0.5 mb-2">
+                        @for($i = 1; $i <= 5; $i++)
+                            @if($i <= $request->feedback->rating)
+                                <i class="ti ti-star-filled text-yellow-400 text-sm"></i>
+                            @else
+                                <i class="ti ti-star text-gray-300 text-sm"></i>
+                            @endif
+                        @endfor
+                    </div>
+                    @if($request->feedback->comment)
+                        <p class="text-sm text-gray-600 mt-2">{{ \Str::limit($request->feedback->comment, 100) }}</p>
+                    @endif
+                    <a href="{{ route('citizen.feedback.show', $request->feedback->id) }}" 
+                       class="inline-block mt-3 text-blue-600 hover:underline text-sm">
+                        View Full Feedback →
+                    </a>
+                </div>
+            @endif
+            
+            <!-- Book Appointment Card -->
+            @if(isset($request->service) && $request->service->requires_appointment && !$request->appointment && !in_array($request->status, ['cancelled', 'rejected', 'completed']))
                 <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-5 text-white text-center">
                     <i class="ti ti-calendar-plus text-3xl mb-2 block"></i>
                     <h3 class="font-semibold text-lg mb-1">Need an Appointment?</h3>
                     <p class="text-sm text-white/80 mb-3">This service requires an in-person visit. Book a time with our staff.</p>
                     <a href="{{ route('citizen.appointments.create', $request->id) }}" 
-                       class="inline-block px-4 py-2 bg-white text-green-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition w-full">
+                    class="inline-block px-4 py-2 bg-white text-green-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition w-full">
                         Book Appointment →
                     </a>
                 </div>
             @endif
             
-            <!-- SHOW EXISTING APPOINTMENT -->
+            <!-- Existing Appointment Card -->
             @if($request->appointment)
                 <div class="bg-white rounded-xl p-5 shadow-sm" style="border: 0.5px solid #e5e7eb;">
                     <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -269,17 +325,17 @@
                 </div>
             @endif
             
-            <!-- Give Feedback -->
+            <!-- Give Feedback Button -->
             @if($request->status == 'completed' && !$request->feedback)
-            <div class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl p-6 text-white text-center">
-                <i class="ti ti-star text-2xl mb-2 block"></i>
-                <h3 class="font-semibold text-lg mb-1">Rate this Service</h3>
-                <p class="text-sm text-white/80 mb-3">Share your experience</p>
-                <a href="{{ route('citizen.feedback.create', $request->id) }}" 
-                   class="inline-block px-4 py-2 bg-white text-blue-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition">
-                    Give Feedback →
-                </a>
-            </div>
+                <div class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl p-6 text-white text-center">
+                    <i class="ti ti-star text-2xl mb-2 block"></i>
+                    <h3 class="font-semibold text-lg mb-1">Rate this Service</h3>
+                    <p class="text-sm text-white/80 mb-3">Share your experience</p>
+                    <a href="{{ route('citizen.feedback.create', $request->id) }}" 
+                       class="inline-block px-4 py-2 bg-white text-blue-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition">
+                        Give Feedback →
+                    </a>
+                </div>
             @endif
             
         </div>

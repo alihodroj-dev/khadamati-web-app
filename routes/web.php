@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\AdminFeedbackController;
 
 use App\Http\Controllers\NotificationController;
 
@@ -18,6 +19,7 @@ use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\StaffOfficeController;
 use App\Http\Controllers\Staff\StaffRequestController;
 use App\Http\Controllers\Staff\StaffAppointmentController;
+use App\Http\Controllers\Staff\StaffFeedbackController;
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PublicTrackingController;
@@ -146,6 +148,9 @@ Route::middleware('auth')->group(function () {
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
         });
+
+        Route::resource('feedback', AdminFeedbackController::class)->only(['index', 'show']);
+        Route::post('feedback/{id}/respond', [AdminFeedbackController::class, 'respond'])->name('feedback.respond');
     });
 
     /*
@@ -174,6 +179,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}', [StaffAppointmentController::class, 'show'])->name('show');
             Route::post('/{id}/update', [StaffAppointmentController::class, 'update'])->name('update');
         });
+
+        Route::get('/feedback', [StaffFeedbackController::class, 'index'])->name('feedback.index');
     });
 
     /*
