@@ -177,38 +177,45 @@
             </div>
             @endif
             
-            <!-- Payment Info -->
-            @if($request->payment)
+            <!-- Payment Info WITH PAY NOW BUTTON -->
             <div class="bg-white rounded-xl p-6 shadow-sm" style="border: 0.5px solid #e5e7eb;">
                 <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <i class="ti ti-credit-card"></i>
                     Payment
                 </h2>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Amount:</span>
-                        <span class="font-bold text-gray-900">${{ number_format($request->payment->amount, 2) }}</span>
+                
+                @if($request->payment)
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Amount:</span>
+                            <span class="font-bold text-gray-900">${{ number_format($request->payment->amount, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Status:</span>
+                            <span class="{{ $request->payment->status == 'paid' ? 'text-green-600' : 'text-red-600' }}">
+                                {{ ucfirst($request->payment->status) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Method:</span>
+                            <span>{{ ucfirst($request->payment->payment_method ?? 'Not specified') }}</span>
+                        </div>
+                        
+                        @if($request->payment->status != 'paid')
+                            <a href="{{ route('citizen.payments.checkout', $request->id) }}" 
+                               class="block text-center mt-3 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                                💳 Pay Now →
+                            </a>
+                        @endif
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Status:</span>
-                        <span class="{{ $request->payment->status == 'paid' ? 'text-green-600' : 'text-red-600' }}">
-                            {{ ucfirst($request->payment->status) }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Method:</span>
-                        <span>{{ ucfirst($request->payment->payment_method ?? 'Not specified') }}</span>
-                    </div>
-                    
-                    @if($request->payment->status != 'paid')
-                        <a href="{{ route('citizen.payments.checkout', $request->id) }}" 
-                           class="block text-center mt-3 px-3 py-2 bg-blue-900 text-white rounded-lg text-sm hover:bg-blue-800 transition">
-                            Pay Now
-                        </a>
-                    @endif
-                </div>
+                @else
+                    <p class="text-gray-500 text-sm mb-3">No payment record found.</p>
+                    <a href="{{ route('citizen.payments.checkout', $request->id) }}" 
+                       class="block text-center px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                        💳 Proceed to Payment →
+                    </a>
+                @endif
             </div>
-            @endif
             
             <!-- Appointment Info -->
             @if($request->appointment)
