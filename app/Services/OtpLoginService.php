@@ -6,6 +6,7 @@ use App\Models\OtpChallenge;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -178,15 +179,12 @@ class OtpLoginService
 
     protected function deliverOtp(User $user, string $otp): void
     {
-        // Log the OTP for development
-        Log::info('Login OTP generated.', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'otp' => $otp,
-        ]);
-        
-        // For production, you would send an email here
-        // For now, we'll also store it in session for easy testing
-        session(['debug_otp' => $otp]);
+        Mail::send('emails.otp', [
+            'name' => $user->name,
+            'otp' => $otp
+        ], function ($message) use ($user) {
+            $message->to($user->email)
+                    ->subject('Your Khadamati Login Verification Code');
+        });
     }
 }

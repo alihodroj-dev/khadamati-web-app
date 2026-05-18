@@ -15,12 +15,6 @@
             </div>
         @endif
 
-        @if(session('debug_otp'))
-            <div class="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
-                <strong>Development Mode:</strong> Your OTP code is: <code class="font-bold text-lg">{{ session('debug_otp') }}</code>
-            </div>
-        @endif
-
         <form method="POST" action="{{ route('citizen.auth.otp.verify') }}">
             @csrf
 
