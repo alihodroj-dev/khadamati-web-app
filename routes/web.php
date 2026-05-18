@@ -212,6 +212,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/appointments/{id}', [CitizenAppointmentController::class, 'show'])->name('appointments.show');
         Route::post('/appointments/{id}/cancel', [CitizenAppointmentController::class, 'cancel'])->name('appointments.cancel');
         Route::get('/appointments/availability/{officeId}', [CitizenAppointmentController::class, 'getAvailableSlots'])->name('appointments.availability');
+        Route::get('/appointments/availability/staff', [CitizenAppointmentController::class, 'getAvailableStaff'])->name('appointments.availability.staff');
         
         // Feedback
         Route::get('/feedback/create/{requestId}', [CitizenFeedbackController::class, 'create'])->name('feedback.create');

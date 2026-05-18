@@ -217,28 +217,56 @@
                 @endif
             </div>
             
-            <!-- Appointment Info -->
+            <!-- BOOK APPOINTMENT CARD - NEW -->
+            @if($request->service->requires_appointment && !$request->appointment && !in_array($request->status, ['cancelled', 'rejected', 'completed']))
+                <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-5 text-white text-center">
+                    <i class="ti ti-calendar-plus text-3xl mb-2 block"></i>
+                    <h3 class="font-semibold text-lg mb-1">Need an Appointment?</h3>
+                    <p class="text-sm text-white/80 mb-3">This service requires an in-person visit. Book a time with our staff.</p>
+                    <a href="{{ route('citizen.appointments.create', $request->id) }}" 
+                       class="inline-block px-4 py-2 bg-white text-green-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition w-full">
+                        Book Appointment →
+                    </a>
+                </div>
+            @endif
+            
+            <!-- SHOW EXISTING APPOINTMENT -->
             @if($request->appointment)
-            <div class="bg-white rounded-xl p-6 shadow-sm" style="border: 0.5px solid #e5e7eb;">
-                <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <i class="ti ti-calendar"></i>
-                    Appointment
-                </h2>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Date:</span>
-                        <span>{{ \Carbon\Carbon::parse($request->appointment->appointment_date)->format('M d, Y') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Time:</span>
-                        <span>{{ \Carbon\Carbon::parse($request->appointment->appointment_time)->format('h:i A') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Status:</span>
-                        <span>{{ ucfirst($request->appointment->status) }}</span>
+                <div class="bg-white rounded-xl p-5 shadow-sm" style="border: 0.5px solid #e5e7eb;">
+                    <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i class="ti ti-calendar text-green-600"></i>
+                        Your Appointment
+                    </h2>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Date:</span>
+                            <span class="font-medium">{{ \Carbon\Carbon::parse($request->appointment->appointment_date)->format('M d, Y') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Time:</span>
+                            <span class="font-medium">{{ \Carbon\Carbon::parse($request->appointment->appointment_time)->format('h:i A') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">With:</span>
+                            <span class="font-medium">{{ $request->appointment->staff->name ?? 'Staff Member' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Status:</span>
+                            <span class="px-2 py-0.5 text-xs rounded-full
+                                @if($request->appointment->status == 'scheduled') bg-yellow-100 text-yellow-800
+                                @elseif($request->appointment->status == 'confirmed') bg-green-100 text-green-800
+                                @elseif($request->appointment->status == 'completed') bg-emerald-100 text-emerald-800
+                                @else bg-red-100 text-red-800
+                                @endif">
+                                {{ ucfirst($request->appointment->status) }}
+                            </span>
+                        </div>
+                        <a href="{{ route('citizen.appointments.show', $request->appointment->id) }}" 
+                           class="block text-center mt-3 text-blue-600 hover:underline text-sm">
+                            View Appointment Details →
+                        </a>
                     </div>
                 </div>
-            </div>
             @endif
             
             <!-- Give Feedback -->

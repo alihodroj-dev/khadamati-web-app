@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
 use App\Models\Appointment;
 use App\Models\OfficeTimeSlot;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -36,35 +37,63 @@ class CitizenAppointmentController extends Controller
         return view('citizen.appointments.create', compact('serviceRequest'));
     }
 
-    public function getAvailableSlots(Request $request, $officeId)
+    public function getAvailableStaff(Request $request)
     {
         $date = Carbon::parse($request->date);
         
-        $slots = OfficeTimeSlot::where('office_id', $officeId)
-            ->where('day_of_week', $date->dayOfWeek)
+        $staff = User::where('role', 'staff')
             ->where('is_active', true)
-            ->with('staff')
             ->get();
+        
+        $result = [];
+        foreach ($staff as $staffMember) {
+            $result[] = [
+                'id' => $staffMember->id,
+                'name' => $staffMember->name,
+                'office_name' => $staffMember->office ? $staffMember->office->name : 'Main Office',
+            ];
+        }
+        
+        return response()->json($result);
+    }
 
+    public function getAvailableSlots(Request $request, $staffId)
+    {
+        $date = Carbon::parse($request->date);
+        $dayOfWeek = $date->dayOfWeek;
+        
+        $timeSlots = OfficeTimeSlot::where('staff_id', $staffId)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true)
+            ->get();
+        
         $availableSlots = [];
-
-        foreach ($slots as $slot) {
-            // Check if staff already has appointment at this time
-            $existingAppointment = Appointment::where('staff_id', $slot->staff_id)
-                ->whereDate('appointment_date', $date)
-                ->whereTime('appointment_time', $slot->start_time)
-                ->exists();
-
-            if (!$existingAppointment) {
-                $availableSlots[] = [
-                    'staff_id' => $slot->staff_id,
-                    'staff_name' => $slot->staff->name,
-                    'start_time' => $slot->start_time,
-                    'end_time' => $slot->end_time,
-                ];
+        
+        foreach ($timeSlots as $slot) {
+            $start = Carbon::parse($slot->start_time);
+            $end = Carbon::parse($slot->end_time);
+            $duration = $slot->slot_duration_minutes;
+            
+            while ($start < $end) {
+                $slotTime = $start->format('H:i');
+                
+                $isBooked = Appointment::where('staff_id', $staffId)
+                    ->whereDate('appointment_date', $date)
+                    ->whereTime('appointment_time', $slotTime)
+                    ->where('status', '!=', 'cancelled')
+                    ->exists();
+                
+                if (!$isBooked) {
+                    $availableSlots[] = [
+                        'time' => $slotTime,
+                        'display' => $start->format('h:i A'),
+                    ];
+                }
+                
+                $start->addMinutes($duration);
             }
         }
-
+        
         return response()->json($availableSlots);
     }
 
@@ -79,7 +108,6 @@ class CitizenAppointmentController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        // Check if slot is still available
         $existing = Appointment::where('staff_id', $request->staff_id)
             ->whereDate('appointment_date', $request->appointment_date)
             ->whereTime('appointment_time', $request->appointment_time)
