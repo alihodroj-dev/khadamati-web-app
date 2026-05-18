@@ -94,10 +94,25 @@ class AdminReportService
             ->select('service_requests.office_id', DB::raw('COUNT(*) as request_count'))
             ->whereNotNull('service_requests.office_id')
             ->groupBy('service_requests.office_id')
-            ->orderByDesc('request_count')
             ->get();
 
-        return $this->attachOfficeMetadata($rows, 'request_count', 'count')->all();
+        $counts = $rows->pluck('request_count', 'office_id');
+
+        return $this->officeMetadataQuery()
+            ->get()
+            ->map(fn (Office $office) => [
+                'office_id' => (int) $office->id,
+                'office_name' => $office->name,
+                'municipality_id' => $office->municipality_id,
+                'municipality_name' => $office->municipality?->name,
+                'count' => (int) ($counts[$office->id] ?? 0),
+            ])
+            ->sortBy([
+                ['count', 'desc'],
+                ['office_name', 'asc'],
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -355,5 +370,20 @@ class AdminReportService
                 $outputField => $roundMoney ? round((float) $value, 2) : (int) $value,
             ];
         });
+    }
+
+    private function officeMetadataQuery(): Builder
+    {
+        $query = Office::query()->with('municipality:id,name');
+
+        if ($this->filters->officeId !== null) {
+            $query->where('id', $this->filters->officeId);
+        }
+
+        if ($this->filters->municipalityId !== null) {
+            $query->where('municipality_id', $this->filters->municipalityId);
+        }
+
+        return $query->orderBy('name');
     }
 }

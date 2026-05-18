@@ -88,6 +88,29 @@ class AdminReportOverviewTest extends TestCase
     }
 
     #[Test]
+    public function overview_includes_empty_offices_with_zero_requests(): void
+    {
+        $this->actingAsAdmin();
+
+        $officeWithRequests = $this->createOffice('Office With Requests');
+        $emptyOffice = $this->createOffice('Empty Office');
+        $service = $this->createService($officeWithRequests, 'Permit');
+        $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
+
+        $this->createRequest($citizen, $service, $officeWithRequests, 'pending');
+
+        $requestsByOffice = collect(
+            $this->getJson('/api/admin/reports/overview')
+                ->assertOk()
+                ->json('data.requests_by_office')
+        )->keyBy('office_id');
+
+        $this->assertSame(1, $requestsByOffice[$officeWithRequests->id]['count']);
+        $this->assertSame(0, $requestsByOffice[$emptyOffice->id]['count']);
+        $this->assertSame('Empty Office', $requestsByOffice[$emptyOffice->id]['office_name']);
+    }
+
+    #[Test]
     public function overview_includes_request_counts_by_status(): void
     {
         $this->actingAsAdmin();
