@@ -57,6 +57,20 @@ Route::prefix('citizen')->name('citizen.auth.')->group(function () {
         ->name('otp.resend');
 });
 
+Route::get('/qr-code/{id}', function($id) {
+    $request = App\Models\ServiceRequest::findOrFail($id);
+    $path = storage_path('app/public/' . $request->qr_code_path);
+    
+    if (file_exists($path)) {
+        return response()->file($path, [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => 'inline'
+        ]);
+    }
+    
+    abort(404, 'QR Code not found');
+})->name('qr.code');
+
 /*
 |--------------------------------------------------------------------------
 | Guest Routes (Not Logged In)

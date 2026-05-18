@@ -199,7 +199,7 @@
             @if($qrCodeUrl)
             <div class="bg-white rounded-xl p-6 shadow-sm text-center" style="border: 0.5px solid #e5e7eb;">
                 <h2 class="font-semibold text-gray-900 mb-3">Track with QR Code</h2>
-                <img src="{{ $qrCodeUrl }}" alt="QR Code" class="mx-auto mb-3" style="width: 150px; height: 150px;">
+                <img src="{{ route('qr.code', $request->id) }}" alt="QR Code" class="mx-auto mb-3" style="width: 150px; height: 150px;">
                 <p class="text-xs text-gray-500">Scan to track this request</p>
                 <a href="{{ $trackingUrl }}" target="_blank" class="inline-block mt-3 text-sm text-blue-600 hover:underline">
                     Tracking Link →
@@ -207,42 +207,47 @@
             </div>
             @endif
             
-            <!-- Payment Info -->
-            <div class="bg-white rounded-xl p-6 shadow-sm" style="border: 0.5px solid #e5e7eb;">
-                <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <i class="ti ti-credit-card"></i>
+           <!-- Payment Info WITH PAY NOW BUTTON -->
+            <div class="bg-white rounded-xl p-6 shadow-sm mb-4" style="border: 0.5px solid #e5e7eb;">
+                <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="ti ti-credit-card text-blue-600"></i>
                     Payment
                 </h2>
                 
                 @if($request->payment)
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-gray-100">
                             <span class="text-gray-500">Amount:</span>
-                            <span class="font-bold text-gray-900">${{ number_format($request->payment->amount, 2) }}</span>
+                            <span class="font-bold text-xl text-blue-900">${{ number_format($request->payment->amount, 2) }}</span>
                         </div>
-                        <div class="flex justify-between">
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-500">Status:</span>
-                            <span class="{{ $request->payment->status == 'paid' ? 'text-green-600' : 'text-red-600' }}">
+                            <span class="px-2 py-1 text-xs rounded-full
+                                @if($request->payment->status == 'paid') bg-green-100 text-green-800
+                                @else bg-yellow-100 text-yellow-800
+                                @endif">
                                 {{ ucfirst($request->payment->status) }}
                             </span>
                         </div>
-                        <div class="flex justify-between">
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-500">Method:</span>
-                            <span>{{ ucfirst($request->payment->payment_method ?? 'Not specified') }}</span>
+                            <span class="text-gray-700">{{ ucfirst($request->payment->payment_method ?? 'Not specified') }}</span>
                         </div>
                         
                         @if($request->payment->status != 'paid')
-                            <a href="{{ route('citizen.payments.checkout', $request->id) }}" 
-                               class="block text-center mt-3 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
-                                💳 Pay Now →
-                            </a>
+                            <div class="mt-4 pt-2">
+                                <a href="{{ route('citizen.payments.checkout', $request->id) }}" 
+                                class="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition">
+                                    PAY NOW →
+                                </a>
+                            </div>
                         @endif
                     </div>
                 @else
-                    <p class="text-gray-500 text-sm mb-3">No payment record found.</p>
+                    <p class="text-gray-500 text-sm mb-4">No payment record found.</p>
                     <a href="{{ route('citizen.payments.checkout', $request->id) }}" 
-                       class="block text-center px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
-                        💳 Proceed to Payment →
+                    class="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition">
+                        PROCEED TO PAYMENT →
                     </a>
                 @endif
             </div>

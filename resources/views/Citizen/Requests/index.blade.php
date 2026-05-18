@@ -48,7 +48,7 @@
     </div>
 
     @if($requests->count() > 0)
-        <div class="space-y-4">
+        <div class="space-y-6">
             @foreach($requests as $req)
                 <div class="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition" style="border: 0.5px solid #e5e7eb;">
                     
