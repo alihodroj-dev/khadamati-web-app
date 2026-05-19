@@ -147,4 +147,71 @@ class User extends Authenticatable
     {
         return StaffOfficeScope::canAccessOffice($this, $officeId);
     }
+
+    /**
+     * Get conversations where user is the citizen
+     */
+    public function conversationsAsCitizen()
+    {
+        return $this->hasMany(Conversation::class, 'citizen_id');
+    }
+
+    /**
+     * Get conversations where user is the staff member
+     */
+    public function conversationsAsStaff()
+    {
+        return $this->hasMany(Conversation::class, 'staff_id');
+    }
+
+    /**
+     * Get all conversations user participates in (as citizen or staff)
+     */
+    public function allConversations()
+    {
+        return Conversation::where('citizen_id', $this->id)
+            ->orWhere('staff_id', $this->id);
+    }
+
+    /**
+     * Get messages sent by user
+     */
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    /**
+     * Get messages received by user
+     */
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    /**
+     * Get unread messages count for user
+     */
+    public function getUnreadMessagesCountAttribute()
+    {
+        return Message::where('receiver_id', $this->id)
+            ->where('is_read', false)
+            ->count();
+    }
+
+    /**
+     * Get conversations with unread messages
+     */
+    public function conversationsWithUnreadMessages()
+    {
+        return Conversation::where(function($query) {
+                $query->where('citizen_id', $this->id)
+                    ->orWhere('staff_id', $this->id);
+            })
+            ->whereHas('messages', function($query) {
+                $query->where('receiver_id', $this->id)
+                    ->where('is_read', false);
+            })
+            ->get();
+    }
 }

@@ -136,4 +136,35 @@ class ServiceRequest extends Model
 
         return $token;
     }
+
+    /**
+     * Get the conversation for this service request
+     */
+    public function conversation()
+    {
+        return $this->hasOne(Conversation::class);
+    }
+
+    /**
+     * Check if this request has an active conversation
+     */
+    public function hasActiveConversation(): bool
+    {
+        return $this->conversation && $this->conversation->status === 'active';
+    }
+
+    /**
+     * Get or create conversation for this request
+     */
+    public function getOrCreateConversation()
+    {
+        return Conversation::firstOrCreate(
+            ['service_request_id' => $this->id],
+            [
+                'citizen_id' => $this->user_id,
+                'staff_id' => $this->assigned_staff_id,
+                'status' => 'active'
+            ]
+        );
+    }
 }
