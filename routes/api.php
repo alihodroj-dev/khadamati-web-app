@@ -25,6 +25,8 @@ use App\Http\Controllers\Api\StaffRequestController;
 use App\Http\Controllers\Api\StaffServiceController;
 use App\Http\Controllers\Api\StaffTimeSlotBlockController;
 use App\Http\Controllers\Api\StaffTimeSlotController;
+use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\TrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -219,4 +221,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/admin/offices/{office}', [AdminController::class, 'updateOffice']);
         Route::delete('/admin/offices/{office}', [AdminController::class, 'deleteOffice']);
     });
+
+    // Messaging Routes: Citizen & Staff Communication
+
+    // Conversations
+    Route::get('/conversations/my', [ConversationController::class, 'myConversations']);
+    Route::get('/conversations/my/{serviceRequest}', [ConversationController::class, 'getOrCreate']);
+    Route::get('/conversations/staff', [ConversationController::class, 'staffConversations']);
+    Route::get('/conversations/staff/{conversation}', [ConversationController::class, 'show']);
+    Route::patch('/conversations/{conversation}/close', [ConversationController::class, 'close']);
+
+    // Messages
+    Route::get('/conversations/{conversation}/messages', [MessageController::class, 'index']);
+    Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store']);
+    Route::get('/conversations/{conversation}/poll', [MessageController::class, 'poll']);
+    Route::post('/conversations/{conversation}/typing', [MessageController::class, 'typing']);
+
+    // Message utilities
+    Route::patch('/conversations/messages/{message}/read', [MessageController::class, 'markAsRead']);
+    Route::delete('/conversations/messages/{message}', [MessageController::class, 'destroy']);
+
+    // Unread counts
+    Route::get('/conversations/unread/count', [MessageController::class, 'unreadCount']);
+    Route::get('/conversations/unread/per-conversation', [MessageController::class, 'unreadPerConversation']);
+    
 });
