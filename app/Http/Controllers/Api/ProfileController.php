@@ -98,7 +98,6 @@ class ProfileController extends Controller
                 'max:255',
                 Rule::unique('users', 'national_id')->ignore($user->id),
             ],
-            'phone' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {

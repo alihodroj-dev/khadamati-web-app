@@ -19,8 +19,7 @@ class ProfileCompletionService
      *     father_name: string,
      *     mother_name: string,
      *     date_of_birth: string,
-     *     national_id: string,
-     *     phone?: string|null
+     *     national_id: string
      * }  $data
      */
     public function complete(User $user, array $data): User
@@ -58,7 +57,6 @@ class ProfileCompletionService
                 'name' => trim($data['first_name'].' '.$data['last_name']),
                 'date_of_birth' => $data['date_of_birth'],
                 'national_id' => $data['national_id'],
-                'phone' => $data['phone'] ?? $user->phone,
                 'id_front_path' => $idFrontPath,
                 'id_back_path' => $idBackPath,
             ]);

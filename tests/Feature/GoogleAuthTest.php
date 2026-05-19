@@ -43,7 +43,8 @@ class GoogleAuthTest extends TestCase
                 ->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/google', [
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'google',
             'id_token' => 'valid-google-token',
         ]);
 
@@ -104,7 +105,8 @@ class GoogleAuthTest extends TestCase
                 ->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/google', [
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'google',
             'id_token' => 'valid-google-token',
         ]);
 
@@ -156,7 +158,8 @@ class GoogleAuthTest extends TestCase
                 ->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/google', [
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'google',
             'id_token' => 'valid-google-token',
         ]);
 
@@ -180,7 +183,8 @@ class GoogleAuthTest extends TestCase
                 ->andThrow(new InvalidArgumentException('Invalid Google ID token.'));
         });
 
-        $response = $this->postJson('/api/auth/google', [
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'google',
             'id_token' => 'invalid-token',
         ]);
 
@@ -215,7 +219,8 @@ class GoogleAuthTest extends TestCase
                 ->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/google', [
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'google',
             'id_token' => 'valid-google-token',
         ]);
 
@@ -226,10 +231,39 @@ class GoogleAuthTest extends TestCase
 
     public function test_google_auth_validates_id_token_presence(): void
     {
-        $response = $this->postJson('/api/auth/google', []);
+        $response = $this->postJson('/api/auth/social', []);
 
         $response->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation failed.');
+    }
+
+    public function test_social_login_uses_first_and_last_name_for_google_when_provided(): void
+    {
+        config(['services.google.web_client_id' => 'test-client-id.apps.googleusercontent.com']);
+
+        $payload = [
+            'sub' => 'google-user-name',
+            'email' => 'named@example.com',
+            'email_verified' => true,
+            'name' => 'Token Name',
+            'iss' => 'accounts.google.com',
+            'aud' => 'test-client-id.apps.googleusercontent.com',
+            'exp' => time() + 3600,
+        ];
+
+        $this->mock(GoogleIdTokenVerificationService::class, function ($mock) use ($payload) {
+            $mock->shouldReceive('verify')->once()->andReturn($payload);
+        });
+
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'google',
+            'id_token' => 'valid-google-token',
+            'first_name' => 'Jane',
+            'last_name' => 'Citizen',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.user.name', 'Jane Citizen');
     }
 }

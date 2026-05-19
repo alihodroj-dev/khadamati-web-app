@@ -31,8 +31,7 @@ Errors: `success: false`, `errors` may contain field validation messages. Common
 |--------|------|------|
 | `POST` | `/identity/preview` | No |
 | `POST` | `/register/complete` | No |
-| `POST` | `/auth/google` | No |
-| `POST` | `/auth/apple` | No |
+| `POST` | `/auth/social` | No |
 | `POST` | `/login` | No |
 | `POST` | `/login/verify-otp` | No |
 | `POST` | `/login/resend-otp` | No |
@@ -48,6 +47,7 @@ Errors: `success: false`, `errors` may contain field validation messages. Common
 | `GET` | `/me` | Yes |
 | `POST` | `/logout` | Yes |
 | `GET` | `/profile` | Yes |
+| `POST` | `/profile/complete` | Yes |
 | `PATCH` | `/profile` | Yes |
 | `PATCH` | `/profile/password` | Yes |
 | `PATCH` | `/profile/notification-preferences` | Yes |
@@ -94,8 +94,7 @@ Staff/admin routes under `/staff/*`, `/admin/*`, `/dashboard/*` are **not** for 
 | Scenario | Flow |
 |----------|------|
 | New citizen | `POST /identity/preview` → `POST /register/complete` → token |
-| Google (returning) | `POST /auth/google` → token |
-| Apple (returning) | `POST /auth/apple` → token |
+| Google / Apple (returning) | `POST /auth/social` → token |
 | Email (returning) | `POST /login` → `POST /login/verify-otp` → token |
 
 Social sign-in returns a token immediately (no OTP). Email sign-in always requires OTP.
@@ -157,30 +156,29 @@ For Google/Apple: `auth_provider` + `provider_token` instead of password.
 
 ---
 
-### Google sign-in
+### Social sign-in (Google & Apple)
 
-`POST /auth/google`
-
-```json
-{ "id_token": "google-native-id-token" }
-```
-
-**Response `200`:** `data.user`, `data.token`. Server verifies issuer, audience, expiry, and verified email.
-
----
-
-### Apple sign-in
-
-`POST /auth/apple`
+`POST /auth/social`
 
 ```json
 {
-  "identity_token": "apple-identity-token",
-  "full_name": "Optional — first Apple login only"
+  "provider": "google",
+  "id_token": "native-id-token-from-sdk",
+  "first_name": "Ali",
+  "last_name": "Hodroj",
+  "email": "ali@example.com"
 }
 ```
 
-**Response `200`:** same shape as Google. Supports private relay emails.
+| Field | Required | Notes |
+|-------|----------|--------|
+| `provider` | Yes | `google` or `apple` |
+| `id_token` | Yes | Google ID token or Apple identity token |
+| `first_name` | No | Used when creating a new user (Apple first sign-in) |
+| `last_name` | No | Same as `first_name` |
+| `email` | No | Apple: send on first sign-in if not present in the token; Google: taken from the verified token |
+
+**Response `200`:** `data.user`, `data.token`, `data.profile_completed`. Google tokens must have a verified email. Apple supports private relay emails.
 
 ---
 
@@ -232,9 +230,30 @@ In `local`, OTP is written to Laravel logs.
 | Method | Path | Body (partial OK) |
 |--------|------|-------------------|
 | `GET` | `/profile` | — |
+| `POST` | `/profile/complete` | See below (auth required) |
 | `PATCH` | `/profile` | `name`, `phone`, `national_id` (not email/password/role) |
 | `PATCH` | `/profile/password` | `current_password`, `password`, `password_confirmation` |
 | `PATCH` | `/profile/notification-preferences` | `push_notifications_enabled`, `email_notifications_enabled`, `sms_notifications_enabled` |
+
+### Complete profile (citizen, after OTP / social sign-in)
+
+`POST /profile/complete` — Bearer token required.
+
+Does **not** accept `email`, `phone`, `password`, or `password_confirmation`. Email comes from the authenticated session; citizens sign in with OTP only.
+
+```json
+{
+  "verification_session_token": "from-identity-preview",
+  "first_name": "Ali",
+  "last_name": "Hodroj",
+  "father_name": "Salah",
+  "mother_name": "Fatma Alyan",
+  "date_of_birth": "2004-11-27",
+  "national_id": "00073028821"
+}
+```
+
+**Response `200`:** `data` is a `UserResource` including `profile_completed: true`.
 
 ---
 

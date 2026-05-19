@@ -26,7 +26,8 @@
     { "key": "email", "value": "jane@example.com", "type": "string" },
     { "key": "password", "value": "password123", "type": "string" },
     { "key": "google_id_token", "value": "google-native-id-token", "type": "string" },
-    { "key": "apple_identity_token", "value": "apple-identity-token", "type": "string" }
+    { "key": "apple_id_token", "value": "apple-identity-token", "type": "string" },
+    { "key": "social_provider", "value": "google", "type": "string" }
   ],
   "auth": {
     "type": "bearer",
@@ -81,23 +82,13 @@
           }
         },
         {
-          "name": "Google Sign In",
+          "name": "Social Sign In",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"id_token\": \"{{google_id_token}}\"\n}" },
-            "url": { "raw": "{{base_url}}/auth/google", "host": ["{{base_url}}"], "path": ["auth", "google"] }
-          }
-        },
-        {
-          "name": "Apple Sign In",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"identity_token\": \"{{apple_identity_token}}\",\n  \"full_name\": \"Jane Citizen\"\n}" },
-            "url": { "raw": "{{base_url}}/auth/apple", "host": ["{{base_url}}"], "path": ["auth", "apple"] }
+            "body": { "mode": "raw", "raw": "{\n  \"provider\": \"{{social_provider}}\",\n  \"id_token\": \"{{social_provider}}\" === \"apple\" ? \"{{apple_id_token}}\" : \"{{google_id_token}}\",\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Citizen\",\n  \"email\": \"{{email}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/social", "host": ["{{base_url}}"], "path": ["auth", "social"] }
           }
         },
         {

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use Illuminate\Database\Seeder;
@@ -10,6 +11,10 @@ class ServiceSeeder extends Seeder
 {
     public function run(): void
     {
+        $beirutOffice = Office::query()->where('name', 'Beirut Central Services Office')->first();
+        $hamraOffice = Office::query()->where('name', 'Hamra Citizen Service Center')->first();
+        $tripoliOffice = Office::query()->where('name', 'Tripoli Main Office')->first();
+
         $services = [
             [
                 'category' => 'Civil Records',
@@ -22,6 +27,8 @@ class ServiceSeeder extends Seeder
                     'Family registration document',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $beirutOffice,
                 'is_active' => true,
             ],
             [
@@ -36,6 +43,8 @@ class ServiceSeeder extends Seeder
                     'Marriage registration proof',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $beirutOffice,
                 'is_active' => true,
             ],
             [
@@ -49,6 +58,8 @@ class ServiceSeeder extends Seeder
                     'Family registration number',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $beirutOffice,
                 'is_active' => true,
             ],
             [
@@ -63,6 +74,8 @@ class ServiceSeeder extends Seeder
                     'National ID copy',
                 ],
                 'requires_appointment' => true,
+                'issues_certificate' => true,
+                'office' => $hamraOffice,
                 'is_active' => true,
             ],
             [
@@ -76,6 +89,8 @@ class ServiceSeeder extends Seeder
                     'Optional supporting images or documents',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => false,
+                'office' => $hamraOffice,
                 'is_active' => true,
             ],
             [
@@ -90,6 +105,8 @@ class ServiceSeeder extends Seeder
                     'National ID copy',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $hamraOffice,
                 'is_active' => true,
             ],
             [
@@ -104,6 +121,8 @@ class ServiceSeeder extends Seeder
                     'Previous tax declaration if available',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $tripoliOffice,
                 'is_active' => true,
             ],
             [
@@ -117,6 +136,8 @@ class ServiceSeeder extends Seeder
                     'National ID copy',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $tripoliOffice,
                 'is_active' => true,
             ],
             [
@@ -130,6 +151,8 @@ class ServiceSeeder extends Seeder
                     'Proof of residence',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $beirutOffice,
                 'is_active' => true,
             ],
             [
@@ -144,6 +167,8 @@ class ServiceSeeder extends Seeder
                     'Proof of income',
                 ],
                 'requires_appointment' => true,
+                'issues_certificate' => true,
+                'office' => $beirutOffice,
                 'is_active' => true,
             ],
             [
@@ -157,6 +182,8 @@ class ServiceSeeder extends Seeder
                     'National ID copy',
                 ],
                 'requires_appointment' => false,
+                'issues_certificate' => true,
+                'office' => $hamraOffice,
                 'is_active' => true,
             ],
             [
@@ -172,6 +199,8 @@ class ServiceSeeder extends Seeder
                     'National ID copy',
                 ],
                 'requires_appointment' => true,
+                'issues_certificate' => true,
+                'office' => $hamraOffice,
                 'is_active' => true,
             ],
         ];
@@ -183,17 +212,21 @@ class ServiceSeeder extends Seeder
                 continue;
             }
 
+            $office = $serviceData['office'] ?? $beirutOffice;
+
             Service::updateOrCreate(
                 [
                     'name' => $serviceData['name'],
                     'service_category_id' => $category->id,
                 ],
                 [
+                    'office_id' => $office?->id,
                     'description' => $serviceData['description'],
                     'base_fee' => $serviceData['base_fee'],
                     'estimated_processing_days' => $serviceData['estimated_processing_days'],
                     'required_documents' => $serviceData['required_documents'],
                     'requires_appointment' => $serviceData['requires_appointment'],
+                    'issues_certificate' => $serviceData['issues_certificate'] ?? true,
                     'is_active' => $serviceData['is_active'],
                 ]
             );

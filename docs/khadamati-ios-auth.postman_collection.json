@@ -14,7 +14,8 @@
     { "key": "email", "value": "citizen@example.com", "type": "string" },
     { "key": "password", "value": "password123", "type": "string" },
     { "key": "google_id_token", "value": "google-native-id-token", "type": "string" },
-    { "key": "apple_identity_token", "value": "apple-identity-token", "type": "string" },
+    { "key": "apple_id_token", "value": "apple-identity-token", "type": "string" },
+    { "key": "social_provider", "value": "google", "type": "string" },
     { "key": "profile_completed", "value": "false", "type": "string" }
   ],
   "item": [
@@ -180,7 +181,7 @@
       "name": "3. Social sign-in",
       "item": [
         {
-          "name": "Google Sign In",
+          "name": "Social Sign In",
           "event": [
             {
               "listen": "test",
@@ -202,37 +203,9 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id_token\": \"{{google_id_token}}\"\n}"
+              "raw": "{\n  \"provider\": \"{{social_provider}}\",\n  \"id_token\": \"{{social_provider}}\" === \"apple\" ? \"{{apple_id_token}}\" : \"{{google_id_token}}\",\n  \"first_name\": \"Ali\",\n  \"last_name\": \"Hodroj\",\n  \"email\": \"{{email}}\"\n}"
             },
-            "url": "{{base_url}}/auth/google"
-          }
-        },
-        {
-          "name": "Apple Sign In",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);",
-                  "if (json?.data?.profile_completed !== undefined) {",
-                  "  pm.collectionVariables.set('profile_completed', String(json.data.profile_completed));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"identity_token\": \"{{apple_identity_token}}\",\n  \"full_name\": \"Ali Hodroj\"\n}"
-            },
-            "url": "{{base_url}}/auth/apple"
+            "url": "{{base_url}}/auth/social"
           }
         }
       ]
@@ -293,7 +266,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"verification_session_token\": \"{{verification_session_token}}\",\n  \"first_name\": \"Ali\",\n  \"last_name\": \"Hodroj\",\n  \"father_name\": \"Salah\",\n  \"mother_name\": \"Fatma Alyan\",\n  \"date_of_birth\": \"2004-11-27\",\n  \"national_id\": \"00073028821\",\n  \"phone\": \"+96170000001\"\n}"
+              "raw": "{\n  \"verification_session_token\": \"{{verification_session_token}}\",\n  \"first_name\": \"Ali\",\n  \"last_name\": \"Hodroj\",\n  \"father_name\": \"Salah\",\n  \"mother_name\": \"Fatma Alyan\",\n  \"date_of_birth\": \"2004-11-27\",\n  \"national_id\": \"00073028821\"\n}"
             },
             "url": "{{base_url}}/profile/complete"
           }

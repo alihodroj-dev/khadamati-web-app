@@ -37,7 +37,6 @@ class ProfileCompletionTest extends TestCase
             'mother_name' => 'Fatma Alyan',
             'date_of_birth' => '2004-11-27',
             'national_id' => '00073028821',
-            'phone' => '+96170000001',
         ]);
 
         $response->assertOk()

@@ -17,11 +17,16 @@ class AppleAuthenticationService
      *     email?: string
      * }  $payload
      */
-    public function authenticate(array $payload, ?string $fullName = null): User
-    {
-        return DB::transaction(function () use ($payload, $fullName) {
+    public function authenticate(
+        array $payload,
+        ?string $firstName = null,
+        ?string $lastName = null,
+        ?string $emailFromClient = null,
+    ): User {
+        return DB::transaction(function () use ($payload, $firstName, $lastName, $emailFromClient) {
             $providerUserId = $payload['sub'];
-            $email = $this->normalizeEmail($payload['email'] ?? null);
+            $email = $this->normalizeEmail($payload['email'] ?? null)
+                ?? $this->normalizeEmail($emailFromClient);
 
             $socialAccount = SocialAccount::query()
                 ->where('provider', SocialAccount::PROVIDER_APPLE)
@@ -48,7 +53,7 @@ class AppleAuthenticationService
                 }
 
                 $user = User::create([
-                    'name' => $this->resolveNameForNewUser($fullName, $email),
+                    'name' => $this->resolveNameForNewUser($firstName, $lastName, $email),
                     'email' => $email,
                     'password' => null,
                     'role' => User::ROLE_CITIZEN,
@@ -84,12 +89,13 @@ class AppleAuthenticationService
         return $email === '' ? null : $email;
     }
 
-    protected function resolveNameForNewUser(?string $fullName, string $email): string
+    protected function resolveNameForNewUser(?string $firstName, ?string $lastName, string $email): string
     {
-        $fullName = is_string($fullName) ? trim($fullName) : '';
+        $firstName = is_string($firstName) ? trim($firstName) : '';
+        $lastName = is_string($lastName) ? trim($lastName) : '';
 
-        if ($fullName !== '') {
-            return $fullName;
+        if ($firstName !== '' || $lastName !== '') {
+            return trim($firstName.' '.$lastName);
         }
 
         $localPart = strstr($email, '@', true);

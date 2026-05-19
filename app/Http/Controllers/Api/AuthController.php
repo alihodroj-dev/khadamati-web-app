@@ -5,11 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use App\Services\AppleAuthenticationService;
-use App\Services\AppleIdentityTokenVerificationService;
-use App\Services\GoogleAuthenticationService;
-use App\Services\GoogleIdTokenVerificationService;
+use App\Models\SocialAccount;
 use App\Services\OtpLoginService;
+use App\Services\SocialLoginService;
 use App\Services\RegistrationCompletionService;
 use App\Support\UserProfileCompletion;
 use App\Traits\ApiResponse;
@@ -103,68 +101,34 @@ class AuthController extends Controller
         );
     }
 
-    public function google(
-        Request $request,
-        GoogleIdTokenVerificationService $tokenVerifier,
-        GoogleAuthenticationService $googleAuth
-    ) {
+    public function socialLogin(Request $request, SocialLoginService $socialLoginService)
+    {
         $validated = $request->validate([
+            'provider' => ['required', 'string', Rule::in([
+                SocialAccount::PROVIDER_GOOGLE,
+                SocialAccount::PROVIDER_APPLE,
+            ])],
             'id_token' => ['required', 'string'],
+            'first_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
         ]);
 
         try {
-            $payload = $tokenVerifier->verify($validated['id_token']);
-            $user = $googleAuth->authenticate($payload)->fresh();
+            $result = $socialLoginService->authenticate(
+                $validated['provider'],
+                $validated['id_token'],
+                $validated['first_name'] ?? null,
+                $validated['last_name'] ?? null,
+                $validated['email'] ?? null,
+            );
+            $user = $result['user']->fresh();
         } catch (InvalidArgumentException $e) {
+            $providerLabel = $socialLoginService->providerLabel($validated['provider']);
+
             return $this->errorResponse(
-                'Invalid Google ID token.',
+                "Invalid {$providerLabel} ID token.",
                 ['id_token' => [$e->getMessage()]],
-                401
-            );
-        } catch (RuntimeException $e) {
-            return $this->errorResponse(
-                $e->getMessage(),
-                null,
-                500
-            );
-        }
-
-        if (! $user->is_active) {
-            return $this->errorResponse(
-                'Your account is inactive.',
-                null,
-                403
-            );
-        }
-
-        $token = $user->createToken('khadamati-ios-app')->plainTextToken;
-
-        return $this->successResponse(
-            $this->authenticationPayload($user, $token),
-            'Logged in successfully'
-        );
-    }
-
-    public function apple(
-        Request $request,
-        AppleIdentityTokenVerificationService $tokenVerifier,
-        AppleAuthenticationService $appleAuth
-    ) {
-        $validated = $request->validate([
-            'identity_token' => ['required', 'string'],
-            'full_name' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        try {
-            $payload = $tokenVerifier->verify($validated['identity_token']);
-            $user = $appleAuth->authenticate(
-                $payload,
-                $validated['full_name'] ?? null
-            )->fresh();
-        } catch (InvalidArgumentException $e) {
-            return $this->errorResponse(
-                'Invalid Apple identity token.',
-                ['identity_token' => [$e->getMessage()]],
                 401
             );
         } catch (RuntimeException $e) {

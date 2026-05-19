@@ -41,9 +41,11 @@ class AppleAuthTest extends TestCase
                 ->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
-            'full_name' => 'Citizen User',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
+            'first_name' => 'Citizen',
+            'last_name' => 'User',
         ]);
 
         $response->assertOk()
@@ -84,9 +86,11 @@ class AppleAuthTest extends TestCase
             $mock->shouldReceive('verify')->once()->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
-            'full_name' => 'Relay User',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
+            'first_name' => 'Relay',
+            'last_name' => 'User',
         ]);
 
         $response->assertOk()
@@ -116,9 +120,11 @@ class AppleAuthTest extends TestCase
             $mock->shouldReceive('verify')->once()->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
-            'full_name' => 'Should Not Override',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
+            'first_name' => 'Should',
+            'last_name' => 'Not Override',
         ]);
 
         $response->assertOk()
@@ -161,9 +167,11 @@ class AppleAuthTest extends TestCase
             $mock->shouldReceive('verify')->once()->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
-            'full_name' => 'Ignored Name',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
+            'first_name' => 'Ignored',
+            'last_name' => 'Name',
         ]);
 
         $response->assertOk()
@@ -187,12 +195,41 @@ class AppleAuthTest extends TestCase
             $mock->shouldReceive('verify')->once()->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
         ]);
 
         $response->assertOk()
             ->assertJsonPath('data.user.name', 'jane.doe');
+    }
+
+    public function test_apple_auth_uses_request_email_when_token_has_no_email_on_first_sign_in(): void
+    {
+        config(['services.apple.client_id' => 'com.khadamati.app']);
+
+        $payload = [
+            'sub' => 'apple-user-client-email',
+            'iss' => 'https://appleid.apple.com',
+            'aud' => 'com.khadamati.app',
+            'exp' => time() + 3600,
+        ];
+
+        $this->mock(AppleIdentityTokenVerificationService::class, function ($mock) use ($payload) {
+            $mock->shouldReceive('verify')->once()->andReturn($payload);
+        });
+
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
+            'email' => 'client@example.com',
+            'first_name' => 'Client',
+            'last_name' => 'Email',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.user.email', 'client@example.com')
+            ->assertJsonPath('data.user.name', 'Client Email');
     }
 
     public function test_apple_auth_rejects_first_sign_in_without_email(): void
@@ -210,13 +247,14 @@ class AppleAuthTest extends TestCase
             $mock->shouldReceive('verify')->once()->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
         ]);
 
         $response->assertUnauthorized()
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Invalid Apple identity token.');
+            ->assertJsonPath('message', 'Invalid Apple ID token.');
     }
 
     public function test_apple_auth_rejects_invalid_token(): void
@@ -229,12 +267,13 @@ class AppleAuthTest extends TestCase
                 ->andThrow(new InvalidArgumentException('Invalid Apple identity token.'));
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'invalid-token',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'invalid-token',
         ]);
 
         $response->assertUnauthorized()
-            ->assertJsonPath('message', 'Invalid Apple identity token.');
+            ->assertJsonPath('message', 'Invalid Apple ID token.');
     }
 
     public function test_apple_auth_rejects_inactive_user(): void
@@ -258,17 +297,18 @@ class AppleAuthTest extends TestCase
             $mock->shouldReceive('verify')->once()->andReturn($payload);
         });
 
-        $response = $this->postJson('/api/auth/apple', [
-            'identity_token' => 'valid-apple-token',
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'apple',
+            'id_token' => 'valid-apple-token',
         ]);
 
         $response->assertForbidden()
             ->assertJsonPath('message', 'Your account is inactive.');
     }
 
-    public function test_apple_auth_validates_identity_token_presence(): void
+    public function test_social_login_validates_required_fields(): void
     {
-        $response = $this->postJson('/api/auth/apple', []);
+        $response = $this->postJson('/api/auth/social', []);
 
         $response->assertUnprocessable()
             ->assertJsonPath('message', 'Validation failed.');

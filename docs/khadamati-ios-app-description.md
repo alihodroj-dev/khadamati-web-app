@@ -137,35 +137,27 @@ The token is a Sanctum bearer token and should be stored securely by iOS.
 
 ## 3.2 Returning User Login
 
-### Google Login
+### Social Login (Google & Apple)
 
 Endpoint:
 
 ```http
-POST /api/auth/google
+POST /api/auth/social
 ```
 
-The iOS app sends a native Google ID token. The backend verifies issuer, audience, expiry, and verified email. If valid, it returns:
+The iOS app sends:
+
+- `provider`: `google` or `apple`
+- `id_token`: native token from the SDK
+- `first_name`, `last_name`, `email`: optional; especially important on first Apple sign-in when Apple only shares name/email once
+
+The backend verifies the token and returns:
 
 - `user`
 - `token`
+- `profile_completed`
 
-Google users do not go through OTP.
-
-### Apple Login
-
-Endpoint:
-
-```http
-POST /api/auth/apple
-```
-
-The iOS app sends an Apple identity token and optionally `full_name` on first login. The backend verifies the token and returns:
-
-- `user`
-- `token`
-
-Apple users do not go through OTP.
+Social users do not go through OTP.
 
 ### Email Login With OTP
 

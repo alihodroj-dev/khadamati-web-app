@@ -16,12 +16,15 @@ class GoogleAuthenticationService
      *     picture?: string
      * }  $payload
      */
-    public function authenticate(array $payload): User
-    {
-        return DB::transaction(function () use ($payload) {
+    public function authenticate(
+        array $payload,
+        ?string $firstName = null,
+        ?string $lastName = null,
+    ): User {
+        return DB::transaction(function () use ($payload, $firstName, $lastName) {
             $providerUserId = $payload['sub'];
             $email = $payload['email'];
-            $name = $payload['name'] ?? $email;
+            $name = $this->resolveDisplayName($firstName, $lastName, $payload['name'] ?? null, $email);
             $avatarUrl = $payload['picture'] ?? null;
 
             $socialAccount = SocialAccount::query()
@@ -65,6 +68,30 @@ class GoogleAuthenticationService
 
             return $user;
         });
+    }
+
+    protected function resolveDisplayName(
+        ?string $firstName,
+        ?string $lastName,
+        ?string $tokenName,
+        string $email,
+    ): string {
+        $firstName = is_string($firstName) ? trim($firstName) : '';
+        $lastName = is_string($lastName) ? trim($lastName) : '';
+
+        if ($firstName !== '' || $lastName !== '') {
+            return trim($firstName.' '.$lastName);
+        }
+
+        $tokenName = is_string($tokenName) ? trim($tokenName) : '';
+
+        if ($tokenName !== '') {
+            return $tokenName;
+        }
+
+        $localPart = strstr($email, '@', true);
+
+        return is_string($localPart) && $localPart !== '' ? $localPart : 'Citizen';
     }
 
     /**
