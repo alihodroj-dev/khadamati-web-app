@@ -148,6 +148,21 @@
                     <i class="ti ti-building text-lg" aria-hidden="true"></i>
                     Office Profile
                 </a>
+
+                <a href="{{ route('staff.conversations.index') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm transition-all
+                    {{ request()->routeIs('staff.conversations.*') ? 'bg-white font-medium' : 'hover:bg-white/10' }}"
+                    style="{{ request()->routeIs('staff.conversations.*') ? 'color: #1e3a5f;' : 'color: rgba(255,255,255,0.75);' }}">
+                    <i class="ti ti-message-2 text-lg" aria-hidden="true"></i>
+                    Messages
+                    @php
+                        $unreadCount = auth()->user()->getUnreadMessagesCountAttribute();
+                    @endphp
+                    @if($unreadCount > 0)
+                        <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                        </span>
+                    @endif
+                </a>
             </div>
 
         @endif

@@ -18,6 +18,7 @@ use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\StaffOfficeController;
 use App\Http\Controllers\Staff\StaffRequestController;
 use App\Http\Controllers\Staff\StaffAppointmentController;
+use App\Http\Controllers\Staff\StaffConversationController;
 
 
 use App\Http\Controllers\Auth\LoginController;
@@ -293,20 +294,41 @@ Route::middleware('auth')->group(function () {
         Route::post('/requests/{id}/upload', [StaffRequestController::class, 'uploadDocument'])
             ->name('staff.requests.uploadDocument');
 
-            Route::prefix('appointments')->group(function () {
+        Route::prefix('appointments')->group(function () {
 
-                Route::get('/', [StaffAppointmentController::class, 'index'])
-                    ->name('staff.appointments.index');
+            Route::get('/', [StaffAppointmentController::class, 'index'])
+                ->name('staff.appointments.index');
 
-                Route::get('/today', [StaffAppointmentController::class, 'today'])
-                    ->name('staff.appointments.today');
+            Route::get('/today', [StaffAppointmentController::class, 'today'])
+                ->name('staff.appointments.today');
 
-                Route::get('/{id}', [StaffAppointmentController::class, 'show'])
-                    ->name('staff.appointments.show');
+            Route::get('/{id}', [StaffAppointmentController::class, 'show'])
+                ->name('staff.appointments.show');
 
-                Route::post('/{id}/update', [StaffAppointmentController::class, 'update'])
-                    ->name('staff.appointments.update');
+            Route::post('/{id}/update', [StaffAppointmentController::class, 'update'])
+                ->name('staff.appointments.update');
 
-            });
+        });
+        
+        // Conversation
+        Route::prefix('conversations')->group(function () {
+            Route::get('/', [App\Http\Controllers\Staff\StaffConversationController::class, 'index'])
+                ->name('staff.conversations.index');
+            
+            Route::get('/{conversation}', [App\Http\Controllers\Staff\StaffConversationController::class, 'show'])
+                ->name('staff.conversations.show');
+            
+            Route::post('/{conversation}/messages', [App\Http\Controllers\Staff\StaffConversationController::class, 'sendMessage'])
+                ->name('staff.conversations.send');
+            
+            Route::post('/{conversation}/close', [App\Http\Controllers\Staff\StaffConversationController::class, 'close'])
+                ->name('staff.conversations.close');
+
+            Route::post('/conversations/{id}/reopen', [StaffConversationController::class, 'reopen'])
+                ->name('staff.conversations.reopen');
+            
+            Route::get('/{conversation}/poll', [StaffConversationController::class, 'poll'])
+                ->name('staff.conversations.poll');
+        });
     });
 });
