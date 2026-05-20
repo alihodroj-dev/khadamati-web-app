@@ -82,5 +82,19 @@ class UserSeeder extends Seeder
                 'profile_completed' => false,
             ]
         );
+                User::updateOrCreate(
+            ['email' => 'hussein.barakat.313371@gmail.com'],
+            [
+                'name' => 'hussein baraket',
+                'password' => null,
+                'role' => User::ROLE_STAFF,
+                'phone' => '+96170887097',
+                'national_id' => 'STF-000003',
+                'is_active' => true,
+                'email_verified_at' => now(),
+                'profile_completed' => false,
+            ]
+        );
+
     }
 }
