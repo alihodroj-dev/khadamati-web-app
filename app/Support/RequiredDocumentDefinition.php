@@ -4,7 +4,7 @@ namespace App\Support;
 
 class RequiredDocumentDefinition
 {
-    public const DEFAULT_ACCEPTED_TYPES = ['jpg', 'jpeg', 'png', 'pdf'];
+    public const DEFAULT_ACCEPTED_TYPES = ['jpg', 'jpeg', 'png', 'pdf', 'heic', 'heif'];
 
     public const DEFAULT_MAX_SIZE_MB = 5;
 

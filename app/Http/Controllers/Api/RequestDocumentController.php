@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use App\Models\ServiceRequest;
 use App\Notifications\DocumentUploadedNotification;
 use App\Support\RequiredDocumentDefinition;
+use App\Support\RequestDocumentUploadValidator;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,12 +48,13 @@ class RequestDocumentController extends Controller
 
         $validated = $request->validate([
             'document_type' => ['required', 'string', 'max:255'],
-            'document' => ['required', 'file'],
         ]);
+
+        $file = $request->file('document');
 
         if ($response = $this->validateDocumentItem(
             $validated['document_type'],
-            $request->file('document'),
+            $file,
             $requiredDefinitions,
             'document_type',
             'document'
@@ -64,7 +66,7 @@ class RequestDocumentController extends Controller
             $request,
             $serviceRequest,
             $validated['document_type'],
-            $request->file('document'),
+            $file,
             $requiredDefinitions
         );
 
@@ -99,15 +101,17 @@ class RequestDocumentController extends Controller
         $validated = $request->validate([
             'documents' => ['required', 'array', 'min:1'],
             'documents.*.document_type' => ['required', 'string', 'max:255'],
-            'documents.*.file' => ['required', 'file'],
         ]);
 
         $prepared = [];
 
-        foreach ($validated['documents'] as $index => $item) {
+        foreach (array_keys($validated['documents']) as $index) {
+            $item = $validated['documents'][$index];
+            $file = $request->file("documents.{$index}.file");
+
             if ($response = $this->validateDocumentItem(
                 $item['document_type'],
-                $item['file'],
+                $file,
                 $requiredDefinitions,
                 "documents.{$index}.document_type",
                 "documents.{$index}.file"
@@ -117,7 +121,7 @@ class RequestDocumentController extends Controller
 
             $prepared[] = [
                 'document_type' => $item['document_type'],
-                'file' => $item['file'],
+                'file' => $file,
             ];
         }
 
@@ -274,11 +278,15 @@ class RequestDocumentController extends Controller
 
     private function validateDocumentItem(
         string $documentType,
-        UploadedFile $file,
+        ?UploadedFile $file,
         array $requiredDefinitions,
         string $typeField,
         string $fileField
     ): ?JsonResponse {
+        if ($errors = RequestDocumentUploadValidator::earlyUploadErrors($file, $fileField)) {
+            return $this->errorResponse('Validation failed.', $errors, 422);
+        }
+
         $resolvedKey = RequiredDocumentDefinition::resolveTypeKey(
             $documentType,
             $requiredDefinitions
@@ -298,18 +306,9 @@ class RequestDocumentController extends Controller
             ? RequiredDocumentDefinition::find($resolvedKey, $requiredDefinitions)
             : null;
 
-        $acceptedTypes = $definition['accepted_types'] ?? RequiredDocumentDefinition::DEFAULT_ACCEPTED_TYPES;
-        $maxSizeKb = ($definition['max_size_mb'] ?? RequiredDocumentDefinition::DEFAULT_MAX_SIZE_MB) * 1024;
-
         $validator = Validator::make(
             [$fileField => $file],
-            [
-                $fileField => [
-                    'file',
-                    'mimes:'.implode(',', $acceptedTypes),
-                    'max:'.$maxSizeKb,
-                ],
-            ]
+            RequestDocumentUploadValidator::fileRules($fileField, $definition)
         );
 
         if ($validator->fails()) {

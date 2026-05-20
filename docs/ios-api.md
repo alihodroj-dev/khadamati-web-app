@@ -6,6 +6,8 @@ Citizen-facing REST API for the Khadamati mobile app.
 
 **Postman:** Import [`docs/khadamati-ios.postman_collection.json`](khadamati-ios.postman_collection.json) — full citizen API with collection variables and test scripts that auto-save `token`, `challenge_token`, and `verification_session_token`.
 
+**Service requests (full citizen flow):** See [`docs/ios-service-requests.md`](ios-service-requests.md) for lifecycle, status logic, documents, payments, appointments, tracking, and iOS screen flow.
+
 **In-app messaging (citizen ↔ staff):** See [`docs/ios-messaging.md`](ios-messaging.md) for flow logic, polling, read receipts, and all conversation/message endpoints.
 
 **Headers:** `Content-Type: application/json` (use `multipart/form-data` for file uploads).
@@ -342,6 +344,8 @@ Default sort: `name`. With coordinates: distance ascending (offices without coor
 
 ## Service requests
 
+Full flow, state diagram, and iOS integration guide: [`ios-service-requests.md`](ios-service-requests.md).
+
 ### Create
 
 `POST /service-requests`
@@ -432,7 +436,7 @@ Uploading notifies **assigned staff** (database notification, type `document_upl
 | `GET` | `.../documents/{id}/download` | binary file (not JSON) |
 | `DELETE` | `.../documents/{id}` | citizen requirement uploads only; not if `approved` |
 
-Blocked when request is `completed`, `cancelled`, or `rejected`. Files: jpg, jpeg, png, pdf; max 5 MB per file (per requirement `max_size_mb` when stricter).
+Blocked when request is `completed`, `cancelled`, or `rejected`. Files: jpg, jpeg, png, pdf, heic, heif; max 5 MB per file (per requirement `max_size_mb` when stricter). Use **multipart/form-data** with field name `document` (single) or `documents[n][file]` (bulk). If PHP `upload_max_filesize` is lower than 5 MB (common default 2M), uploads fail with a clear error — see `public/.user.ini` for local dev limits.
 
 ---
 
