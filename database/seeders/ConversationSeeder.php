@@ -4,32 +4,31 @@ namespace Database\Seeders;
 
 use App\Models\Conversation;
 use App\Models\ServiceRequest;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class ConversationSeeder extends Seeder
 {
     public function run(): void
     {
-        $citizen = User::query()->where('email', 'citizen@khadamati.com')->first();
-        $staff = User::query()->where('email', 'staff@khadamati.com')->first();
+        ServiceRequest::query()
+            ->whereNotNull('assigned_staff_id')
+            ->orderBy('id')
+            ->each(function (ServiceRequest $request) {
+                $status = in_array($request->status, ['completed', 'cancelled'], true)
+                    ? 'closed'
+                    : 'active';
 
-        $underReview = ServiceRequest::query()
-            ->where('reference_number', 'like', '%SEED001')
-            ->first();
-
-        if (! $underReview || ! $citizen) {
-            return;
-        }
-
-        Conversation::updateOrCreate(
-            ['service_request_id' => $underReview->id],
-            [
-                'citizen_id' => $citizen->id,
-                'staff_id' => $staff?->id,
-                'status' => 'active',
-                'last_message_at' => now()->subHours(2),
-            ]
-        );
+                Conversation::updateOrCreate(
+                    [
+                        'service_request_id' => $request->id,
+                        'citizen_id' => $request->user_id,
+                    ],
+                    [
+                        'staff_id' => $request->assigned_staff_id,
+                        'status' => $status,
+                        'last_message_at' => now()->subHours(2),
+                    ]
+                );
+            });
     }
 }

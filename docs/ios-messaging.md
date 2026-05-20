@@ -586,11 +586,11 @@ After `php artisan migrate:fresh --seed`:
 
 | Item | Value |
 |------|--------|
-| Citizen | `citizen@khadamati.com` |
-| Staff | `staff@khadamati.com` |
-| Request | Reference like `KHR-*-SEED001` (under review, assigned staff) |
-| Conversation | Linked to that request |
-| Messages | 3 seeded messages (1 unread from citizen to staff) |
+| Citizens | `citizen@khadamati.com`, `citizen2@khadamati.com`, **`hodroj.ali.2004@gmail.com`** (full demo — see `AliHodrojCitizenSeeder`) |
+| Staff | `staff@khadamati.com`, `staff2@khadamati.com` |
+| Conversations | One per service request with `assigned_staff_id` (active or `closed` if request completed/cancelled) |
+| Messages | ~3–4 per conversation; each thread has at least one unread message for the citizen |
+| References | `KHR-*-SEED001` … `SEED007` (see `ServiceRequestSeeder`) |
 
 **Try in Postman:**
 

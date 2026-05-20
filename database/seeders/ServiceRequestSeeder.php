@@ -16,8 +16,10 @@ class ServiceRequestSeeder extends Seeder
     public function run(): void
     {
         $citizen = User::query()->where('email', 'citizen@khadamati.com')->first();
+        $citizen2 = User::query()->where('email', 'citizen2@khadamati.com')->first();
         $completeCitizen = User::query()->where('email', 'citizen.complete@khadamati.com')->first();
         $staff = User::query()->where('email', 'staff@khadamati.com')->first();
+        $staff2 = User::query()->where('email', 'staff2@khadamati.com')->first();
         $beirutOffice = Office::query()->where('name', 'Beirut Central Services Office')->first();
         $hamraOffice = Office::query()->where('name', 'Hamra Citizen Service Center')->first();
 
@@ -82,6 +84,28 @@ class ServiceRequestSeeder extends Seeder
                 'status' => 'cancelled',
                 'citizen_notes' => 'Submitted by mistake.',
                 'submitted_at' => now()->subDays(8),
+            ],
+            [
+                'user' => $citizen2 ?? $citizen,
+                'service' => $birthCertificate,
+                'reference' => 'SEED006',
+                'status' => 'under_review',
+                'citizen_notes' => 'Need a copy for employment verification.',
+                'staff_notes' => 'Initial review in progress.',
+                'assigned_staff_id' => $staff2?->id ?? $staff?->id,
+                'submitted_at' => now()->subDays(4),
+                'reviewed_at' => now()->subDays(1),
+            ],
+            [
+                'user' => $citizen2 ?? $citizen,
+                'service' => $taxClearance,
+                'reference' => 'SEED007',
+                'status' => 'requires_action',
+                'citizen_notes' => 'Uploaded documents from mobile.',
+                'staff_notes' => 'Waiting for clearer utility bill.',
+                'assigned_staff_id' => $staff?->id,
+                'submitted_at' => now()->subDays(2),
+                'reviewed_at' => now()->subHours(12),
             ],
         ];
 

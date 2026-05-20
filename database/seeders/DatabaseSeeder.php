@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             OfficeTimeSlotSeeder::class,
             OfficeTimeSlotBlockSeeder::class,
             ServiceRequestSeeder::class,
+            AliHodrojCitizenSeeder::class,
             RequestDocumentSeeder::class,
             AppointmentSeeder::class,
             PaymentSeeder::class,

@@ -82,5 +82,28 @@ class UserSeeder extends Seeder
                 'profile_completed' => false,
             ]
         );
+
+        $ali = User::updateOrCreate(
+            ['email' => 'hodroj.ali.2004@gmail.com'],
+            [
+                'name' => 'Ali Hodroj',
+                'first_name' => 'Ali',
+                'last_name' => 'Hodroj',
+                'father_name' => 'Salah',
+                'mother_name' => 'Fatima Alyan',
+                'date_of_birth' => '2004-11-27',
+                'national_id' => '00073028821',
+                'password' => null,
+                'role' => User::ROLE_CITIZEN,
+                'phone' => '+96170111222',
+                'is_active' => true,
+                'email_verified_at' => now(),
+                'id_front_path' => 'id-documents/seed-users/ali-hodroj-front.jpg',
+                'id_back_path' => 'id-documents/seed-users/ali-hodroj-back.jpg',
+                'profile_completed' => true,
+            ]
+        );
+
+        UserProfileCompletion::sync($ali);
     }
 }

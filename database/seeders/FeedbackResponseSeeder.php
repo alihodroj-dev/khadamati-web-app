@@ -12,7 +12,9 @@ class FeedbackResponseSeeder extends Seeder
     public function run(): void
     {
         $staff = User::query()->where('email', 'staff@khadamati.com')->first();
-        $feedback = Feedback::query()->first();
+        $feedback = Feedback::query()
+            ->whereHas('serviceRequest', fn ($q) => $q->where('reference_number', 'like', '%SEED004'))
+            ->first();
 
         if (! $feedback || ! $staff) {
             return;
