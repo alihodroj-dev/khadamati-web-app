@@ -4,10 +4,12 @@ namespace Database\Seeders;
 
 use App\Models\Municipality;
 use App\Models\Office;
+use Database\Seeders\Concerns\SeedImageUrls;
 use Illuminate\Database\Seeder;
 
 class OfficeSeeder extends Seeder
 {
+    use SeedImageUrls;
     public function run(): void
     {
         $beirut = Municipality::where('code', 'BEY')->first();
@@ -103,6 +105,7 @@ class OfficeSeeder extends Seeder
                     'longitude' => $office['longitude'],
                     'working_hours' => $office['working_hours'],
                     'is_active' => $office['is_active'],
+                    'image_url' => $this->officeImageUrl($office['name']),
                 ]
             );
         }

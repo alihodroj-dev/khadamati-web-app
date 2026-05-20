@@ -10,6 +10,7 @@ class ServiceCategory extends Model
         'name',
         'description',
         'icon',
+        'image_url',
         'is_active',
     ];
 

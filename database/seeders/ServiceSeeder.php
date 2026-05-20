@@ -5,10 +5,12 @@ namespace Database\Seeders;
 use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceCategory;
+use Database\Seeders\Concerns\SeedImageUrls;
 use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
 {
+    use SeedImageUrls;
     public function run(): void
     {
         $beirutOffice = Office::query()->where('name', 'Beirut Central Services Office')->first();
@@ -228,6 +230,7 @@ class ServiceSeeder extends Seeder
                     'requires_appointment' => $serviceData['requires_appointment'],
                     'issues_certificate' => $serviceData['issues_certificate'] ?? true,
                     'is_active' => $serviceData['is_active'],
+                    'image_url' => $this->serviceImageUrl($serviceData['name']),
                 ]
             );
         }

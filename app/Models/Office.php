@@ -15,6 +15,7 @@ class Office extends Model
         'address',
         'phone',
         'email',
+        'image_url',
         'latitude',
         'longitude',
         'working_hours',

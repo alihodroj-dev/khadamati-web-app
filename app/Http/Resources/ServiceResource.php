@@ -18,7 +18,9 @@ class ServiceResource extends JsonResource
             'office' => new OfficeResource($this->whenLoaded('office')),
             'name' => $this->name,
             'description' => $this->description,
+            'image_url' => $this->image_url,
             'base_fee' => (float) $this->base_fee,
+            'issues_certificate' => (bool) $this->issues_certificate,
             'estimated_processing_days' => $this->estimated_processing_days,
             'required_documents' => RequiredDocumentDefinition::normalizeList(
                 $this->required_documents ?? []

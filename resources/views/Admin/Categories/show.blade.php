@@ -51,7 +51,16 @@
 
                 <div>
                     <p class="text-sm text-gray-500">Icon</p>
-                    <p class="text-2xl">{{ $category->icon }}</p>
+                    <p class="text-2xl">{{ $category->icon ?? '—' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-500">Cover Image</p>
+                    @if($category->image_url)
+                        <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="mt-2 h-40 w-full max-w-md rounded-lg border border-gray-200 object-cover">
+                    @else
+                        <p class="text-base text-gray-700">—</p>
+                    @endif
                 </div>
             </div>
         </x-card>

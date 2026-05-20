@@ -3,10 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\ServiceCategory;
+use Database\Seeders\Concerns\SeedImageUrls;
 use Illuminate\Database\Seeder;
 
 class ServiceCategorySeeder extends Seeder
 {
+    use SeedImageUrls;
     public function run(): void
     {
         $categories = [
@@ -45,7 +47,9 @@ class ServiceCategorySeeder extends Seeder
         foreach ($categories as $category) {
             ServiceCategory::updateOrCreate(
                 ['name' => $category['name']],
-                $category
+                array_merge($category, [
+                    'image_url' => $this->categoryImageUrl($category['name']),
+                ])
             );
         }
     }

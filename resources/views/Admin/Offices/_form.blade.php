@@ -19,6 +19,7 @@
 <x-input label="Address" name="address" value="{{ old('address', $office?->address) }}" />
 <x-input label="Phone" name="phone" value="{{ old('phone', $office?->phone) }}" />
 <x-input label="Email" name="email" type="email" value="{{ old('email', $office?->email) }}" />
+<x-image-url-field :value="old('image_url', $office?->image_url)" />
 <x-input label="Latitude" name="latitude" value="{{ old('latitude', $office?->latitude) }}" />
 <x-input label="Longitude" name="longitude" value="{{ old('longitude', $office?->longitude) }}" />
 

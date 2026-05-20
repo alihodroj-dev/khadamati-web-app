@@ -11,10 +11,12 @@ class Service extends Model
         'office_id',
         'name',
         'description',
+        'image_url',
         'base_fee',
         'estimated_processing_days',
         'required_documents',
         'requires_appointment',
+        'issues_certificate',
         'is_active',
     ];
 
@@ -22,6 +24,7 @@ class Service extends Model
         'required_documents' => 'array',
         'base_fee' => 'decimal:2',
         'requires_appointment' => 'boolean',
+        'issues_certificate' => 'boolean',
         'is_active' => 'boolean',
     ];
 

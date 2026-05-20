@@ -4,6 +4,8 @@ Citizen-facing REST API for the Khadamati mobile app.
 
 **Base URL:** `{APP_URL}/api`
 
+**Postman:** Import [`docs/khadamati-ios.postman_collection.json`](khadamati-ios.postman_collection.json) — full citizen API with collection variables and test scripts that auto-save `token`, `challenge_token`, and `verification_session_token`.
+
 **Headers:** `Content-Type: application/json` (use `multipart/form-data` for file uploads).
 
 **Auth (protected routes):** `Authorization: Bearer {sanctum_token}`
@@ -275,7 +277,7 @@ Does **not** accept `email`, `phone`, `password`, or `password_confirmation`. Em
 
 ### Categories
 
-`GET /service-categories` → `data.categories[]`
+`GET /service-categories` → `data.categories[]` (each includes `image_url`, `icon`)
 
 `GET /service-categories/{id}` → `data.category` (404 if inactive)
 
@@ -283,7 +285,7 @@ Does **not** accept `email`, `phone`, `password`, or `password_confirmation`. Em
 
 `GET /services` — query: `office_id`, `category_id`, `search` → `data.services[]` (includes `category`, `office` when set)
 
-`GET /services/{id}` → `data.service` with normalized `required_documents[]`:
+`GET /services/{id}` → `data.service` with `image_url` and normalized `required_documents[]`:
 
 ```json
 {
@@ -316,9 +318,9 @@ Legacy string entries in the database are normalized automatically.
 
 Default sort: `name`. With coordinates: distance ascending (offices without coords last).
 
-**Response** `data.offices[]` includes `working_hours`, `services_count`, `average_rating`, `ratings_count` (stats from **completed** requests/feedback at that office).
+**Response** `data.offices[]` includes `image_url`, `working_hours`, `services_count`, `average_rating`, `ratings_count` (stats from **completed** requests/feedback at that office).
 
-`GET /offices/{id}` → `data.office`
+`GET /offices/{id}` → `data.office` (includes `image_url`)
 
 ### Public office feedback
 

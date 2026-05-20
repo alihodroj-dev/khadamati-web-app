@@ -81,6 +81,7 @@ class CategoryController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'icon' => ['nullable', 'string', 'max:255'],
+            'image_url' => ['nullable', 'string', 'url', 'max:2048'],
             'is_active' => ['required', Rule::in(['0', '1', 0, 1, true, false])],
         ]);
 
@@ -88,6 +89,7 @@ class CategoryController extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'icon' => $validated['icon'] ?? null,
+            'image_url' => $validated['image_url'] ?? null,
             'is_active' => AdminFormInput::boolean($validated['is_active']),
         ];
     }

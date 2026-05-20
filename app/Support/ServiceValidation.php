@@ -20,6 +20,7 @@ class ServiceValidation
             'service_category_id' => [$required, 'exists:service_categories,id'],
             'name' => [$required, 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'image_url' => ['nullable', 'string', 'url', 'max:2048'],
             'base_fee' => [$partial ? 'sometimes' : 'required', 'numeric', 'min:0'],
             'estimated_processing_days' => ['nullable', 'integer', 'min:0'],
             'required_documents' => ['nullable', 'array'],
@@ -62,6 +63,10 @@ class ServiceValidation
             $payload['description'] = $validated['description'];
         }
 
+        if (array_key_exists('image_url', $validated)) {
+            $payload['image_url'] = $validated['image_url'];
+        }
+
         if (array_key_exists('base_fee', $validated)) {
             $payload['base_fee'] = $validated['base_fee'];
         }
@@ -94,6 +99,7 @@ class ServiceValidation
                 'office_id' => $officeId,
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
+                'image_url' => $validated['image_url'] ?? null,
                 'base_fee' => $validated['base_fee'],
                 'estimated_processing_days' => $validated['estimated_processing_days'] ?? null,
                 'required_documents' => RequiredDocumentDefinition::normalizeList(

@@ -86,6 +86,7 @@ class ServiceController extends Controller
             'office_id' => ['nullable', 'exists:offices,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'image_url' => ['nullable', 'string', 'url', 'max:2048'],
             'base_fee' => ['required', 'numeric', 'min:0'],
             'estimated_processing_days' => ['nullable', 'integer', 'min:0'],
             'required_documents' => ['nullable', 'string'],
@@ -98,6 +99,7 @@ class ServiceController extends Controller
             'office_id' => ! empty($validated['office_id']) ? (int) $validated['office_id'] : null,
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'image_url' => $validated['image_url'] ?? null,
             'base_fee' => $validated['base_fee'],
             'estimated_processing_days' => $validated['estimated_processing_days'] ?? null,
             'required_documents' => RequiredDocumentDefinition::normalizeList(

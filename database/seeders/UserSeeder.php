@@ -69,28 +69,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $completeCitizen = User::updateOrCreate(
-            ['email' => 'citizen.complete@khadamati.com'],
-            [
-                'name' => 'Ali Hodroj',
-                'first_name' => 'Ali',
-                'last_name' => 'Hodroj',
-                'father_name' => 'Salah',
-                'mother_name' => 'Fatima Alyan',
-                'date_of_birth' => '2004-11-27',
-                'password' => null,
-                'role' => User::ROLE_CITIZEN,
-                'phone' => '+96176554042',
-                'national_id' => '00073028821',
-                'id_front_path' => 'id-documents/seed-citizen/front.jpg',
-                'id_back_path' => 'id-documents/seed-citizen/back.jpg',
-                'is_active' => true,
-                'email_verified_at' => now(),
-            ]
-        );
-
-        UserProfileCompletion::sync($completeCitizen);
-
         User::updateOrCreate(
             ['email' => 'citizen2@khadamati.com'],
             [

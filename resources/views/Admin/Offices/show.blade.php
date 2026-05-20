@@ -50,6 +50,14 @@
                     <p class="text-base text-gray-700">{{ $office->email ?? '—' }}</p>
                 </div>
                 <div>
+                    <p class="text-sm text-gray-500">Cover Image</p>
+                    @if($office->image_url)
+                        <img src="{{ $office->image_url }}" alt="{{ $office->name }}" class="mt-2 h-40 w-full max-w-md rounded-lg border border-gray-200 object-cover">
+                    @else
+                        <p class="text-base text-gray-700">—</p>
+                    @endif
+                </div>
+                <div>
                     <p class="text-sm text-gray-500">Coordinates</p>
                     <p class="text-base text-gray-700">
                         @if($office->latitude !== null && $office->longitude !== null)

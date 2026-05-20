@@ -31,6 +31,7 @@
         <x-input label="Address" name="address" value="{{ old('address', $office->address) }}" required />
         <x-input label="Phone" name="phone" value="{{ old('phone', $office->phone) }}" />
         <x-input label="Email" name="email" type="email" value="{{ old('email', $office->email) }}" />
+        <x-image-url-field :value="old('image_url', $office->image_url)" />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <x-input

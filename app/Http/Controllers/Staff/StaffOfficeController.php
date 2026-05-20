@@ -27,6 +27,7 @@ class StaffOfficeController extends Controller
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'image_url' => ['nullable', 'string', 'url', 'max:2048'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'working_hours' => ['nullable'],

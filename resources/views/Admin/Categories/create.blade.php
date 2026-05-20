@@ -26,6 +26,8 @@
             name="icon"
         />
 
+        <x-image-url-field />
+
         {{-- Status --}}
         <div class="mb-6">
 

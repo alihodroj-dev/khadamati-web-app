@@ -42,6 +42,7 @@
 </div>
 
 <x-input label="Service Name" name="name" value="{{ old('name', $service?->name) }}" placeholder="e.g. Passport Renewal" />
+<x-image-url-field :value="old('image_url', $service?->image_url)" />
 <x-input label="Description" name="description" value="{{ old('description', $service?->description) }}" placeholder="Briefly describe the service..." />
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

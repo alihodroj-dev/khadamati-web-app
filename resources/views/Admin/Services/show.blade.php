@@ -52,6 +52,15 @@
                 </div>
 
                 <div class="md:col-span-2">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Cover Image</h3>
+                    @if($service->image_url)
+                        <img src="{{ $service->image_url }}" alt="{{ $service->name }}" class="mt-2 h-40 w-full max-w-md rounded-lg border border-gray-200 object-cover">
+                    @else
+                        <p class="text-gray-500">—</p>
+                    @endif
+                </div>
+
+                <div class="md:col-span-2">
                     <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Required Documents</h3>
                     <div class="mt-2 flex flex-wrap gap-2">
                         {{-- Required documents --}}

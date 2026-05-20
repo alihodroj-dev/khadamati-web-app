@@ -14,7 +14,8 @@
 
         <x-input label="Category Name" name="name" value="{{ $category->name }}" />
         <x-input label="Description" name="description" value="{{ $category->description }}" />
-        <x-input label="Icon" name="icon" value="{{ $category->icon }}" />
+        <x-input label="Icon" name="icon" value="{{ old('icon', $category->icon) }}" />
+        <x-image-url-field :value="old('image_url', $category->image_url)" />
 
         {{-- Status --}}
         <div class="mb-6">
