@@ -6,6 +6,8 @@ Citizen-facing REST API for the Khadamati mobile app.
 
 **Postman:** Import [`docs/khadamati-ios.postman_collection.json`](khadamati-ios.postman_collection.json) — full citizen API with collection variables and test scripts that auto-save `token`, `challenge_token`, and `verification_session_token`.
 
+**In-app messaging (citizen ↔ staff):** See [`docs/ios-messaging.md`](ios-messaging.md) for flow logic, polling, read receipts, and all conversation/message endpoints.
+
 **Headers:** `Content-Type: application/json` (use `multipart/form-data` for file uploads).
 
 **Auth (protected routes):** `Authorization: Bearer {sanctum_token}`
@@ -84,8 +86,18 @@ Errors: `success: false`, `errors` may contain field validation messages. Common
 | `GET` | `/notifications` | Yes |
 | `PATCH` | `/notifications/{id}/read` | Yes |
 | `PATCH` | `/notifications/read-all` | Yes |
+| `GET` | `/conversations/my` | Yes |
+| `GET` | `/conversations/my/{serviceRequestId}` | Yes |
+| `GET` | `/conversations/{id}/messages` | Yes |
+| `GET` | `/conversations/{id}/poll` | Yes |
+| `POST` | `/conversations/{id}/messages` | Yes |
+| `POST` | `/conversations/{id}/typing` | Yes |
+| `GET` | `/conversations/unread/count` | Yes |
+| `GET` | `/conversations/unread/per-conversation` | Yes |
+| `PATCH` | `/conversations/messages/{messageId}/read` | Yes |
+| `DELETE` | `/conversations/messages/{messageId}` | Yes |
 
-Staff/admin routes under `/staff/*`, `/admin/*`, `/dashboard/*` are **not** for the citizen app.
+Staff/admin routes under `/staff/*`, `/admin/*`, `/dashboard/*` are **not** for the citizen app. Messaging details: [`ios-messaging.md`](ios-messaging.md).
 
 ---
 
