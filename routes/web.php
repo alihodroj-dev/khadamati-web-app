@@ -28,6 +28,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Stripe sandbox test page — remove before production
+Route::get('/stripe-test', function () {
+    return view('stripe-test', ['stripe_key' => config('services.stripe.key')]);
+});
+
 Route::get('/track/{trackingToken}', [PublicTrackingController::class, 'show'])
     ->name('tracking.show');
 

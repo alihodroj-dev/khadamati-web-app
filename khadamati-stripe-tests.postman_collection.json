@@ -1,0 +1,299 @@
+{
+    "info": {
+        "_postman_id": "khadamati-stripe-final",
+        "name": "Khadamati — Stripe Tests (Final)",
+        "description": "Run steps 1 to 5 in order. Each one auto-saves what the next needs.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "base_url",           "value": "http://localhost:8000/api" },
+        { "key": "token",              "value": "" },
+        { "key": "service_request_id", "value": "" },
+        { "key": "payment_id",         "value": "" }
+    ],
+    "item": [
+        {
+            "name": "STEP 1 — Register (saves token)",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.collectionVariables.set('test_email', 'test_' + Date.now() + '@example.com');"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                            "var json = pm.response.json();",
+                            "var token = json.data && json.data.token;",
+                            "if (token) {",
+                            "    pm.collectionVariables.set('token', token);",
+                            "    pm.test('✅ Token saved — run STEP 2', () => true);",
+                            "} else {",
+                            "    pm.test('❌ No token. Response: ' + JSON.stringify(json), () => false);",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Content-Type", "value": "application/json" },
+                    { "key": "Accept",       "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Test Citizen\",\n    \"email\": \"{{test_email}}\",\n    \"password\": \"password123\",\n    \"national_id\": \"TEST{{$timestamp}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/register",
+                    "host": ["{{base_url}}"],
+                    "path": ["register"]
+                }
+            }
+        },
+        {
+            "name": "STEP 2 — Get Services + Create Service Request",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "if (!pm.collectionVariables.get('token')) {",
+                            "    throw new Error('Run STEP 1 first — no token');",
+                            "}"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('GET /services returned 200', () => pm.response.to.have.status(200));",
+                            "",
+                            "var json   = pm.response.json();",
+                            "var list   = (json.data && json.data.services) ? json.data.services : [];",
+                            "var paid   = list.filter(function(s) { return parseFloat(s.base_fee) > 0; });",
+                            "",
+                            "if (paid.length === 0) {",
+                            "    pm.test('❌ No paid services — run seeders first', () => false);",
+                            "    return;",
+                            "}",
+                            "",
+                            "var service = paid[0];",
+                            "pm.test('Picked service: ' + service.name + ' ($' + service.base_fee + ')', () => true);",
+                            "",
+                            "var token   = pm.collectionVariables.get('token');",
+                            "var baseUrl = pm.collectionVariables.get('base_url');",
+                            "",
+                            "pm.sendRequest({",
+                            "    url:    baseUrl + '/service-requests',",
+                            "    method: 'POST',",
+                            "    header: [",
+                            "        { key: 'Authorization', value: 'Bearer ' + token },",
+                            "        { key: 'Content-Type',  value: 'application/json' },",
+                            "        { key: 'Accept',        value: 'application/json' }",
+                            "    ],",
+                            "    body: {",
+                            "        mode: 'raw',",
+                            "        raw: JSON.stringify({ service_id: service.id, citizen_notes: 'Stripe test' })",
+                            "    }",
+                            "}, function(err, res) {",
+                            "    if (err) { pm.test('❌ Request error: ' + err, () => false); return; }",
+                            "    var data = res.json();",
+                            "    var id   = data.data && data.data.service_request && data.data.service_request.id;",
+                            "    if (id) {",
+                            "        pm.collectionVariables.set('service_request_id', String(id));",
+                            "        pm.test('✅ service_request_id saved: ' + id + ' — run STEP 3', () => true);",
+                            "    } else {",
+                            "        pm.test('❌ Could not create service request. Response: ' + JSON.stringify(data), () => false);",
+                            "    }",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [{ "key": "Accept", "value": "application/json" }],
+                "url": {
+                    "raw": "{{base_url}}/services",
+                    "host": ["{{base_url}}"],
+                    "path": ["services"]
+                }
+            }
+        },
+        {
+            "name": "STEP 3 — Create Card Payment (saves payment_id)",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "if (!pm.collectionVariables.get('token')) { throw new Error('Run STEP 1 first — no token'); }",
+                            "if (!pm.collectionVariables.get('service_request_id')) { throw new Error('Run STEP 2 first — no service_request_id'); }"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                            "var json = pm.response.json();",
+                            "var id   = json.data && json.data.id;",
+                            "if (id) {",
+                            "    pm.collectionVariables.set('payment_id', String(id));",
+                            "    pm.test('✅ payment_id saved: ' + id + ' ($' + json.data.amount + ') — run STEP 4', () => true);",
+                            "} else {",
+                            "    pm.test('❌ No payment id. Response: ' + JSON.stringify(json), () => false);",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Content-Type",  "value": "application/json" },
+                    { "key": "Accept",        "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"service_request_id\": \"{{service_request_id}}\",\n    \"payment_method\": \"card\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/payments",
+                    "host": ["{{base_url}}"],
+                    "path": ["payments"]
+                }
+            }
+        },
+        {
+            "name": "STEP 4 ⭐ — Create Stripe Intent (MAIN TEST)",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "if (!pm.collectionVariables.get('token')) { throw new Error('Run STEP 1 first — no token'); }",
+                            "if (!pm.collectionVariables.get('payment_id')) { throw new Error('Run STEP 3 first — no payment_id'); }"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                            "var json   = pm.response.json();",
+                            "var secret = json.data && json.data.client_secret;",
+                            "if (secret) {",
+                            "    pm.test('✅ STRIPE WORKING — client_secret received!', () => true);",
+                            "    console.log('client_secret     : ' + json.data.client_secret);",
+                            "    console.log('publishable_key   : ' + json.data.publishable_key);",
+                            "    console.log('payment_intent_id : ' + json.data.payment_intent_id);",
+                            "} else {",
+                            "    pm.test('❌ No client_secret. HTTP ' + pm.response.code + ' — ' + pm.response.text(), () => false);",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept",        "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/payments/{{payment_id}}/stripe/intent",
+                    "host": ["{{base_url}}"],
+                    "path": ["payments", "{{payment_id}}", "stripe", "intent"]
+                }
+            }
+        },
+        {
+            "name": "STEP 5 — Check Payment Status",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "if (!pm.collectionVariables.get('payment_id')) { throw new Error('Run STEP 3 first — no payment_id'); }"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                            "var status = pm.response.json().data && pm.response.json().data.status;",
+                            "pm.test('Payment status = ' + status, () => pm.expect(status).to.be.a('string'));"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept",        "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/payments/{{payment_id}}",
+                    "host": ["{{base_url}}"],
+                    "path": ["payments", "{{payment_id}}"]
+                }
+            }
+        },
+        {
+            "name": "STEP 6 — Webhook bad signature (expect 400)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test('✅ Status 400 — invalid signature rejected correctly', () => pm.response.to.have.status(400));"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Content-Type",     "value": "application/json" },
+                    { "key": "Accept",           "value": "application/json" },
+                    { "key": "Stripe-Signature", "value": "t=0,v1=fakesignature" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\"type\":\"payment_intent.succeeded\",\"data\":{\"object\":{\"id\":\"pi_fake\"}}}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/stripe/webhook",
+                    "host": ["{{base_url}}"],
+                    "path": ["stripe", "webhook"]
+                }
+            }
+        }
+    ]
+}
