@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OfficeController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\StripeController;
 use App\Http\Controllers\Api\RequestDocumentController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
@@ -57,6 +58,9 @@ Route::get('/track/{trackingToken}', [TrackingController::class, 'show']);
 Route::get('/offices', [OfficeController::class, 'index']);
 Route::get('/offices/{office}/feedback', [OfficeController::class, 'feedback']);
 Route::get('/offices/{office}', [OfficeController::class, 'show']);
+
+// Stripe webhook — public, no auth, Stripe posts here after payment events
+Route::post('/stripe/webhook', [StripeController::class, 'webhook']);
 
 /*
 |--------------------------------------------------------------------------
@@ -139,6 +143,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
     Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt']);
     Route::post('/payments/{payment}/process', [PaymentController::class, 'process']);
+    Route::post('/payments/{payment}/stripe/checkout', [StripeController::class, 'createCheckout']);
+    Route::post('/payments/{payment}/stripe/intent', [StripeController::class, 'createIntent']);
     Route::patch('/payments/{payment}/mark-paid', [PaymentController::class, 'markAsPaid']);
     Route::patch('/payments/{payment}/refund', [PaymentController::class, 'refund']);
 

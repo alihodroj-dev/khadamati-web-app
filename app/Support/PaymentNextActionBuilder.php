@@ -17,8 +17,9 @@ class PaymentNextActionBuilder
 
         return match ($payment->payment_method) {
             'card' => [
-                'type' => 'mock_card_confirmation',
-                'message' => 'Use /payments/'.$payment->id.'/process in sandbox',
+                'type'         => 'stripe_checkout',
+                'checkout_url' => null, // call POST /payments/{id}/stripe/checkout to get the URL
+                'endpoint'     => '/api/payments/'.$payment->id.'/stripe/checkout',
             ],
             'crypto' => self::cryptoTransferAction($payment),
             default => null,
