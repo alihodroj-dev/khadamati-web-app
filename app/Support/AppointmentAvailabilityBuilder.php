@@ -14,7 +14,7 @@ class AppointmentAvailabilityBuilder
 
     public const DEFAULT_END = '15:00';
 
-    public const SLOT_DURATION_MINUTES = 30;
+    public const SLOT_DURATION_MINUTES = 60;
 
     /**
      * @param  list<string>  $unavailableTimes  Times in H:i format (booked)
@@ -22,8 +22,8 @@ class AppointmentAvailabilityBuilder
      *     date: string,
      *     slot_duration_minutes: int,
      *     working_hours: array{start: string, end: string},
-     *     available_times: list<string>,
-     *     unavailable_times: list<string>,
+     *     available_slots: list<string>,
+     *     unavailable_slots: list<string>,
      *     source: string
      * }
      */
@@ -64,10 +64,33 @@ class AppointmentAvailabilityBuilder
             'date' => $date,
             'slot_duration_minutes' => $slotDuration,
             'working_hours' => $workingHours,
-            'available_times' => $available,
-            'unavailable_times' => $unavailable,
+            'available_slots' => $available,
+            'unavailable_slots' => $unavailable,
             'source' => $source,
         ];
+    }
+
+    /**
+     * @param  list<string>  $appointmentStartTimes  Times in H:i format
+     * @return list<string>
+     */
+    public function occupiedSlotsForAppointments(string $date, array $appointmentStartTimes): array
+    {
+        $occupied = [];
+
+        foreach ($appointmentStartTimes as $startTime) {
+            $normalizedStart = Carbon::parse($startTime)->format('H:i');
+            $end = Carbon::parse($date.' '.$normalizedStart)
+                ->addMinutes(self::SLOT_DURATION_MINUTES)
+                ->format('H:i');
+
+            $occupied = array_merge(
+                $occupied,
+                $this->generateSlots($date, $normalizedStart, $end, self::SLOT_DURATION_MINUTES)
+            );
+        }
+
+        return array_values(array_unique($occupied));
     }
 
     /**
@@ -83,7 +106,7 @@ class AppointmentAvailabilityBuilder
         $normalizedTime = Carbon::parse($time)->format('H:i');
         $payload = $this->build($date, $office, $additionalUnavailable, $staffId);
 
-        return in_array($normalizedTime, $payload['available_times'], true);
+        return in_array($normalizedTime, $payload['available_slots'], true);
     }
 
     /**
@@ -199,7 +222,7 @@ class AppointmentAvailabilityBuilder
             ->map(fn (OfficeTimeSlot $slot) => [
                 'start' => Carbon::parse($slot->start_time)->format('H:i'),
                 'end' => Carbon::parse($slot->end_time)->format('H:i'),
-                'duration' => (int) $slot->slot_duration_minutes,
+                'duration' => self::SLOT_DURATION_MINUTES,
             ])
             ->values()
             ->all();

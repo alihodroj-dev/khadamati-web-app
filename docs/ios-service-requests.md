@@ -452,15 +452,16 @@ Optional in-person visits linked to a service request.
 
 ### Check availability
 
-`GET /api/appointments/availability?date=2026-05-24`
+`GET /api/appointments/availability?date=2026-05-24&service_request_id=12`
 
 | Query | Required | Notes |
 |-------|----------|-------|
 | `date` | Yes | `Y-m-d` |
-| `service_request_id` | No | Uses request’s office `working_hours`; must own request |
-| `staff_id` | No | Narrow slots to one staff member |
+| `service_request_id` | Yes | Must own request; service must have `requires_appointment: true` |
 
-Default slot grid: **09:00–15:00**, **30 minutes**, minus already booked times (non-cancelled appointments).
+Slots are **1 hour** within the request office’s working hours (or staff schedule when `assigned_staff_id` is set). Excludes non-cancelled appointments on the same day for that staff (or office when unassigned). Returns `available_slots` and `unavailable_slots` (`slot_duration_minutes` is always `60`).
+
+**422** if the service does not require an appointment.
 
 ### Book
 
@@ -480,8 +481,9 @@ Default slot grid: **09:00–15:00**, **30 minutes**, minus already booked times
 |------|--------|
 | Ownership | Request must belong to citizen |
 | Date | `appointment_date` ≥ today |
-| Time | `H:i` (e.g. `11:30`) |
-| Slot | Must be in available set → else **422** |
+| Time | `H:i` on the hour (e.g. `11:00`); each booking is **1 hour** |
+| Slot | Must be in `available_slots` from availability → else **422** |
+| Service | Request’s service must have `requires_appointment: true` → else **422** |
 | Duplicate | Without `staff_id`: only one non-cancelled appointment per request |
 | `staff_id` | Defaults to `assigned_staff_id` when omitted |
 
