@@ -19,9 +19,9 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('payments', function (Blueprint $table) {
-            $table->enum('payment_method', ['card', 'cash', 'crypto'])->change();
-        });
+        DB::statement("ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_payment_method_check");
+        DB::statement("ALTER TABLE payments ALTER COLUMN payment_method TYPE VARCHAR(255)");
+        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_payment_method_check CHECK (payment_method IN ('card', 'cash', 'crypto'))");
     }
 
     public function down(): void
@@ -36,8 +36,8 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('payments', function (Blueprint $table) {
-            $table->enum('payment_method', ['card', 'cash'])->change();
-        });
+        DB::statement("ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_payment_method_check");
+        DB::statement("ALTER TABLE payments ALTER COLUMN payment_method TYPE VARCHAR(255)");
+        DB::statement("ALTER TABLE payments ADD CONSTRAINT payments_payment_method_check CHECK (payment_method IN ('card', 'cash'))");
     }
 };
