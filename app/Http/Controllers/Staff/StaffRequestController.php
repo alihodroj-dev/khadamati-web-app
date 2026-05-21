@@ -70,6 +70,10 @@ class StaffRequestController extends Controller
             'rejection_reason' => ['required_if:status,'.ServiceRequestStatus::REJECTED, 'nullable', 'string'],
         ]);
 
+        if ((int) $request->assigned_staff_id !== auth()->id()) {
+            return back()->with('error', 'You can only update requests assigned to you.');
+        }
+
         ServiceRequestStatusUpdater::apply(
             $request,
             $httpRequest->status,
@@ -88,6 +92,11 @@ class StaffRequestController extends Controller
     }
 
     public function assignStaff(HttpRequest $httpRequest, $id)
+    {
+        return back()->with('error', 'Only admins can assign staff to requests.');
+    }
+
+    private function assignStaffInternal(HttpRequest $httpRequest, $id)
     {
         $request = StaffOfficeScope::applyServiceRequestScope(
             ServiceRequest::query(),
@@ -129,6 +138,10 @@ class StaffRequestController extends Controller
             ServiceRequest::query(),
             auth()->user()
         )->findOrFail($id);
+
+        if ((int) $request->assigned_staff_id !== auth()->id()) {
+            return back()->with('error', 'You can only upload documents for requests assigned to you.');
+        }
 
         $httpRequest->validate([
             'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',

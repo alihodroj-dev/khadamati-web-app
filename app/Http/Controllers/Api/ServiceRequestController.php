@@ -8,6 +8,8 @@ use App\Http\Resources\ServiceRequestResource;
 use App\Models\Office;
 use App\Models\Service;
 use App\Models\ServiceRequest;
+use App\Models\User;
+use App\Notifications\RequestUpdatedNotification;
 use App\Support\ServiceRequestCertificateBuilder;
 use App\Support\ServiceRequestStatus;
 use App\Traits\ApiResponse;
@@ -66,6 +68,25 @@ class ServiceRequestController extends Controller
         ]);
 
         $serviceRequest->load(['service.category', 'office']);
+
+        $recipients = User::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($officeId) {
+                $q->where('role', User::ROLE_ADMIN)
+                    ->orWhere(function ($q2) use ($officeId) {
+                        $q2->where('role', User::ROLE_STAFF)
+                            ->when($officeId, fn ($q3) => $q3->where('office_id', $officeId));
+                    });
+            })
+            ->get();
+
+        foreach ($recipients as $recipient) {
+            $recipient->notify(new RequestUpdatedNotification(
+                $serviceRequest,
+                'New service request submitted',
+                'A new request for '.$serviceRequest->service->name.' has been submitted.'
+            ));
+        }
 
         return $this->successResponse(
             [
