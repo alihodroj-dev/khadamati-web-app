@@ -1,52 +1,29 @@
-@props([
-    'notification',
-    'compact' => false,
-])
+@props(['notification', 'compact' => false])
 
 @php
-    $isUnread = $notification['is_unread'] ?? false;
-    $url = $notification['url'] ?? null;
+    $data   = $notification->data ?? [];
+    $title  = $data['title'] ?? 'Notification';
+    $body   = $data['body'] ?? '';
+    $isRead = ! is_null($notification->read_at);
 @endphp
 
-<div class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 {{ $isUnread ? 'bg-blue-50/60' : '' }}">
-
-    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 {{ $compact ? 'mt-0.5' : '' }}">
-        <i class="{{ $notification['icon'] }} text-blue-600" style="font-size: {{ $compact ? '15px' : '16px' }};"></i>
+@if($compact)
+    <a href="{{ route('notifications.index') }}"
+       class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition {{ $isRead ? '' : 'bg-blue-50' }}">
+        <span class="mt-1 flex-shrink-0 w-2 h-2 rounded-full {{ $isRead ? 'bg-transparent' : 'bg-blue-500' }}"></span>
+        <div class="min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">{{ $title }}</p>
+            <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ $body }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+        </div>
+    </a>
+@else
+    <div class="flex items-start gap-4 px-4 py-4 {{ $isRead ? '' : 'bg-blue-50' }}">
+        <span class="mt-2 flex-shrink-0 w-2.5 h-2.5 rounded-full {{ $isRead ? 'bg-gray-300' : 'bg-blue-500' }}"></span>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900">{{ $title }}</p>
+            <p class="text-sm text-gray-600 mt-0.5">{{ $body }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+        </div>
     </div>
-
-    <div class="flex-1 min-w-0">
-        @if($url)
-            <a href="{{ $url }}" class="block group">
-                <p class="text-sm text-gray-900 font-medium group-hover:text-blue-700">{{ $notification['title'] }}</p>
-                @if($notification['body'])
-                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ $notification['body'] }}</p>
-                @endif
-            </a>
-        @else
-            <p class="text-sm text-gray-900 font-medium">{{ $notification['title'] }}</p>
-            @if($notification['body'])
-                <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ $notification['body'] }}</p>
-            @endif
-        @endif
-
-        <p class="text-xs text-gray-400 mt-1">{{ $notification['created_at_human'] }}</p>
-    </div>
-
-    <div class="flex flex-col items-end gap-2 flex-shrink-0">
-        @if($isUnread)
-            <span class="w-2 h-2 rounded-full bg-blue-500" title="Unread"></span>
-        @endif
-
-        @if($isUnread)
-            <form method="POST" action="{{ route('notifications.read', $notification['id']) }}">
-                @csrf
-                <button type="submit"
-                        class="text-xs text-blue-600 hover:underline"
-                        style="background: none; border: none; cursor: pointer; padding: 0;">
-                    Mark read
-                </button>
-            </form>
-        @endif
-    </div>
-
-</div>
+@endif
