@@ -16,7 +16,7 @@ class LoginController extends Controller
 
     public function showLogin()
     {
-        return view('Auth.login');
+        return view('auth.login');
     }
 
     public function login(Request $request, OtpLoginService $otpLoginService)
@@ -93,7 +93,7 @@ class LoginController extends Controller
                 ->withErrors(['email' => 'Please request a verification code first.']);
         }
 
-        return view('Auth.verify-otp', [
+        return view('auth.verify-otp', [
             'email' => $request->session()->get('otp_login.email'),
         ]);
     }
