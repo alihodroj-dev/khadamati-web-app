@@ -11,6 +11,7 @@ COPY composer.json composer.lock ./
 RUN COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 COPY . .
+RUN cp .env.example .env
 RUN COMPOSER_MEMORY_LIMIT=-1 composer dump-autoload --optimize
 
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
