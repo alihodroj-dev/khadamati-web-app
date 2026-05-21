@@ -1,6 +1,6 @@
 FROM php:8.4-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor curl zip unzip git bash postgresql-dev \
+RUN apk add --no-cache nginx supervisor curl zip unzip git bash postgresql-dev nodejs npm \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql opcache
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -13,6 +13,9 @@ RUN COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --n
 COPY . .
 RUN cp .env.example .env
 RUN COMPOSER_MEMORY_LIMIT=-1 composer dump-autoload --optimize
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts && npm run build
 
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && chmod -R 775 /app/storage /app/bootstrap/cache
