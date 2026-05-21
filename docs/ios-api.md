@@ -479,20 +479,18 @@ No citizen name, documents, payments, or staff notes.
 
 ### Availability
 
-`GET /appointments/availability?date=2026-05-17` — `date` required (`Y-m-d`)
+`GET /appointments/availability?date=2026-05-24&service_request_id=12` — `date` and `service_request_id` required (`Y-m-d`)
 
-Optional: `staff_id`, `service_request_id` (uses request office `working_hours`; must own request)
-
-Default hours: **09:00–15:00**, **30-minute** slots.
+Only for services with `requires_appointment: true`. Uses request office hours and assigned staff schedule; **1-hour** slots.
 
 ```json
 {
   "data": {
-    "date": "2026-05-17",
-    "slot_duration_minutes": 30,
+    "date": "2026-05-24",
+    "slot_duration_minutes": 60,
     "working_hours": { "start": "09:00", "end": "15:00" },
-    "available_times": ["09:00", "09:30"],
-    "unavailable_times": ["10:00"]
+    "available_slots": ["09:00", "10:00"],
+    "unavailable_slots": ["11:00"]
   }
 }
 ```
@@ -502,7 +500,7 @@ Default hours: **09:00–15:00**, **30-minute** slots.
 | Method | Path | Notes |
 |--------|------|--------|
 | `GET` | `/appointments` | Own appointments; includes `office`, `service` summaries |
-| `POST` | `/appointments` | `service_request_id`, `appointment_date`, `appointment_time` (`H:i`), optional `staff_id`, `notes` |
+| `POST` | `/appointments` | `service_request_id` (must require appointment), `appointment_date`, `appointment_time` (`H:i`, on the hour), optional `staff_id`, `notes` |
 | `GET` | `/appointments/{id}` | |
 | `PATCH` | `/appointments/{id}` | Citizens: only `scheduled` appointments |
 | `DELETE` | `/appointments/{id}` | Citizens: `scheduled` only |

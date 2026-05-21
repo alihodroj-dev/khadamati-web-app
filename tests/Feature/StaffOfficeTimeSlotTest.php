@@ -108,7 +108,7 @@ class StaffOfficeTimeSlotTest extends TestCase
             ->assertJsonPath('data.source', 'time_slots')
             ->assertJsonPath('data.working_hours.start', '10:00')
             ->assertJsonPath('data.working_hours.end', '12:00')
-            ->assertJsonPath('data.available_times', ['10:00', '10:30', '11:00', '11:30']);
+            ->assertJsonPath('data.available_slots', ['10:00', '11:00']);
     }
 
     #[Test]
@@ -129,21 +129,19 @@ class StaffOfficeTimeSlotTest extends TestCase
         $this->getJson('/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id)
             ->assertOk()
             ->assertJsonPath('data.source', 'working_hours')
-            ->assertJsonPath('data.available_times', ['10:00', '10:30', '11:00', '11:30']);
+            ->assertJsonPath('data.available_slots', ['10:00', '11:00']);
     }
 
     #[Test]
-    public function availability_falls_back_to_default_hours_without_office_context(): void
+    public function availability_requires_service_request_id(): void
     {
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
 
         $this->actingAs($citizen);
 
         $this->getJson('/api/appointments/availability?date=2026-05-17')
-            ->assertOk()
-            ->assertJsonPath('data.source', 'default')
-            ->assertJsonPath('data.working_hours.start', '09:00')
-            ->assertJsonPath('data.working_hours.end', '15:00');
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['service_request_id']);
     }
 
     #[Test]
@@ -179,9 +177,9 @@ class StaffOfficeTimeSlotTest extends TestCase
             '/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id
         )->assertOk();
 
-        $this->assertContains('10:00', $response->json('data.unavailable_times'));
-        $this->assertNotContains('10:00', $response->json('data.available_times'));
-        $this->assertContains('09:00', $response->json('data.available_times'));
+        $this->assertContains('10:00', $response->json('data.unavailable_slots'));
+        $this->assertNotContains('10:00', $response->json('data.available_slots'));
+        $this->assertContains('09:00', $response->json('data.available_slots'));
     }
 
     #[Test]
@@ -203,9 +201,11 @@ class StaffOfficeTimeSlotTest extends TestCase
 
         $this->actingAs($citizen);
 
+        $appointmentDate = now()->addDays(3)->toDateString();
+
         $this->postJson('/api/appointments', [
             'service_request_id' => $serviceRequest->id,
-            'appointment_date' => '2026-05-17',
+            'appointment_date' => $appointmentDate,
             'appointment_time' => '09:00',
         ])
             ->assertStatus(422)
@@ -213,7 +213,7 @@ class StaffOfficeTimeSlotTest extends TestCase
 
         $this->postJson('/api/appointments', [
             'service_request_id' => $serviceRequest->id,
-            'appointment_date' => '2026-05-17',
+            'appointment_date' => $appointmentDate,
             'appointment_time' => '10:00',
         ])->assertCreated();
     }
@@ -246,15 +246,16 @@ class StaffOfficeTimeSlotTest extends TestCase
 
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
         $serviceRequest = $this->createServiceRequest($citizen, $office);
+        $serviceRequest->update(['assigned_staff_id' => $staff->id]);
 
         $this->actingAs($citizen);
 
         $response = $this->getJson(
-            '/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id.'&staff_id='.$staff->id
+            '/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id
         )->assertOk()
             ->assertJsonPath('data.source', 'time_slots');
 
-        $times = $response->json('data.available_times');
+        $times = $response->json('data.available_slots');
 
         $this->assertContains('09:00', $times);
         $this->assertContains('14:00', $times);
@@ -290,6 +291,7 @@ class StaffOfficeTimeSlotTest extends TestCase
             'office_id' => $office->id,
             'name' => 'Permit',
             'base_fee' => 10,
+            'requires_appointment' => true,
             'is_active' => true,
         ]);
 

@@ -15,28 +15,51 @@ class AppointmentAvailabilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_availability_returns_slots_and_working_hours(): void
+    public function test_availability_requires_service_request_id(): void
     {
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
 
-        $response = $this->actingAs($citizen)->getJson(
+        $this->actingAs($citizen)->getJson(
             '/api/appointments/availability?date=2026-05-17'
+        )->assertStatus(422)
+            ->assertJsonValidationErrors(['service_request_id']);
+    }
+
+    public function test_availability_rejects_service_that_does_not_require_appointment(): void
+    {
+        $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
+        $serviceRequest = $this->createServiceRequest($citizen, requiresAppointment: false);
+
+        $this->actingAs($citizen)->getJson(
+            '/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id
+        )->assertStatus(422)
+            ->assertJsonPath('message', 'This service request does not require an appointment.');
+    }
+
+    public function test_availability_returns_hourly_slots_and_working_hours(): void
+    {
+        $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
+        $serviceRequest = $this->createServiceRequest($citizen);
+
+        $response = $this->actingAs($citizen)->getJson(
+            '/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id
         );
 
         $response->assertOk()
             ->assertJsonPath('data.date', '2026-05-17')
-            ->assertJsonPath('data.slot_duration_minutes', 30)
+            ->assertJsonPath('data.slot_duration_minutes', 60)
             ->assertJsonPath('data.working_hours.start', '09:00')
             ->assertJsonPath('data.working_hours.end', '15:00')
             ->assertJsonStructure([
                 'data' => [
-                    'available_times',
-                    'unavailable_times',
+                    'available_slots',
+                    'unavailable_slots',
                 ],
             ]);
 
-        $this->assertContains('09:00', $response->json('data.available_times'));
-        $this->assertContains('09:30', $response->json('data.available_times'));
+        $this->assertContains('09:00', $response->json('data.available_slots'));
+        $this->assertContains('10:00', $response->json('data.available_slots'));
+        $this->assertNotContains('09:30', $response->json('data.available_slots'));
     }
 
     public function test_availability_uses_office_hours_from_service_request(): void
@@ -60,14 +83,14 @@ class AppointmentAvailabilityTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.working_hours.start', '10:00')
             ->assertJsonPath('data.working_hours.end', '12:00')
-            ->assertJsonPath('data.available_times', ['10:00', '10:30', '11:00', '11:30']);
+            ->assertJsonPath('data.available_slots', ['10:00', '11:00']);
     }
 
-    public function test_booked_slot_appears_in_unavailable_times(): void
+    public function test_booked_slot_appears_in_unavailable_slots_for_assigned_staff(): void
     {
         $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
         $staff = User::factory()->create(['role' => User::ROLE_STAFF]);
-        $serviceRequest = $this->createServiceRequest($citizen);
+        $serviceRequest = $this->createServiceRequest($citizen, assignedStaffId: $staff->id);
 
         Appointment::query()->create([
             'service_request_id' => $serviceRequest->id,
@@ -79,17 +102,34 @@ class AppointmentAvailabilityTest extends TestCase
         ]);
 
         $response = $this->actingAs($citizen)->getJson(
-            '/api/appointments/availability?date=2026-05-17&staff_id='.$staff->id
+            '/api/appointments/availability?date=2026-05-17&service_request_id='.$serviceRequest->id
         );
 
         $response->assertOk()
-            ->assertJsonPath('data.unavailable_times', ['10:00']);
+            ->assertJsonPath('data.unavailable_slots', ['10:00']);
 
-        $this->assertNotContains('10:00', $response->json('data.available_times'));
+        $this->assertNotContains('10:00', $response->json('data.available_slots'));
     }
 
-    private function createServiceRequest(User $citizen, ?Office $office = null): ServiceRequest
+    public function test_store_rejects_service_that_does_not_require_appointment(): void
     {
+        $citizen = User::factory()->create(['role' => User::ROLE_CITIZEN]);
+        $serviceRequest = $this->createServiceRequest($citizen, requiresAppointment: false);
+
+        $this->actingAs($citizen)->postJson('/api/appointments', [
+            'service_request_id' => $serviceRequest->id,
+            'appointment_date' => now()->addDays(3)->toDateString(),
+            'appointment_time' => '10:00',
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['service_request_id']);
+    }
+
+    private function createServiceRequest(
+        User $citizen,
+        ?Office $office = null,
+        bool $requiresAppointment = true,
+        ?int $assignedStaffId = null,
+    ): ServiceRequest {
         $office ??= Office::query()->create([
             'name' => 'Default Office',
             'address' => 'Address',
@@ -106,6 +146,7 @@ class AppointmentAvailabilityTest extends TestCase
             'office_id' => $office->id,
             'name' => 'Service',
             'base_fee' => 10,
+            'requires_appointment' => $requiresAppointment,
             'is_active' => true,
         ]);
 
@@ -113,6 +154,7 @@ class AppointmentAvailabilityTest extends TestCase
             'user_id' => $citizen->id,
             'service_id' => $service->id,
             'office_id' => $office->id,
+            'assigned_staff_id' => $assignedStaffId,
             'reference_number' => 'REQ-'.uniqid(),
             'tracking_token' => ServiceRequest::generateTrackingToken(),
             'status' => 'pending',
