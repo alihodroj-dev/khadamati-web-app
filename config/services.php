@@ -52,4 +52,10 @@ return [
         'engine' => (int) env('OCR_SPACE_ENGINE', 3),
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];
