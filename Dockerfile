@@ -1,6 +1,6 @@
 FROM php:8.3-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor curl zip unzip git bash \
+RUN apk add --no-cache nginx supervisor curl zip unzip git bash postgresql-dev \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql opcache
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
