@@ -18,6 +18,19 @@ class StripeController extends Controller
 {
     use ApiResponse;
 
+    private function ensureStripeConfigured(): ?JsonResponse
+    {
+        if (blank(config('services.stripe.secret'))) {
+            return $this->errorResponse(
+                'Stripe is not configured. Set STRIPE_KEY and STRIPE_SECRET in your environment.',
+                null,
+                503
+            );
+        }
+
+        return null;
+    }
+
     /**
      * Create a Stripe Checkout Session for mobile/web.
      *
@@ -46,6 +59,10 @@ class StripeController extends Controller
                 null,
                 422
             );
+        }
+
+        if ($response = $this->ensureStripeConfigured()) {
+            return $response;
         }
 
         $validated = $request->validate([
@@ -121,6 +138,10 @@ class StripeController extends Controller
                 null,
                 422
             );
+        }
+
+        if ($response = $this->ensureStripeConfigured()) {
+            return $response;
         }
 
         $existingIntentId = $payment->payment_details['stripe_payment_intent_id'] ?? null;

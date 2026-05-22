@@ -54,17 +54,43 @@ class AppointmentController extends Controller
 
         $validated = $request->validate([
             'date' => ['required', 'date', 'date_format:Y-m-d'],
-            'staff_id' => ['nullable', 'integer', 'exists:users,id'],
-            'service_request_id' => ['nullable', 'integer', 'exists:service_requests,id'],
+            'service_request_id' => ['required', 'integer', 'exists:service_requests,id'],
         ]);
 
-        $office = $this->resolveOfficeForAvailability($request, $validated);
-        $staffId = ! empty($validated['staff_id']) ? (int) $validated['staff_id'] : null;
+        $serviceRequest = ServiceRequest::query()
+            ->with(['office', 'service'])
+            ->findOrFail($validated['service_request_id']);
+
+        if ($serviceRequest->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
+            return $this->errorResponse(
+                'You are not allowed to view availability for this service request.',
+                null,
+                403
+            );
+        }
+
+        if (! $serviceRequest->service?->requires_appointment) {
+            return $this->errorResponse(
+                'This service request does not require an appointment.',
+                [
+                    'service_request_id' => ['Appointments are not available for this service.'],
+                ],
+                422
+            );
+        }
+
+        $office = $serviceRequest->office;
+        $office = $office instanceof Office && $office->is_active ? $office : null;
+        $staffId = $serviceRequest->assigned_staff_id
+            ? (int) $serviceRequest->assigned_staff_id
+            : null;
 
         $bookedTimes = $this->bookedTimesForDate(
             $validated['date'],
             $staffId,
-            $office?->id
+            $office?->id,
+            null,
+            $availabilityBuilder
         );
 
         $payload = $availabilityBuilder->build(
@@ -78,28 +104,6 @@ class AppointmentController extends Controller
             $payload,
             'Appointment availability retrieved successfully.'
         );
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function resolveOfficeForAvailability(Request $request, array $validated): ?Office
-    {
-        if (empty($validated['service_request_id'])) {
-            return null;
-        }
-
-        $serviceRequest = ServiceRequest::query()
-            ->with('office')
-            ->findOrFail($validated['service_request_id']);
-
-        if ($serviceRequest->user_id !== $request->user()->id && ! $request->user()->isAdmin()) {
-            abort(403, 'You are not allowed to view availability for this service request.');
-        }
-
-        $office = $serviceRequest->office;
-
-        return $office instanceof Office && $office->is_active ? $office : null;
     }
 
     public function store(Request $request)
@@ -131,9 +135,9 @@ class AppointmentController extends Controller
             ],
         ]);
 
-        $serviceRequest = ServiceRequest::findOrFail(
-            $validated['service_request_id']
-        );
+        $serviceRequest = ServiceRequest::query()
+            ->with(['office', 'service'])
+            ->findOrFail($validated['service_request_id']);
 
         if ($serviceRequest->user_id !== auth()->id()) {
 
@@ -144,16 +148,29 @@ class AppointmentController extends Controller
             );
         }
 
+        if (! $serviceRequest->service?->requires_appointment) {
+            return $this->errorResponse(
+                'This service request does not require an appointment.',
+                [
+                    'service_request_id' => ['You cannot book an appointment for this service.'],
+                ],
+                422
+            );
+        }
+
+        $availabilityBuilder = app(AppointmentAvailabilityBuilder::class);
         $staffId = $validated['staff_id'] ?? $serviceRequest->assigned_staff_id;
         $office = $serviceRequest->office;
 
         $bookedTimes = $this->bookedTimesForDate(
             $validated['appointment_date'],
             $staffId ? (int) $staffId : null,
-            $office?->id
+            $office?->id,
+            null,
+            $availabilityBuilder
         );
 
-        if (! app(AppointmentAvailabilityBuilder::class)->isSlotAvailable(
+        if (! $availabilityBuilder->isSlotAvailable(
             $validated['appointment_date'],
             $validated['appointment_time'],
             $office,
@@ -262,15 +279,18 @@ class AppointmentController extends Controller
             $staffId = $validated['staff_id'] ?? $appointment->staff_id;
             $office = $appointment->serviceRequest?->office;
 
+            $availabilityBuilder = app(AppointmentAvailabilityBuilder::class);
+
             $bookedTimes = $this->bookedTimesForDate(
                 $date,
                 $staffId ? (int) $staffId : null,
                 $office?->id,
-                $appointment->id
+                $appointment->id,
+                $availabilityBuilder
             );
 
             if (($validated['status'] ?? $appointment->status) !== 'cancelled'
-                && ! app(AppointmentAvailabilityBuilder::class)->isSlotAvailable(
+                && ! $availabilityBuilder->isSlotAvailable(
                     $date,
                     $time,
                     $office,
@@ -329,6 +349,7 @@ class AppointmentController extends Controller
         ?int $staffId,
         ?int $officeId,
         ?int $excludeAppointmentId = null,
+        ?AppointmentAvailabilityBuilder $availabilityBuilder = null,
     ): array {
         $query = Appointment::query()
             ->whereDate('appointment_date', $date)
@@ -346,13 +367,17 @@ class AppointmentController extends Controller
             $query->where('id', '!=', $excludeAppointmentId);
         }
 
-        return $query
+        $startTimes = $query
             ->orderBy('appointment_time')
             ->pluck('appointment_time')
             ->map(fn ($time) => Carbon::parse($time)->format('H:i'))
             ->unique()
             ->values()
             ->all();
+
+        $builder = $availabilityBuilder ?? app(AppointmentAvailabilityBuilder::class);
+
+        return $builder->occupiedSlotsForAppointments($date, $startTimes);
     }
 
     /**

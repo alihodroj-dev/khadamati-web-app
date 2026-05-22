@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Exception\FirebaseException;
 use Kreait\Firebase\Exception\MessagingException;
+use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Throwable;
@@ -38,12 +39,19 @@ class FirebaseNotificationService
             return false;
         }
 
+        $apnsConfig = ApnsConfig::new()
+            ->withImmediatePriority()
+            ->withDefaultSound()
+            ->withApsField('alert', [
+                'title' => $title,
+                'body' => $body,
+            ]);
+
         $message = CloudMessage::new()
             ->withToken($token)
             ->withNotification(Notification::create($title, $body))
-            ->withData($this->stringifyData($data))
-            ->withDefaultSounds()
-            ->withHighestPossiblePriority();
+            ->withApnsConfig($apnsConfig)
+            ->withData($this->stringifyData($data));
 
         try {
             $this->messaging->send($message);

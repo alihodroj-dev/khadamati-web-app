@@ -17,7 +17,7 @@ class FcmChannel
             return;
         }
 
-        if (blank($notifiable->fcm_token)) {
+        if (! $notifiable->push_notifications_enabled || blank($notifiable->fcm_token)) {
             return;
         }
 

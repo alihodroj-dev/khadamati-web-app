@@ -14,6 +14,17 @@ If local Composer reports that `ext-sodium` is missing, enable Sodium in your PH
 composer require kreait/laravel-firebase -W --ignore-platform-req=ext-sodium
 ```
 
+## Apple (APNs) in Firebase Console
+
+iOS delivery only works after APNs is linked to the Firebase project **`khadamati-2005`**:
+
+1. Open [Firebase Console](https://console.firebase.google.com/) → **Project settings** → **Cloud Messaging**.
+2. Under **Apple app configuration**, upload either:
+   - **APNs Authentication Key** (.p8) — recommended, or
+   - **APNs Certificate** (.p12) — e.g. `Khadamati Push Cert.p12` on your machine.
+3. Bundle ID must match the iOS app: `com.alihodroj.Khadamati`.
+4. Debug/Xcode builds use the **development (sandbox)** APNs environment; release/TestFlight use **production**. Mismatch between cert/key environment and build type is a common reason test pushes never appear.
+
 ## Environment
 
 The Firebase service account JSON is expected here:
@@ -34,6 +45,8 @@ Then clear cached config:
 ```bash
 php artisan config:clear
 ```
+
+Without the service account file and env vars, Laravel cannot send pushes (`composer install` must also be run so `kreait/laravel-firebase` is present in `vendor/`).
 
 ## Save FCM Token
 
