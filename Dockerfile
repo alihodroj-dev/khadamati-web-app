@@ -1,12 +1,3 @@
-# Stage 1: Build frontend assets with Node 22
-FROM node:22-alpine AS frontend-builder
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-# Stage 2: PHP application
 FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache nginx supervisor curl zip unzip git bash postgresql-dev \
@@ -22,9 +13,6 @@ RUN COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --n
 COPY . .
 RUN cp .env.example .env
 RUN COMPOSER_MEMORY_LIMIT=-1 composer dump-autoload --optimize
-
-# Copy compiled frontend assets from stage 1
-COPY --from=frontend-builder /app/public/build /app/public/build
 
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && chmod -R 775 /app/storage /app/bootstrap/cache
