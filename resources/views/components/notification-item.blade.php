@@ -1,10 +1,11 @@
 @props(['notification', 'compact' => false])
 
 @php
-    $data   = $notification->data ?? [];
-    $title  = $data['title'] ?? 'Notification';
-    $body   = $data['body'] ?? '';
-    $isRead = ! is_null($notification->read_at);
+    $isArray = is_array($notification);
+    $title   = $isArray ? ($notification['title'] ?? 'Notification') : ($notification->data['title'] ?? 'Notification');
+    $body    = $isArray ? ($notification['body'] ?? '')              : ($notification->data['body'] ?? '');
+    $isRead  = $isArray ? ! ($notification['is_unread'] ?? true)     : ! is_null($notification->read_at);
+    $time    = $isArray ? ($notification['created_at_human'] ?? '')  : optional($notification->created_at)->diffForHumans();
 @endphp
 
 @if($compact)
@@ -14,7 +15,7 @@
         <div class="min-w-0">
             <p class="text-sm font-medium text-gray-900 truncate">{{ $title }}</p>
             <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ $body }}</p>
-            <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $time }}</p>
         </div>
     </a>
 @else
@@ -23,7 +24,7 @@
         <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-gray-900">{{ $title }}</p>
             <p class="text-sm text-gray-600 mt-0.5">{{ $body }}</p>
-            <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $time }}</p>
         </div>
     </div>
 @endif
