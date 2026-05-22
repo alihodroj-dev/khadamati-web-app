@@ -57,6 +57,11 @@ return [
                     return null;
                 }
 
+                // Inline JSON pasted directly as env var — pass straight to SDK
+                if (str_starts_with(ltrim($credentials), '{')) {
+                    return $credentials;
+                }
+
                 $isAbsolutePath = str_starts_with($credentials, '/')
                     || preg_match('/^[A-Za-z]:[\/\\\\]/', $credentials) === 1;
 
